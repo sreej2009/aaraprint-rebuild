@@ -1,0 +1,92 @@
+/* Metric-matched fallback so text doesn't jump when Inter finishes loading. */
+@font-face {
+  font-family: 'Inter Fallback';
+  src: local('Arial');
+  size-adjust: 107.12%;
+  ascent-override: 90.44%;
+  descent-override: 22.52%;
+  line-gap-override: 0%;
+}
+
+@layer base {
+  :root {
+    --gutter: 1rem;
+    --header-height: 3.5rem;
+  }
+
+  @media (min-width: 48rem) {
+    :root {
+      --gutter: 1.5rem;
+      --header-height: 4.5rem;
+    }
+  }
+
+  html {
+    color-scheme: light;
+    font-family: var(--font-sans);
+    color: var(--color-fg);
+    background-color: var(--color-surface);
+    -webkit-text-size-adjust: 100%;
+    text-size-adjust: 100%;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    text-rendering: optimizeLegibility;
+    scroll-padding-top: calc(var(--header-height) + 1rem);
+  }
+
+  body {
+    min-height: 100dvh;
+    font-size: var(--text-body);
+    line-height: var(--text-body--line-height);
+  }
+
+  h1,
+  h2,
+  h3,
+  h4 {
+    font-family: var(--font-display);
+    color: var(--color-fg);
+    text-wrap: balance;
+  }
+
+  p,
+  li,
+  dd {
+    text-wrap: pretty;
+  }
+
+  :focus-visible {
+    outline: 2px solid var(--color-accent);
+    outline-offset: 2px;
+  }
+
+  ::selection {
+    background-color: var(--color-accent-soft);
+    color: var(--color-fg);
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    *,
+    ::before,
+    ::after {
+      animation-duration: 0.01ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.01ms !important;
+      scroll-behavior: auto !important;
+    }
+  }
+}
+
+/* Page container: 1280px content with responsive side gutters. */
+@utility container-page {
+  width: 100%;
+  max-width: calc(var(--container-page) + 2 * var(--gutter));
+  margin-inline: auto;
+  padding-inline: var(--gutter);
+}
+
+/* Same focus ring as :focus-visible, for elements that receive focus programmatically. */
+@utility focus-ring {
+  outline: 2px solid var(--color-accent);
+  outline-offset: 2px;
+}

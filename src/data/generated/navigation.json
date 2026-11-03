@@ -1,0 +1,68 @@
+[
+  {
+    "slug": "visiting-cards",
+    "name": "Visiting Cards",
+    "productCount": 33,
+    "fromPriceCents": 9900
+  },
+  {
+    "slug": "stationery-letterheads-notebooks",
+    "name": "Stationery, Letterheads & Notebooks",
+    "productCount": 68,
+    "fromPriceCents": 14900
+  },
+  {
+    "slug": "stamps-and-ink",
+    "name": "Stamps and Ink",
+    "productCount": 17,
+    "fromPriceCents": 19900
+  },
+  {
+    "slug": "signs-posters-marketing-materials",
+    "name": "Signs, Posters & Marketing Materials",
+    "productCount": 69,
+    "fromPriceCents": 19900
+  },
+  {
+    "slug": "labels-stickers-packaging",
+    "name": "Labels, Stickers & Packaging",
+    "productCount": 60,
+    "fromPriceCents": 14900
+  },
+  {
+    "slug": "clothing-caps-bags",
+    "name": "Clothing, Caps & Bags",
+    "productCount": 65,
+    "fromPriceCents": 9900
+  },
+  {
+    "slug": "mugs-albums-gifts",
+    "name": "Mugs, Albums & Gifts",
+    "productCount": 46,
+    "fromPriceCents": 14900
+  },
+  {
+    "slug": "pens",
+    "name": "Pens",
+    "productCount": 49,
+    "fromPriceCents": 4900
+  },
+  {
+    "slug": "drinkware",
+    "name": "Drinkware",
+    "productCount": 48,
+    "fromPriceCents": 19900
+  },
+  {
+    "slug": "custom-polo-t-shirts",
+    "name": "Custom Polo T-shirts",
+    "productCount": 43,
+    "fromPriceCents": 34900
+  },
+  {
+    "slug": "umbrellas-rainwear",
+    "name": "Umbrellas & Rainwear",
+    "productCount": 35,
+    "fromPriceCents": 19900
+  }
+]

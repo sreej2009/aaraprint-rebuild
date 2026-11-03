@@ -1,0 +1,45 @@
+# Dependencies
+node_modules/
+
+# Build output and generated types
+build/
+dist/
+dist-ssr/
+.react-router/
+
+# Test output
+test-results/
+playwright-report/
+blob-report/
+coverage/
+review-screens/
+
+# Environment files (keep the committed example)
+.env
+.env.*
+!.env.example
+*.local
+
+# Logs and temp files
+logs/
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+*.tmp
+.cache/
+.vite/
+
+# OS and editor files
+.DS_Store
+Thumbs.db
+desktop.ini
+.idea/
+.vscode/*
+!.vscode/extensions.json
+*.suo
+*.sw?
+
+# Note: the catalogue data in public/api/ and src/data/generated/ is committed on purpose.
+# The recovered asset folders live outside this repository (../recovered, ../recovered-additional).

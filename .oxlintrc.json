@@ -1,0 +1,46 @@
+{
+  "$schema": "./node_modules/oxlint/configuration_schema.json",
+  "plugins": [
+    "react",
+    "typescript",
+    "oxc",
+    "jsx-a11y",
+    "import",
+    "vitest"
+  ],
+  "rules": {
+    "react/rules-of-hooks": "error",
+    "react/only-export-components": [
+      "warn",
+      {
+        "allowConstantExport": true,
+        "allowExportNames": [
+          "meta",
+          "links",
+          "headers",
+          "loader",
+          "clientLoader",
+          "action",
+          "clientAction",
+          "handle",
+          "shouldRevalidate",
+          "ErrorBoundary",
+          "HydrateFallback",
+          "Layout"
+        ]
+      }
+    ],
+    "import/no-cycle": "error",
+    "vitest/valid-expect": [
+      "error",
+      {
+        "maxArgs": 2
+      }
+    ]
+  },
+  "ignorePatterns": [
+    "build/**",
+    ".react-router/**",
+    "public/api/**"
+  ]
+}

@@ -1,0 +1,18 @@
+{
+  "generatedAt": "2026-10-31T12:53:03.833Z",
+  "sources": {
+    "pages": "../recovered/pages",
+    "printConfigs": "../recovered-additional/data/print-configs.json",
+    "printConfigsFetchedAt": "2026-10-31T12:20:22Z"
+  },
+  "counts": {
+    "categories": 11,
+    "collections": 6,
+    "products": 533,
+    "variants": 5546,
+    "customisable": 532,
+    "withPrintConfig": 532,
+    "withImage": 450
+  },
+  "problems": []
+}
