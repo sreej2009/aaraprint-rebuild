@@ -44,6 +44,7 @@ src/
                            design-system, planned (Phase 6 placeholders), 404, studio placeholder
   features/catalogue/      listing logic (filters, facets, sort, pages), search, product card/image, filter panel, listing view
   features/product/        option selection & price display, gallery, purchase panel, details, print specs
+  features/studio/         Design Studio (Phase 3): print geometry, profiles, …
   components/content/      prose renderer for imported content blocks
   config/business.ts       business details (support email, hours, shipping rules)
   design-system/           tokens.ts + ~30 components (Button, Field, OptionChips, QuantityTiers, Dialog, Sheet, Toast …)
@@ -54,10 +55,12 @@ src/
   data/generated/          slim navigation data bundled into the shell (generated)
   styles/                  app.css → Tailwind + fonts + theme.css (tokens) + base.css
 public/api/v1/catalogue/   mock catalogue API: categories, collections, 533 products (generated)
+public/api/v1/studio/      mock Studio API: 532 product profiles (generated)
 scripts/
   catalogue/import-catalogue.mjs        builds the catalogue data from ../recovered (+ print configs)
   catalogue/product-types.mjs           product-type rules used for the "Type" filter
   content/import-content.mjs            converts the original content/policy pages into structured blocks
+  studio/build-studio-profiles.mjs      builds a Design Studio profile per product (print area, trim, sides, mockups, rights)
   recovery/recover-additional-assets.mjs downloads assets missing from ../recovered into ../recovered-additional
   serve-build.mjs                       production preview server (static-hosting rules)
 tooling/local-media.ts     serves /media/* from the recovered folders in dev/preview
@@ -66,7 +69,7 @@ e2e/                       Playwright specs (routing, navigation, keyboard, axe 
 
 ## Data and media
 
-- `npm run data:import` regenerates `public/api/v1/catalogue/**` and `src/data/generated/navigation.json`; `npm run content:import` regenerates `src/data/generated/content/**`. Both read `../recovered` (and the print configs in `../recovered-additional`). Generated files are committed so the app runs without the recovered folders.
+- `npm run data:import` regenerates `public/api/v1/catalogue/**` and `src/data/generated/navigation.json`; `npm run content:import` regenerates `src/data/generated/content/**`; `npm run studio:profiles` regenerates `public/api/v1/studio/**` and `src/data/generated/studio/profiles-meta.json` (run it after `data:import`). Both read `../recovered` (and the print configs in `../recovered-additional`). Generated files are committed so the app runs without the recovered folders.
 - Media are referenced by path (e.g. `products/pens-2d/classic-front.png`) and resolved by `mediaUrl()`. In dev/preview `/media/*` is served from `../recovered-additional` then `../recovered` (override with `AARAPRINT_MEDIA_ROOTS`). In production set `VITE_MEDIA_BASE_URL` to the CDN.
 - `../recovered/` is read-only. Recovery scripts refuse to write inside it.
 
@@ -103,7 +106,7 @@ e2e/                       Playwright specs (routing, navigation, keyboard, axe 
 |---|-------|--------|
 | 1 | Foundations — tokens, components, shell, routing + pre-rendering, data layer, tests, asset recovery | ✅ Done |
 | 2 | Catalogue, product pages and content pages | ✅ Done |
-| 3 | Design Studio core — all customisable products, flat artwork view, desktop/tablet/phone | Planned (see plan §18) — awaiting approval |
+| 3 | Design Studio core — all customisable products, flat artwork view, desktop/tablet/phone | In progress (plan §18.19) |
 | 4 | Studio advanced (snapping, QR, preflight, on-product apparel & wrap modes, options panel) | — |
 | 5 | 3D previews and remaining product modes | — |
 | 6 | Cart, checkout (pay on delivery), accounts, tracking — needs backend | — |

@@ -493,7 +493,7 @@ Design tokens, ~30 accessible components, app shell, routing with pre-rendering,
 
 ## 18. Phase 3 — Design Studio core: detailed plan
 
-**Status:** proposed, awaiting approval. Nothing below is implemented yet.
+**Status:** approved (decisions in §18.17). In progress — see §18.19 for milestone status and findings.
 
 **Goal.** A customer can open any customisable product at `/products/:slug/design` and design the front and back with text, shapes, graphics and their own images. They can see exactly what will be trimmed, undo anything, close the tab and come back to the same design, and download a proof, on desktop, tablet and phone. Flat-print products (354) get the complete experience. Apparel and wrap products (178) open the same editor on their flat print area; their on-product workspaces follow in Phase 4 (decision D4).
 
@@ -1151,6 +1151,16 @@ Total ≈ 25 working days (≈ 5 weeks). The original estimate was 3 weeks; the 
 | D4 | Apparel and wrap products (178) in Phase 3 | (a) Open in the editor on their flat print area, with the mockup as a reference. (b) Keep the placeholder until Phase 4. | **(a).** Everyone gets a working editor now; Phase 4 adds on-product workspaces. |
 | D5 | Studio graphics | (a) Reuse the original 33 SVGs, subject to the same rights check as the other recovered assets. (b) Commission or license a new set. | **(a)**, refreshed to the new palette later if needed. |
 
+**Outcome (approved):**
+
+| # | Decision |
+|---|----------|
+| D1 | **Approved:** the canvas is the finished trim size; bleed is added outside. |
+| D2 | **On hold:** the 8 product sizes stay unchanged until the business confirms. The discrepancies are documented in §18.19. |
+| D3 | **Approved:** Fraunces and Plus Jakarta Sans, in the Studio only; licences to be verified and kept (M8). |
+| D4 | **Approved:** all 178 apparel and wrap products open on their flat print area in Phase 3. |
+| D5 | **Conditionally approved:** reuse the 33 graphics only after checking their licences and usage rights (M9). Assets with uncertain rights are documented and not used. |
+
 **Dependency note:** apart from D3, Phase 3 needs **no new packages**. Konva, react-konva and Zustand are already installed. §2 proposed Immer, `idb` and `nanoid`; the plan replaces them with immutable history entries, a small IndexedDB wrapper and `crypto` IDs.
 
 ### 18.18 Proposed sequence
@@ -1162,3 +1172,48 @@ Total ≈ 25 working days (≈ 5 weeks). The original estimate was 3 weeks; the 
 5. **Finishing:** M14 → M15 → M16 (templates, preview and proof, hardening and report).
 
 I'll report after steps 2, 4 and 5 (or after each milestone, if you prefer). Each milestone is committed separately as `Phase 3 / Mn: …`.
+
+### 18.19 Phase 3 progress and findings
+
+| Milestone | Status |
+|-----------|--------|
+| M1 Studio profiles and print geometry | Done |
+| M2–M16 | Not started |
+
+#### M1 findings
+
+**Studio profiles.** `npm run studio:profiles` (`scripts/studio/build-studio-profiles.mjs`) writes 532 profiles to `public/api/v1/studio/<slug>.json` and a summary to `src/data/generated/studio/profiles-meta.json`.
+- It reads only product JSON and media file headers; the recovered folders are opened read-only.
+- Every referenced mockup, mask and model was found: 320 products have front/back mockups (including the shared polo mockup the original used), 35 have fabric masks, and 44 have a 3D model.
+- Print sizes are copied unchanged from the catalogue.
+
+**Named-size discrepancies (D2, on hold — not changed).**
+
+| Product | Named size | Canvas (finished size) | Named size should be |
+|---------|-----------|------------------------|----------------------|
+| flyer-a5-heavyweight, flyer-a5-matte, flyer-a5-recycled, flyer-a5-standard | A5 | 105 × 148 mm (= A6) | 148 × 210 mm |
+| flyer-a6-mini | A6 | 74 × 105 mm (= A7) | 105 × 148 mm |
+| stationery-notepad-a5 | A5 | 148 × 105 mm (= A6 landscape) | 148 × 210 mm |
+| stationery-notebook-a4 | A4 | 76.2 × 101.6 mm | 210 × 297 mm — may be a cover print area, not the page |
+| stationery-diary-a5-personalised | A5 | 72 × 101.6 mm | 148 × 210 mm — may be a cover print area, not the page |
+
+The other named-size products match: 3 A4 brochures, A4 flyer, DL flyer and DL envelope.
+
+**Options that change the real size or shape (not applied in Phase 3).** 106 products have options such as Size (signs, gifts, stamps, labels), Diameter (round cards, stamps), Corner Radius, Shape, Width/Height or Oval/Leaf style. The catalogue has one canvas per product, so these options don't resize the canvas. The full list is in `profiles-meta.json` (`optionDrivenSizes`). Example: the round visiting card offers 55 mm and 65 mm, but its canvas is 59.3 mm. Applying size options needs business confirmation of each size (as D2) and belongs with the Phase 4 options panel. Garment sizes (S/M/L) are ignored.
+
+**Trim shapes.**
+- 499 rectangle, 15 rounded rectangle (3 mm default radius, matching the "Standard (3mm)" corner option), 18 ellipse.
+- Ellipses are the 17 circle trims, one of which is non-square (`sticker-die-cut-shape`), plus `business-card-oval`. The oval card is drawn as an ellipse, like the original Studio; its size is unchanged.
+- `business-card-leaf` and `business-card-custom-shape` are die-cut shapes approximated by a rounded rectangle.
+
+**Asset rights register.** Profiles record a rights status for every asset. The Studio only uses `cleared` or `attribution-required` assets.
+
+| Asset | Status | Use in the Studio |
+|-------|--------|-------------------|
+| 556 product mockup images + 70 fabric masks (incl. the shared polo mockup) | Unconfirmed — origin and licence unknown; some show brand-name products | **Not used** until the business confirms rights. Side thumbnails and the Preview reference (M10, M15) are drawn from the customer's own design instead. |
+| `models/polo-shirt.glb` | Attribution required — CC BY 4.0 (credit on `/credits`) | Allowed (3D is Phase 5). |
+| `shirt_baked.glb` | Unconfirmed | Not used. |
+| 33 Studio graphics | To be checked in M9 | — |
+| Fraunces, Plus Jakarta Sans | To be verified in M8 (SIL OFL expected) | — |
+
+Note: the Phase 2 product pages already show mockups as gallery images on 234 products (approved in Phase 2). They are unchanged; the business may want to confirm those rights too.

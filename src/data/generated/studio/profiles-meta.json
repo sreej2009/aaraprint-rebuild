@@ -1,0 +1,3059 @@
+{
+  "profiles": 532,
+  "notCustomisable": [
+    "card-accessory-metal-holder"
+  ],
+  "byMode": {
+    "apparel": 104,
+    "flat": 354,
+    "wrap": 74
+  },
+  "byFamily": {
+    "apparel": 41,
+    "bag": 24,
+    "drinkware": 51,
+    "gift": 34,
+    "label-packaging": 59,
+    "mug": 9,
+    "pen": 49,
+    "polo": 43,
+    "rainwear": 20,
+    "round-pad": 1,
+    "sign-poster": 69,
+    "stamp": 17,
+    "stationery": 68,
+    "umbrella": 15,
+    "visiting-card": 32
+  },
+  "byTrim": {
+    "ellipse": 18,
+    "rectangle": 499,
+    "rounded-rectangle": 15
+  },
+  "trimOverrides": [
+    {
+      "slug": "business-card-oval",
+      "shape": "ellipse",
+      "note": "Oval card: drawn as an ellipse, as in the original Studio."
+    }
+  ],
+  "withMockups": 320,
+  "with3dModel": 44,
+  "sizeAudit": {
+    "checked": 14,
+    "mismatches": [
+      {
+        "slug": "flyer-a5-heavyweight",
+        "namedSize": "A5",
+        "actualMm": [
+          105,
+          148
+        ],
+        "expectedMm": [
+          [
+            148,
+            210
+          ]
+        ]
+      },
+      {
+        "slug": "flyer-a5-matte",
+        "namedSize": "A5",
+        "actualMm": [
+          105,
+          148
+        ],
+        "expectedMm": [
+          [
+            148,
+            210
+          ]
+        ]
+      },
+      {
+        "slug": "flyer-a5-recycled",
+        "namedSize": "A5",
+        "actualMm": [
+          105,
+          148
+        ],
+        "expectedMm": [
+          [
+            148,
+            210
+          ]
+        ]
+      },
+      {
+        "slug": "flyer-a5-standard",
+        "namedSize": "A5",
+        "actualMm": [
+          105,
+          148
+        ],
+        "expectedMm": [
+          [
+            148,
+            210
+          ]
+        ]
+      },
+      {
+        "slug": "flyer-a6-mini",
+        "namedSize": "A6",
+        "actualMm": [
+          74,
+          105
+        ],
+        "expectedMm": [
+          [
+            105,
+            148
+          ]
+        ]
+      },
+      {
+        "slug": "stationery-diary-a5-personalised",
+        "namedSize": "A5",
+        "actualMm": [
+          72,
+          101.6
+        ],
+        "expectedMm": [
+          [
+            148,
+            210
+          ]
+        ]
+      },
+      {
+        "slug": "stationery-notebook-a4",
+        "namedSize": "A4",
+        "actualMm": [
+          76.2,
+          101.6
+        ],
+        "expectedMm": [
+          [
+            210,
+            297
+          ]
+        ]
+      },
+      {
+        "slug": "stationery-notepad-a5",
+        "namedSize": "A5",
+        "actualMm": [
+          148,
+          105
+        ],
+        "expectedMm": [
+          [
+            148,
+            210
+          ]
+        ]
+      }
+    ]
+  },
+  "optionDrivenSizes": [
+    {
+      "slug": "banner-backlit-fabric",
+      "options": [
+        "Size"
+      ]
+    },
+    {
+      "slug": "banner-feather-flag",
+      "options": [
+        "Height"
+      ]
+    },
+    {
+      "slug": "banner-mesh-windproof",
+      "options": [
+        "Size"
+      ]
+    },
+    {
+      "slug": "banner-table-throw",
+      "options": [
+        "Table Size"
+      ]
+    },
+    {
+      "slug": "banner-vinyl-standard",
+      "options": [
+        "Size"
+      ]
+    },
+    {
+      "slug": "business-card-circle",
+      "options": [
+        "Diameter"
+      ]
+    },
+    {
+      "slug": "business-card-leaf",
+      "options": [
+        "Leaf Style"
+      ]
+    },
+    {
+      "slug": "business-card-oval",
+      "options": [
+        "Oval Style"
+      ]
+    },
+    {
+      "slug": "business-card-rounded-corner",
+      "options": [
+        "Corner Radius"
+      ]
+    },
+    {
+      "slug": "flyer-bulk",
+      "options": [
+        "Size"
+      ]
+    },
+    {
+      "slug": "flyer-button-badge",
+      "options": [
+        "Size"
+      ]
+    },
+    {
+      "slug": "flyer-canopy-tent",
+      "options": [
+        "Size"
+      ]
+    },
+    {
+      "slug": "flyer-logo-flag",
+      "options": [
+        "Size"
+      ]
+    },
+    {
+      "slug": "flyer-paper-bag",
+      "options": [
+        "Size"
+      ]
+    },
+    {
+      "slug": "flyer-pop-up-banner",
+      "options": [
+        "Size"
+      ]
+    },
+    {
+      "slug": "flyer-portable-backdrop",
+      "options": [
+        "Size"
+      ]
+    },
+    {
+      "slug": "flyer-promo-table",
+      "options": [
+        "Table Size"
+      ]
+    },
+    {
+      "slug": "flyer-stretch-table-cover",
+      "options": [
+        "Table Size"
+      ]
+    },
+    {
+      "slug": "flyer-table-runner",
+      "options": [
+        "Size"
+      ]
+    },
+    {
+      "slug": "flyer-tablecloth",
+      "options": [
+        "Size"
+      ]
+    },
+    {
+      "slug": "gift-acrylic-display-stand",
+      "options": [
+        "Size"
+      ]
+    },
+    {
+      "slug": "gift-acrylic-photo-block",
+      "options": [
+        "Size"
+      ]
+    },
+    {
+      "slug": "gift-acrylic-photo-print",
+      "options": [
+        "Size"
+      ]
+    },
+    {
+      "slug": "gift-calendar-poster",
+      "options": [
+        "Size"
+      ]
+    },
+    {
+      "slug": "gift-calendar-wall-four-sheeter",
+      "options": [
+        "Size"
+      ]
+    },
+    {
+      "slug": "gift-calendar-wall-new-size",
+      "options": [
+        "Size"
+      ]
+    },
+    {
+      "slug": "gift-calendar-wall",
+      "options": [
+        "Size"
+      ]
+    },
+    {
+      "slug": "gift-canvas-print",
+      "options": [
+        "Size"
+      ]
+    },
+    {
+      "slug": "gift-clock-wall-personalized",
+      "options": [
+        "Size"
+      ]
+    },
+    {
+      "slug": "gift-coaster-customized",
+      "options": [
+        "Shape"
+      ]
+    },
+    {
+      "slug": "gift-frame-acrylic-photo",
+      "options": [
+        "Size"
+      ]
+    },
+    {
+      "slug": "gift-frame-led-photo",
+      "options": [
+        "Size"
+      ]
+    },
+    {
+      "slug": "gift-frame-photo-premium",
+      "options": [
+        "Size"
+      ]
+    },
+    {
+      "slug": "gift-frame-photo",
+      "options": [
+        "Size"
+      ]
+    },
+    {
+      "slug": "gift-framed-photo-print",
+      "options": [
+        "Size"
+      ]
+    },
+    {
+      "slug": "gift-magnet-acrylic-photo",
+      "options": [
+        "Size"
+      ]
+    },
+    {
+      "slug": "gift-magnet-fridge",
+      "options": [
+        "Shape"
+      ]
+    },
+    {
+      "slug": "gift-mousepad-round-photo",
+      "options": [
+        "Size"
+      ]
+    },
+    {
+      "slug": "label-roll-product",
+      "options": [
+        "Shape"
+      ]
+    },
+    {
+      "slug": "packaging-label-roll",
+      "options": [
+        "Shape"
+      ]
+    },
+    {
+      "slug": "packaging-mailer-box",
+      "options": [
+        "Size"
+      ]
+    },
+    {
+      "slug": "packaging-poly-mailer",
+      "options": [
+        "Size"
+      ]
+    },
+    {
+      "slug": "pkg-bag-carry-printed",
+      "options": [
+        "Size"
+      ]
+    },
+    {
+      "slug": "pkg-bag-courier",
+      "options": [
+        "Size"
+      ]
+    },
+    {
+      "slug": "pkg-box-auto-lock-bottom",
+      "options": [
+        "Size"
+      ]
+    },
+    {
+      "slug": "pkg-box-burger",
+      "options": [
+        "Size"
+      ]
+    },
+    {
+      "slug": "pkg-box-corrugated",
+      "options": [
+        "Size"
+      ]
+    },
+    {
+      "slug": "pkg-box-lock-bottom",
+      "options": [
+        "Size"
+      ]
+    },
+    {
+      "slug": "pkg-box-mailer-flat",
+      "options": [
+        "Size"
+      ]
+    },
+    {
+      "slug": "pkg-box-popcorn",
+      "options": [
+        "Size"
+      ]
+    },
+    {
+      "slug": "pkg-box-promotional-product",
+      "options": [
+        "Size"
+      ]
+    },
+    {
+      "slug": "pkg-box-pull-out",
+      "options": [
+        "Size"
+      ]
+    },
+    {
+      "slug": "pkg-ribbon-customised",
+      "options": [
+        "Width"
+      ]
+    },
+    {
+      "slug": "pkg-tape-self-adhesive",
+      "options": [
+        "Width"
+      ]
+    },
+    {
+      "slug": "sign-acrylic-holder",
+      "options": [
+        "Size"
+      ]
+    },
+    {
+      "slug": "sign-acrylic-premium",
+      "options": [
+        "Size"
+      ]
+    },
+    {
+      "slug": "sign-acrylic-sign",
+      "options": [
+        "Size"
+      ]
+    },
+    {
+      "slug": "sign-banner-fabric",
+      "options": [
+        "Size"
+      ]
+    },
+    {
+      "slug": "sign-banner-mesh",
+      "options": [
+        "Size"
+      ]
+    },
+    {
+      "slug": "sign-banner-vinyl",
+      "options": [
+        "Size"
+      ]
+    },
+    {
+      "slug": "sign-banner-x-stand",
+      "options": [
+        "Size"
+      ]
+    },
+    {
+      "slug": "sign-board-sign",
+      "options": [
+        "Size"
+      ]
+    },
+    {
+      "slug": "sign-canvas-sign",
+      "options": [
+        "Size"
+      ]
+    },
+    {
+      "slug": "sign-corrugated-yard",
+      "options": [
+        "Size"
+      ]
+    },
+    {
+      "slug": "sign-foam-board",
+      "options": [
+        "Size"
+      ]
+    },
+    {
+      "slug": "sign-led-clip-on-display",
+      "options": [
+        "Size"
+      ]
+    },
+    {
+      "slug": "sign-led-display-stand",
+      "options": [
+        "Stand Width"
+      ]
+    },
+    {
+      "slug": "sign-led-lollipop-display",
+      "options": [
+        "Head Size"
+      ]
+    },
+    {
+      "slug": "sign-led-translite-board",
+      "options": [
+        "Size"
+      ]
+    },
+    {
+      "slug": "sign-magnetic-sign",
+      "options": [
+        "Size"
+      ]
+    },
+    {
+      "slug": "sign-outdoor-sign",
+      "options": [
+        "Size"
+      ]
+    },
+    {
+      "slug": "sign-paper-bag-full-print",
+      "options": [
+        "Bag Size"
+      ]
+    },
+    {
+      "slug": "sign-plastic-signboard",
+      "options": [
+        "Size"
+      ]
+    },
+    {
+      "slug": "sign-poster-bulk",
+      "options": [
+        "Size"
+      ]
+    },
+    {
+      "slug": "sign-poster-standard",
+      "options": [
+        "Size"
+      ]
+    },
+    {
+      "slug": "sign-qr-code-stand",
+      "options": [
+        "Size"
+      ]
+    },
+    {
+      "slug": "sign-sail-flag",
+      "options": [
+        "Height"
+      ]
+    },
+    {
+      "slug": "sign-standee-fabric-elegant",
+      "options": [
+        "Stand Width"
+      ]
+    },
+    {
+      "slug": "sign-standee-rollup",
+      "options": [
+        "Stand Width"
+      ]
+    },
+    {
+      "slug": "sign-standee-tabletop",
+      "options": [
+        "Size"
+      ]
+    },
+    {
+      "slug": "sign-tabletop-sign",
+      "options": [
+        "Size"
+      ]
+    },
+    {
+      "slug": "sign-tension-fabric-display",
+      "options": [
+        "Size",
+        "Frame Shape"
+      ]
+    },
+    {
+      "slug": "sign-tent-card",
+      "options": [
+        "Size"
+      ]
+    },
+    {
+      "slug": "stamp-embosser-seal",
+      "options": [
+        "Diameter"
+      ]
+    },
+    {
+      "slug": "stamp-fabric",
+      "options": [
+        "Size"
+      ]
+    },
+    {
+      "slug": "stamp-flashy-pre-inking",
+      "options": [
+        "Size"
+      ]
+    },
+    {
+      "slug": "stamp-packaging",
+      "options": [
+        "Size"
+      ]
+    },
+    {
+      "slug": "stamp-pre-inking",
+      "options": [
+        "Impression Size"
+      ]
+    },
+    {
+      "slug": "stamp-professional",
+      "options": [
+        "Diameter"
+      ]
+    },
+    {
+      "slug": "stamp-round-company-seal",
+      "options": [
+        "Diameter"
+      ]
+    },
+    {
+      "slug": "stamp-self-inking-address",
+      "options": [
+        "Impression Size"
+      ]
+    },
+    {
+      "slug": "stamp-wood-handle-traditional",
+      "options": [
+        "Size"
+      ]
+    },
+    {
+      "slug": "standee-rollup-retractable",
+      "options": [
+        "Stand Width"
+      ]
+    },
+    {
+      "slug": "standee-x-stand",
+      "options": [
+        "Size"
+      ]
+    },
+    {
+      "slug": "stationery-envelope-seals",
+      "options": [
+        "Shape"
+      ]
+    },
+    {
+      "slug": "sticker-bumper",
+      "options": [
+        "Size"
+      ]
+    },
+    {
+      "slug": "sticker-car",
+      "options": [
+        "Size"
+      ]
+    },
+    {
+      "slug": "sticker-clear-vinyl",
+      "options": [
+        "Size"
+      ]
+    },
+    {
+      "slug": "sticker-die-cut-shape",
+      "options": [
+        "Size"
+      ]
+    },
+    {
+      "slug": "sticker-die-cut-vinyl",
+      "options": [
+        "Size"
+      ]
+    },
+    {
+      "slug": "sticker-dome",
+      "options": [
+        "Size"
+      ]
+    },
+    {
+      "slug": "sticker-holographic",
+      "options": [
+        "Size"
+      ]
+    },
+    {
+      "slug": "sticker-kraft-paper",
+      "options": [
+        "Size"
+      ]
+    },
+    {
+      "slug": "sticker-kraft",
+      "options": [
+        "Size"
+      ]
+    },
+    {
+      "slug": "sticker-sheet",
+      "options": [
+        "Size"
+      ]
+    },
+    {
+      "slug": "sticker-window",
+      "options": [
+        "Size"
+      ]
+    }
+  ],
+  "assetRights": {
+    "notes": {
+      "unconfirmed": "Origin and licence not confirmed. Do not use in the Studio until the business confirms the rights.",
+      "attribution-required": "Usable with the attribution shown on /credits.",
+      "cleared": "Rights confirmed."
+    },
+    "sources": {
+      "mockup": {
+        "status": "unconfirmed",
+        "source": "Product mockups from the original site; several show brand-name products (Asset Inventory §9)."
+      },
+      "polo-shirt.glb": {
+        "status": "attribution-required",
+        "source": "\"POLO SHIRT\" by arvintriyoga, CC BY 4.0.",
+        "attribution": "\"POLO SHIRT\" by arvintriyoga, licensed under CC BY 4.0"
+      },
+      "shirt_baked.glb": {
+        "status": "unconfirmed",
+        "source": "Homepage 3D shirt from the original site; licence unknown (Asset Inventory §4)."
+      }
+    },
+    "byStatus": {
+      "unconfirmed": 557,
+      "attribution-required": 1
+    },
+    "files": {
+      "models/polo-shirt.glb": {
+        "status": "attribution-required",
+        "products": 43
+      },
+      "products/clothing-caps-bags-2d/apparel-cap-chef-back.png": {
+        "status": "unconfirmed",
+        "products": 1
+      },
+      "products/clothing-caps-bags-2d/apparel-cap-chef-front.png": {
+        "status": "unconfirmed",
+        "products": 1
+      },
+      "products/clothing-caps-bags-2d/apparel-cap-cotton-back.png": {
+        "status": "unconfirmed",
+        "products": 1
+      },
+      "products/clothing-caps-bags-2d/apparel-cap-cotton-front.png": {
+        "status": "unconfirmed",
+        "products": 1
+      },
+      "products/clothing-caps-bags-2d/apparel-cap-dad-hat-back.png": {
+        "status": "unconfirmed",
+        "products": 1
+      },
+      "products/clothing-caps-bags-2d/apparel-cap-dad-hat-front.png": {
+        "status": "unconfirmed",
+        "products": 1
+      },
+      "products/clothing-caps-bags-2d/apparel-cap-embroidered-back.png": {
+        "status": "unconfirmed",
+        "products": 1
+      },
+      "products/clothing-caps-bags-2d/apparel-cap-embroidered-denim-back.png": {
+        "status": "unconfirmed",
+        "products": 1
+      },
+      "products/clothing-caps-bags-2d/apparel-cap-embroidered-denim-front.png": {
+        "status": "unconfirmed",
+        "products": 1
+      },
+      "products/clothing-caps-bags-2d/apparel-cap-embroidered-front.png": {
+        "status": "unconfirmed",
+        "products": 1
+      },
+      "products/clothing-caps-bags-2d/apparel-cap-premium-cotton-back.png": {
+        "status": "unconfirmed",
+        "products": 1
+      },
+      "products/clothing-caps-bags-2d/apparel-cap-premium-cotton-front.png": {
+        "status": "unconfirmed",
+        "products": 1
+      },
+      "products/clothing-caps-bags-2d/apparel-cap-printed-back.png": {
+        "status": "unconfirmed",
+        "products": 1
+      },
+      "products/clothing-caps-bags-2d/apparel-cap-printed-front.png": {
+        "status": "unconfirmed",
+        "products": 1
+      },
+      "products/clothing-caps-bags-2d/apparel-cap-promotional-plain-back.png": {
+        "status": "unconfirmed",
+        "products": 1
+      },
+      "products/clothing-caps-bags-2d/apparel-cap-promotional-plain-front.png": {
+        "status": "unconfirmed",
+        "products": 1
+      },
+      "products/clothing-caps-bags-2d/apparel-cap-puma-back.png": {
+        "status": "unconfirmed",
+        "products": 1
+      },
+      "products/clothing-caps-bags-2d/apparel-cap-puma-front.png": {
+        "status": "unconfirmed",
+        "products": 1
+      },
+      "products/clothing-caps-bags-2d/apparel-cap-structured-back.png": {
+        "status": "unconfirmed",
+        "products": 1
+      },
+      "products/clothing-caps-bags-2d/apparel-cap-structured-front.png": {
+        "status": "unconfirmed",
+        "products": 1
+      },
+      "products/clothing-caps-bags-2d/apparel-cap-woodland-back.png": {
+        "status": "unconfirmed",
+        "products": 1
+      },
+      "products/clothing-caps-bags-2d/apparel-cap-woodland-front.png": {
+        "status": "unconfirmed",
+        "products": 1
+      },
+      "products/clothing-caps-bags-2d/apparel-hoodie-pullover-back.png": {
+        "status": "unconfirmed",
+        "products": 1
+      },
+      "products/clothing-caps-bags-2d/apparel-hoodie-pullover-front.png": {
+        "status": "unconfirmed",
+        "products": 1
+      },
+      "products/clothing-caps-bags-2d/apparel-hoodie-zipup-back.png": {
+        "status": "unconfirmed",
+        "products": 1
+      },
+      "products/clothing-caps-bags-2d/apparel-hoodie-zipup-front.png": {
+        "status": "unconfirmed",
+        "products": 1
+      },
+      "products/clothing-caps-bags-2d/apparel-jersey-custom-team-back.png": {
+        "status": "unconfirmed",
+        "products": 1
+      },
+      "products/clothing-caps-bags-2d/apparel-jersey-custom-team-front.png": {
+        "status": "unconfirmed",
+        "products": 1
+      },
+      "products/clothing-caps-bags-2d/apparel-jersey-india-t20-cricket-fan-back.png": {
+        "status": "unconfirmed",
+        "products": 1
+      },
+      "products/clothing-caps-bags-2d/apparel-jersey-india-t20-cricket-fan-front.png": {
+        "status": "unconfirmed",
+        "products": 1
+      },
+      "products/clothing-caps-bags-2d/apparel-jersey-sports-back.png": {
+        "status": "unconfirmed",
+        "products": 1
+      },
+      "products/clothing-caps-bags-2d/apparel-jersey-sports-front.png": {
+        "status": "unconfirmed",
+        "products": 1
+      },
+      "products/clothing-caps-bags-2d/apparel-shirt-arrow-mens-dress-back.png": {
+        "status": "unconfirmed",
+        "products": 1
+      },
+      "products/clothing-caps-bags-2d/apparel-shirt-arrow-mens-dress-front.png": {
+        "status": "unconfirmed",
+        "products": 1
+      },
+      "products/clothing-caps-bags-2d/apparel-shirt-cambridge-dress-back.png": {
+        "status": "unconfirmed",
+        "products": 1
+      },
+      "products/clothing-caps-bags-2d/apparel-shirt-cambridge-dress-front.png": {
+        "status": "unconfirmed",
+        "products": 1
+      },
+      "products/clothing-caps-bags-2d/apparel-shirt-cambridge-oxford-dress-back.png": {
+        "status": "unconfirmed",
+        "products": 1
+      },
+      "products/clothing-caps-bags-2d/apparel-shirt-cambridge-oxford-dress-front.png": {
+        "status": "unconfirmed",
+        "products": 1
+      },
+      "products/clothing-caps-bags-2d/apparel-shirt-fil-a-fil-back.png": {
+        "status": "unconfirmed",
+        "products": 1
+      },
+      "products/clothing-caps-bags-2d/apparel-shirt-fil-a-fil-front.png": {
+        "status": "unconfirmed",
+        "products": 1
+      },
+      "products/clothing-caps-bags-2d/apparel-shirt-mark-spencer-office-back.png": {
+        "status": "unconfirmed",
+        "products": 1
+      },
+      "products/clothing-caps-bags-2d/apparel-shirt-mark-spencer-office-front.png": {
+        "status": "unconfirmed",
+        "products": 1
+      },
+      "products/clothing-caps-bags-2d/apparel-shirt-mens-dress-back.png": {
+        "status": "unconfirmed",
+        "products": 1
+      },
+      "products/clothing-caps-bags-2d/apparel-shirt-mens-dress-front.png": {
+        "status": "unconfirmed",
+        "products": 1
+      },
+      "products/clothing-caps-bags-2d/apparel-shirt-mens-dress-half-sleeves-back.png": {
+        "status": "unconfirmed",
+        "products": 1
+      },
+      "products/clothing-caps-bags-2d/apparel-shirt-mens-dress-half-sleeves-front.png": {
+        "status": "unconfirmed",
+        "products": 1
+      },
+      "products/clothing-caps-bags-2d/apparel-shirt-park-avenue-back.png": {
+        "status": "unconfirmed",
+        "products": 1
+      },
+      "products/clothing-caps-bags-2d/apparel-shirt-park-avenue-front.png": {
+        "status": "unconfirmed",
+        "products": 1
+      },
+      "products/clothing-caps-bags-2d/apparel-shirt-womens-embroidered-dress-back.png": {
+        "status": "unconfirmed",
+        "products": 1
+      },
+      "products/clothing-caps-bags-2d/apparel-shirt-womens-embroidered-dress-front.png": {
+        "status": "unconfirmed",
+        "products": 1
+      },
+      "products/clothing-caps-bags-2d/apparel-sweatshirt-crew-back.png": {
+        "status": "unconfirmed",
+        "products": 1
+      },
+      "products/clothing-caps-bags-2d/apparel-sweatshirt-crew-front.png": {
+        "status": "unconfirmed",
+        "products": 1
+      },
+      "products/clothing-caps-bags-2d/apparel-tracksuit-adidas-personalised-back.png": {
+        "status": "unconfirmed",
+        "products": 1
+      },
+      "products/clothing-caps-bags-2d/apparel-tracksuit-adidas-personalised-front.png": {
+        "status": "unconfirmed",
+        "products": 1
+      },
+      "products/clothing-caps-bags-2d/apparel-tracksuit-uspa-personalised-back.png": {
+        "status": "unconfirmed",
+        "products": 1
+      },
+      "products/clothing-caps-bags-2d/apparel-tracksuit-uspa-personalised-front.png": {
+        "status": "unconfirmed",
+        "products": 1
+      },
+      "products/clothing-caps-bags-2d/apparel-tshirt-basic-polyester-colours-back.png": {
+        "status": "unconfirmed",
+        "products": 1
+      },
+      "products/clothing-caps-bags-2d/apparel-tshirt-basic-polyester-colours-front.png": {
+        "status": "unconfirmed",
+        "products": 1
+      },
+      "products/clothing-caps-bags-2d/apparel-tshirt-classic-cotton-back.png": {
+        "status": "unconfirmed",
+        "products": 1
+      },
+      "products/clothing-caps-bags-2d/apparel-tshirt-classic-cotton-front.png": {
+        "status": "unconfirmed",
+        "products": 1
+      },
+      "products/clothing-caps-bags-2d/apparel-tshirt-full-sleeves-back.png": {
+        "status": "unconfirmed",
+        "products": 1
+      },
+      "products/clothing-caps-bags-2d/apparel-tshirt-full-sleeves-front.png": {
+        "status": "unconfirmed",
+        "products": 1
+      },
+      "products/clothing-caps-bags-2d/apparel-tshirt-jack-jones-printed-back.png": {
+        "status": "unconfirmed",
+        "products": 1
+      },
+      "products/clothing-caps-bags-2d/apparel-tshirt-jack-jones-printed-front.png": {
+        "status": "unconfirmed",
+        "products": 1
+      },
+      "products/clothing-caps-bags-2d/apparel-tshirt-kids-back.png": {
+        "status": "unconfirmed",
+        "products": 1
+      },
+      "products/clothing-caps-bags-2d/apparel-tshirt-kids-front.png": {
+        "status": "unconfirmed",
+        "products": 1
+      },
+      "products/clothing-caps-bags-2d/apparel-tshirt-limited-edition-cotton-back.png": {
+        "status": "unconfirmed",
+        "products": 1
+      },
+      "products/clothing-caps-bags-2d/apparel-tshirt-limited-edition-cotton-front.png": {
+        "status": "unconfirmed",
+        "products": 1
+      },
+      "products/clothing-caps-bags-2d/apparel-tshirt-mark-spencer-round-neck-back.png": {
+        "status": "unconfirmed",
+        "products": 1
+      },
+      "products/clothing-caps-bags-2d/apparel-tshirt-mark-spencer-round-neck-front.png": {
+        "status": "unconfirmed",
+        "products": 1
+      },
+      "products/clothing-caps-bags-2d/apparel-tshirt-mens-back.png": {
+        "status": "unconfirmed",
+        "products": 1
+      },
+      "products/clothing-caps-bags-2d/apparel-tshirt-mens-front.png": {
+        "status": "unconfirmed",
+        "products": 1
+      },
+      "products/clothing-caps-bags-2d/apparel-tshirt-mens-premium-cotton-back.png": {
+        "status": "unconfirmed",
+        "products": 1
+      },
+      "products/clothing-caps-bags-2d/apparel-tshirt-mens-premium-cotton-front.png": {
+        "status": "unconfirmed",
+        "products": 1
+      },
+      "products/clothing-caps-bags-2d/apparel-tshirt-performance-back.png": {
+        "status": "unconfirmed",
+        "products": 1
+      },
+      "products/clothing-caps-bags-2d/apparel-tshirt-performance-front.png": {
+        "status": "unconfirmed",
+        "products": 1
+      },
+      "products/clothing-caps-bags-2d/apparel-tshirt-polyester-back.png": {
+        "status": "unconfirmed",
+        "products": 1
+      },
+      "products/clothing-caps-bags-2d/apparel-tshirt-polyester-front.png": {
+        "status": "unconfirmed",
+        "products": 1
+      },
+      "products/clothing-caps-bags-2d/apparel-tshirt-vneck-premium-back.png": {
+        "status": "unconfirmed",
+        "products": 1
+      },
+      "products/clothing-caps-bags-2d/apparel-tshirt-vneck-premium-front.png": {
+        "status": "unconfirmed",
+        "products": 1
+      },
+      "products/clothing-caps-bags-2d/apparel-tshirt-womens-back.png": {
+        "status": "unconfirmed",
+        "products": 1
+      },
+      "products/clothing-caps-bags-2d/apparel-tshirt-womens-front.png": {
+        "status": "unconfirmed",
+        "products": 1
+      },
+      "products/clothing-caps-bags-2d/bag-backpack-american-tourister-back.png": {
+        "status": "unconfirmed",
+        "products": 1
+      },
+      "products/clothing-caps-bags-2d/bag-backpack-american-tourister-front.png": {
+        "status": "unconfirmed",
+        "products": 1
+      },
+      "products/clothing-caps-bags-2d/bag-backpack-harissons-dexter-back.png": {
+        "status": "unconfirmed",
+        "products": 1
+      },
+      "products/clothing-caps-bags-2d/bag-backpack-harissons-dexter-front.png": {
+        "status": "unconfirmed",
+        "products": 1
+      },
+      "products/clothing-caps-bags-2d/bag-backpack-lavie-sport-duke-back.png": {
+        "status": "unconfirmed",
+        "products": 1
+      },
+      "products/clothing-caps-bags-2d/bag-backpack-lavie-sport-duke-front.png": {
+        "status": "unconfirmed",
+        "products": 1
+      },
+      "products/clothing-caps-bags-2d/bag-cotton-canvas-tote-back.png": {
+        "status": "unconfirmed",
+        "products": 1
+      },
+      "products/clothing-caps-bags-2d/bag-cotton-canvas-tote-front.png": {
+        "status": "unconfirmed",
+        "products": 1
+      },
+      "products/clothing-caps-bags-2d/bag-drawstring-backpack-back.png": {
+        "status": "unconfirmed",
+        "products": 1
+      },
+      "products/clothing-caps-bags-2d/bag-drawstring-backpack-front.png": {
+        "status": "unconfirmed",
+        "products": 1
+      },
+      "products/clothing-caps-bags-2d/bag-duffle-adidas-back.png": {
+        "status": "unconfirmed",
+        "products": 1
+      },
+      "products/clothing-caps-bags-2d/bag-duffle-adidas-front.png": {
+        "status": "unconfirmed",
+        "products": 1
+      },
+      "products/clothing-caps-bags-2d/bag-garment-suit-back.png": {
+        "status": "unconfirmed",
+        "products": 1
+      },
+      "products/clothing-caps-bags-2d/bag-garment-suit-front.png": {
+        "status": "unconfirmed",
+        "products": 1
+      },
+      "products/clothing-caps-bags-2d/bag-insulated-cooler-back.png": {
+        "status": "unconfirmed",
+        "products": 1
+      },
+      "products/clothing-caps-bags-2d/bag-insulated-cooler-front.png": {
+        "status": "unconfirmed",
+        "products": 1
+      },
+      "products/clothing-caps-bags-2d/bag-jute-custom-back.png": {
+        "status": "unconfirmed",
+        "products": 1
+      },
+      "products/clothing-caps-bags-2d/bag-jute-custom-front.png": {
+        "status": "unconfirmed",
+        "products": 1
+      },
+      "products/clothing-caps-bags-2d/bag-jute-premium-back.png": {
+        "status": "unconfirmed",
+        "products": 1
+      },
+      "products/clothing-caps-bags-2d/bag-jute-premium-front.png": {
+        "status": "unconfirmed",
+        "products": 1
+      },
+      "products/clothing-caps-bags-2d/bag-jute-tote-back.png": {
+        "status": "unconfirmed",
+        "products": 1
+      },
+      "products/clothing-caps-bags-2d/bag-jute-tote-front.png": {
+        "status": "unconfirmed",
+        "products": 1
+      },
+      "products/clothing-caps-bags-2d/bag-laptop-american-tourister-back.png": {
+        "status": "unconfirmed",
+        "products": 1
+      },
+      "products/clothing-caps-bags-2d/bag-laptop-american-tourister-front.png": {
+        "status": "unconfirmed",
+        "products": 1
+      },
+      "products/clothing-caps-bags-2d/bag-laptop-embroidered-back.png": {
+        "status": "unconfirmed",
+        "products": 1
+      },
+      "products/clothing-caps-bags-2d/bag-laptop-embroidered-front.png": {
+        "status": "unconfirmed",
+        "products": 1
+      },
+      "products/clothing-caps-bags-2d/bag-laptop-harissons-embroidered-back.png": {
+        "status": "unconfirmed",
+        "products": 1
+      },
+      "products/clothing-caps-bags-2d/bag-laptop-harissons-embroidered-front.png": {
+        "status": "unconfirmed",
+        "products": 1
+      },
+      "products/clothing-caps-bags-2d/bag-laptop-harissons-nemesis-back.png": {
+        "status": "unconfirmed",
+        "products": 1
+      },
+      "products/clothing-caps-bags-2d/bag-laptop-harissons-nemesis-front.png": {
+        "status": "unconfirmed",
+        "products": 1
+      },
+      "products/clothing-caps-bags-2d/bag-laptop-targus-intellect-back.png": {
+        "status": "unconfirmed",
+        "products": 1
+      },
+      "products/clothing-caps-bags-2d/bag-laptop-targus-intellect-front.png": {
+        "status": "unconfirmed",
+        "products": 1
+      },
+      "products/clothing-caps-bags-2d/bag-mini-gift-back.png": {
+        "status": "unconfirmed",
+        "products": 1
+      },
+      "products/clothing-caps-bags-2d/bag-mini-gift-front.png": {
+        "status": "unconfirmed",
+        "products": 1
+      },
+      "products/clothing-caps-bags-2d/bag-non-woven-carry-back.png": {
+        "status": "unconfirmed",
+        "products": 1
+      },
+      "products/clothing-caps-bags-2d/bag-non-woven-carry-front.png": {
+        "status": "unconfirmed",
+        "products": 1
+      },
+      "products/clothing-caps-bags-2d/bag-paper-kraft-back.png": {
+        "status": "unconfirmed",
+        "products": 1
+      },
+      "products/clothing-caps-bags-2d/bag-paper-kraft-front.png": {
+        "status": "unconfirmed",
+        "products": 1
+      },
+      "products/clothing-caps-bags-2d/bag-paper-laminated-back.png": {
+        "status": "unconfirmed",
+        "products": 1
+      },
+      "products/clothing-caps-bags-2d/bag-paper-laminated-front.png": {
+        "status": "unconfirmed",
+        "products": 1
+      },
+      "products/clothing-caps-bags-2d/bag-tote-canvas-colored-back.png": {
+        "status": "unconfirmed",
+        "products": 1
+      },
+      "products/clothing-caps-bags-2d/bag-tote-canvas-colored-front.png": {
+        "status": "unconfirmed",
+        "products": 1
+      },
+      "products/clothing-caps-bags-2d/bag-tote-cotton-back.png": {
+        "status": "unconfirmed",
+        "products": 1
+      },
+      "products/clothing-caps-bags-2d/bag-tote-cotton-front.png": {
+        "status": "unconfirmed",
+        "products": 1
+      },
+      "products/clothing-caps-bags-2d/bag-tote-pocket-back.png": {
+        "status": "unconfirmed",
+        "products": 1
+      },
+      "products/clothing-caps-bags-2d/bag-tote-pocket-front.png": {
+        "status": "unconfirmed",
+        "products": 1
+      },
+      "products/clothing-caps-bags-2d/bag-zippered-tote-back.png": {
+        "status": "unconfirmed",
+        "products": 1
+      },
+      "products/clothing-caps-bags-2d/bag-zippered-tote-front.png": {
+        "status": "unconfirmed",
+        "products": 1
+      },
+      "products/drinkware-2d/bottle-flip-lid-sports-back.png": {
+        "status": "unconfirmed",
+        "products": 1
+      },
+      "products/drinkware-2d/bottle-flip-lid-sports-front.png": {
+        "status": "unconfirmed",
+        "products": 1
+      },
+      "products/drinkware-2d/bottle-gym-shaker-back.png": {
+        "status": "unconfirmed",
+        "products": 1
+      },
+      "products/drinkware-2d/bottle-gym-shaker-front.png": {
+        "status": "unconfirmed",
+        "products": 1
+      },
+      "products/drinkware-2d/bottle-sipper-back.png": {
+        "status": "unconfirmed",
+        "products": 1
+      },
+      "products/drinkware-2d/bottle-sipper-front.png": {
+        "status": "unconfirmed",
+        "products": 1
+      },
+      "products/drinkware-2d/bottle-steel-classic-back.png": {
+        "status": "unconfirmed",
+        "products": 1
+      },
+      "products/drinkware-2d/bottle-steel-classic-front.png": {
+        "status": "unconfirmed",
+        "products": 1
+      },
+      "products/drinkware-2d/bottle-temperature-display-back.png": {
+        "status": "unconfirmed",
+        "products": 1
+      },
+      "products/drinkware-2d/bottle-temperature-display-front.png": {
+        "status": "unconfirmed",
+        "products": 1
+      },
+      "products/drinkware-2d/bottle-vacuum-insulated-back.png": {
+        "status": "unconfirmed",
+        "products": 1
+      },
+      "products/drinkware-2d/bottle-vacuum-insulated-front.png": {
+        "status": "unconfirmed",
+        "products": 1
+      },
+      "products/drinkware-2d/drinkware-bottle-aluminium-screw-back.png": {
+        "status": "unconfirmed",
+        "products": 1
+      },
+      "products/drinkware-2d/drinkware-bottle-aluminium-screw-front.png": {
+        "status": "unconfirmed",
+        "products": 1
+      },
+      "products/drinkware-2d/drinkware-bottle-cello-duro-flip-screw-back.png": {
+        "status": "unconfirmed",
+        "products": 1
+      },
+      "products/drinkware-2d/drinkware-bottle-cello-duro-flip-screw-front.png": {
+        "status": "unconfirmed",
+        "products": 1
+      },
+      "products/drinkware-2d/drinkware-bottle-cello-duro-kent-screw-back.png": {
+        "status": "unconfirmed",
+        "products": 1
+      },
+      "products/drinkware-2d/drinkware-bottle-cello-duro-kent-screw-front.png": {
+        "status": "unconfirmed",
+        "products": 1
+      },
+      "products/drinkware-2d/drinkware-bottle-cello-swift-screw-back.png": {
+        "status": "unconfirmed",
+        "products": 1
+      },
+      "products/drinkware-2d/drinkware-bottle-cello-swift-screw-front.png": {
+        "status": "unconfirmed",
+        "products": 1
+      },
+      "products/drinkware-2d/drinkware-bottle-cola-printed-600ml-screw-back.png": {
+        "status": "unconfirmed",
+        "products": 1
+      },
+      "products/drinkware-2d/drinkware-bottle-cola-printed-600ml-screw-front.png": {
+        "status": "unconfirmed",
+        "products": 1
+      },
+      "products/drinkware-2d/drinkware-bottle-gym-screw-back.png": {
+        "status": "unconfirmed",
+        "products": 1
+      },
+      "products/drinkware-2d/drinkware-bottle-gym-screw-front.png": {
+        "status": "unconfirmed",
+        "products": 1
+      },
+      "products/drinkware-2d/drinkware-bottle-inox-screw-back.png": {
+        "status": "unconfirmed",
+        "products": 1
+      },
+      "products/drinkware-2d/drinkware-bottle-inox-screw-front.png": {
+        "status": "unconfirmed",
+        "products": 1
+      },
+      "products/drinkware-2d/drinkware-bottle-matt-vacuum-screw-back.png": {
+        "status": "unconfirmed",
+        "products": 1
+      },
+      "products/drinkware-2d/drinkware-bottle-matt-vacuum-screw-front.png": {
+        "status": "unconfirmed",
+        "products": 1
+      },
+      "products/drinkware-2d/drinkware-bottle-sipper-custom-screw-back.png": {
+        "status": "unconfirmed",
+        "products": 1
+      },
+      "products/drinkware-2d/drinkware-bottle-sipper-custom-screw-front.png": {
+        "status": "unconfirmed",
+        "products": 1
+      },
+      "products/drinkware-2d/drinkware-bottle-sipper-steel-screw-back.png": {
+        "status": "unconfirmed",
+        "products": 1
+      },
+      "products/drinkware-2d/drinkware-bottle-sipper-steel-screw-front.png": {
+        "status": "unconfirmed",
+        "products": 1
+      },
+      "products/drinkware-2d/drinkware-bottle-temperature-display-screw-back.png": {
+        "status": "unconfirmed",
+        "products": 1
+      },
+      "products/drinkware-2d/drinkware-bottle-temperature-display-screw-front.png": {
+        "status": "unconfirmed",
+        "products": 1
+      },
+      "products/drinkware-2d/drinkware-bottle-thermal-suction-screw-back.png": {
+        "status": "unconfirmed",
+        "products": 1
+      },
+      "products/drinkware-2d/drinkware-bottle-thermal-suction-screw-front.png": {
+        "status": "unconfirmed",
+        "products": 1
+      },
+      "products/drinkware-2d/drinkware-bottle-vacuum-screw-back.png": {
+        "status": "unconfirmed",
+        "products": 1
+      },
+      "products/drinkware-2d/drinkware-bottle-vacuum-screw-front.png": {
+        "status": "unconfirmed",
+        "products": 1
+      },
+      "products/drinkware-2d/drinkware-bottle-water-custom-screw-back.png": {
+        "status": "unconfirmed",
+        "products": 1
+      },
+      "products/drinkware-2d/drinkware-bottle-water-custom-screw-front.png": {
+        "status": "unconfirmed",
+        "products": 1
+      },
+      "products/drinkware-2d/drinkware-bottle-wireless-speaker-screw-back.png": {
+        "status": "unconfirmed",
+        "products": 1
+      },
+      "products/drinkware-2d/drinkware-bottle-wireless-speaker-screw-front.png": {
+        "status": "unconfirmed",
+        "products": 1
+      },
+      "products/drinkware-2d/drinkware-cup-vacuum-insulation-screw-back.png": {
+        "status": "unconfirmed",
+        "products": 1
+      },
+      "products/drinkware-2d/drinkware-cup-vacuum-insulation-screw-front.png": {
+        "status": "unconfirmed",
+        "products": 1
+      },
+      "products/drinkware-2d/drinkware-flask-cello-flip-screw-back.png": {
+        "status": "unconfirmed",
+        "products": 1
+      },
+      "products/drinkware-2d/drinkware-flask-cello-flip-screw-front.png": {
+        "status": "unconfirmed",
+        "products": 1
+      },
+      "products/drinkware-2d/drinkware-flask-coffee-vacuum-screw-back.png": {
+        "status": "unconfirmed",
+        "products": 1
+      },
+      "products/drinkware-2d/drinkware-flask-coffee-vacuum-screw-front.png": {
+        "status": "unconfirmed",
+        "products": 1
+      },
+      "products/drinkware-2d/drinkware-flask-hip-7oz-black-back.png": {
+        "status": "unconfirmed",
+        "products": 1
+      },
+      "products/drinkware-2d/drinkware-flask-hip-7oz-black-front.png": {
+        "status": "unconfirmed",
+        "products": 1
+      },
+      "products/drinkware-2d/drinkware-glass-champagne-back.png": {
+        "status": "unconfirmed",
+        "products": 1
+      },
+      "products/drinkware-2d/drinkware-glass-champagne-front.png": {
+        "status": "unconfirmed",
+        "products": 1
+      },
+      "products/drinkware-2d/drinkware-glass-wine-back.png": {
+        "status": "unconfirmed",
+        "products": 1
+      },
+      "products/drinkware-2d/drinkware-glass-wine-front.png": {
+        "status": "unconfirmed",
+        "products": 1
+      },
+      "products/drinkware-2d/drinkware-mug-beer-customised-back.png": {
+        "status": "unconfirmed",
+        "products": 1
+      },
+      "products/drinkware-2d/drinkware-mug-beer-customised-front.png": {
+        "status": "unconfirmed",
+        "products": 1
+      },
+      "products/drinkware-2d/drinkware-mug-beer-frosted-back.png": {
+        "status": "unconfirmed",
+        "products": 1
+      },
+      "products/drinkware-2d/drinkware-mug-beer-frosted-front.png": {
+        "status": "unconfirmed",
+        "products": 1
+      },
+      "products/drinkware-2d/drinkware-mug-coffee-vacuum-back.png": {
+        "status": "unconfirmed",
+        "products": 1
+      },
+      "products/drinkware-2d/drinkware-mug-coffee-vacuum-front.png": {
+        "status": "unconfirmed",
+        "products": 1
+      },
+      "products/drinkware-2d/drinkware-mug-temperature-display-back.png": {
+        "status": "unconfirmed",
+        "products": 1
+      },
+      "products/drinkware-2d/drinkware-mug-temperature-display-front.png": {
+        "status": "unconfirmed",
+        "products": 1
+      },
+      "products/drinkware-2d/drinkware-pexpo-austin-steel-screw-back.png": {
+        "status": "unconfirmed",
+        "products": 1
+      },
+      "products/drinkware-2d/drinkware-pexpo-austin-steel-screw-front.png": {
+        "status": "unconfirmed",
+        "products": 1
+      },
+      "products/drinkware-2d/drinkware-pexpo-bravo-vacuum-screw-back.png": {
+        "status": "unconfirmed",
+        "products": 1
+      },
+      "products/drinkware-2d/drinkware-pexpo-bravo-vacuum-screw-front.png": {
+        "status": "unconfirmed",
+        "products": 1
+      },
+      "products/drinkware-2d/drinkware-pexpo-cameo-compact-screw-back.png": {
+        "status": "unconfirmed",
+        "products": 1
+      },
+      "products/drinkware-2d/drinkware-pexpo-cameo-compact-screw-front.png": {
+        "status": "unconfirmed",
+        "products": 1
+      },
+      "products/drinkware-2d/drinkware-pexpo-cocoa-tumbler-screw-back.png": {
+        "status": "unconfirmed",
+        "products": 1
+      },
+      "products/drinkware-2d/drinkware-pexpo-cocoa-tumbler-screw-front.png": {
+        "status": "unconfirmed",
+        "products": 1
+      },
+      "products/drinkware-2d/drinkware-pexpo-flamingo-vacuum-screw-back.png": {
+        "status": "unconfirmed",
+        "products": 1
+      },
+      "products/drinkware-2d/drinkware-pexpo-flamingo-vacuum-screw-front.png": {
+        "status": "unconfirmed",
+        "products": 1
+      },
+      "products/drinkware-2d/drinkware-pexpo-morocco-thermo-screw-back.png": {
+        "status": "unconfirmed",
+        "products": 1
+      },
+      "products/drinkware-2d/drinkware-pexpo-morocco-thermo-screw-front.png": {
+        "status": "unconfirmed",
+        "products": 1
+      },
+      "products/drinkware-2d/drinkware-pexpo-orio-thermo-screw-back.png": {
+        "status": "unconfirmed",
+        "products": 1
+      },
+      "products/drinkware-2d/drinkware-pexpo-orio-thermo-screw-front.png": {
+        "status": "unconfirmed",
+        "products": 1
+      },
+      "products/drinkware-2d/drinkware-pexpo-stanzy-tumbler-screw-back.png": {
+        "status": "unconfirmed",
+        "products": 1
+      },
+      "products/drinkware-2d/drinkware-pexpo-stanzy-tumbler-screw-front.png": {
+        "status": "unconfirmed",
+        "products": 1
+      },
+      "products/drinkware-2d/drinkware-tumbler-customised-screw-back.png": {
+        "status": "unconfirmed",
+        "products": 1
+      },
+      "products/drinkware-2d/drinkware-tumbler-customised-screw-front.png": {
+        "status": "unconfirmed",
+        "products": 1
+      },
+      "products/drinkware-2d/drinkware-tumbler-skinny-600ml-screw-back.png": {
+        "status": "unconfirmed",
+        "products": 1
+      },
+      "products/drinkware-2d/drinkware-tumbler-skinny-600ml-screw-front.png": {
+        "status": "unconfirmed",
+        "products": 1
+      },
+      "products/drinkware-2d/drinkware-tumbler-travel-screw-back.png": {
+        "status": "unconfirmed",
+        "products": 1
+      },
+      "products/drinkware-2d/drinkware-tumbler-travel-screw-front.png": {
+        "status": "unconfirmed",
+        "products": 1
+      },
+      "products/drinkware-2d/drinkware-tumbler-vacuum-insulated-screw-back.png": {
+        "status": "unconfirmed",
+        "products": 1
+      },
+      "products/drinkware-2d/drinkware-tumbler-vacuum-insulated-screw-front.png": {
+        "status": "unconfirmed",
+        "products": 1
+      },
+      "products/drinkware-2d/drinkware-tumbler-wine-screw-back.png": {
+        "status": "unconfirmed",
+        "products": 1
+      },
+      "products/drinkware-2d/drinkware-tumbler-wine-screw-front.png": {
+        "status": "unconfirmed",
+        "products": 1
+      },
+      "products/drinkware-2d/mug-frosted-beer-back.png": {
+        "status": "unconfirmed",
+        "products": 1
+      },
+      "products/drinkware-2d/mug-frosted-beer-front.png": {
+        "status": "unconfirmed",
+        "products": 1
+      },
+      "products/drinkware-2d/tumbler-insulated-coffee-back.png": {
+        "status": "unconfirmed",
+        "products": 1
+      },
+      "products/drinkware-2d/tumbler-insulated-coffee-front.png": {
+        "status": "unconfirmed",
+        "products": 1
+      },
+      "products/drinkware-2d/tumbler-skinny-travel-back.png": {
+        "status": "unconfirmed",
+        "products": 1
+      },
+      "products/drinkware-2d/tumbler-skinny-travel-front.png": {
+        "status": "unconfirmed",
+        "products": 1
+      },
+      "products/drinkware-2d/tumbler-wine-stemless-back.png": {
+        "status": "unconfirmed",
+        "products": 1
+      },
+      "products/drinkware-2d/tumbler-wine-stemless-front.png": {
+        "status": "unconfirmed",
+        "products": 1
+      },
+      "products/labels-packaging-2d/label-jar-bottle-back.png": {
+        "status": "unconfirmed",
+        "products": 1
+      },
+      "products/labels-packaging-2d/label-jar-bottle-front.png": {
+        "status": "unconfirmed",
+        "products": 1
+      },
+      "products/labels-packaging-2d/label-roll-product-back.png": {
+        "status": "unconfirmed",
+        "products": 1
+      },
+      "products/labels-packaging-2d/label-roll-product-front.png": {
+        "status": "unconfirmed",
+        "products": 1
+      },
+      "products/labels-packaging-2d/label-shipping-back.png": {
+        "status": "unconfirmed",
+        "products": 1
+      },
+      "products/labels-packaging-2d/label-shipping-front.png": {
+        "status": "unconfirmed",
+        "products": 1
+      },
+      "products/labels-packaging-2d/packaging-branded-tape-back.png": {
+        "status": "unconfirmed",
+        "products": 1
+      },
+      "products/labels-packaging-2d/packaging-branded-tape-front.png": {
+        "status": "unconfirmed",
+        "products": 1
+      },
+      "products/labels-packaging-2d/packaging-hang-tag-back.png": {
+        "status": "unconfirmed",
+        "products": 1
+      },
+      "products/labels-packaging-2d/packaging-hang-tag-front.png": {
+        "status": "unconfirmed",
+        "products": 1
+      },
+      "products/labels-packaging-2d/packaging-kraft-shipping-box-back.png": {
+        "status": "unconfirmed",
+        "products": 1
+      },
+      "products/labels-packaging-2d/packaging-kraft-shipping-box-front.png": {
+        "status": "unconfirmed",
+        "products": 1
+      },
+      "products/labels-packaging-2d/packaging-label-foil-stamped-back.png": {
+        "status": "unconfirmed",
+        "products": 1
+      },
+      "products/labels-packaging-2d/packaging-label-foil-stamped-front.png": {
+        "status": "unconfirmed",
+        "products": 1
+      },
+      "products/labels-packaging-2d/packaging-label-roll-back.png": {
+        "status": "unconfirmed",
+        "products": 1
+      },
+      "products/labels-packaging-2d/packaging-label-roll-front.png": {
+        "status": "unconfirmed",
+        "products": 1
+      },
+      "products/labels-packaging-2d/packaging-label-tamper-seal-back.png": {
+        "status": "unconfirmed",
+        "products": 1
+      },
+      "products/labels-packaging-2d/packaging-label-tamper-seal-front.png": {
+        "status": "unconfirmed",
+        "products": 1
+      },
+      "products/labels-packaging-2d/packaging-mailer-box-back.png": {
+        "status": "unconfirmed",
+        "products": 1
+      },
+      "products/labels-packaging-2d/packaging-mailer-box-front.png": {
+        "status": "unconfirmed",
+        "products": 1
+      },
+      "products/labels-packaging-2d/packaging-poly-mailer-back.png": {
+        "status": "unconfirmed",
+        "products": 1
+      },
+      "products/labels-packaging-2d/packaging-poly-mailer-front.png": {
+        "status": "unconfirmed",
+        "products": 1
+      },
+      "products/labels-packaging-2d/packaging-rigid-gift-box-back.png": {
+        "status": "unconfirmed",
+        "products": 1
+      },
+      "products/labels-packaging-2d/packaging-rigid-gift-box-front.png": {
+        "status": "unconfirmed",
+        "products": 1
+      },
+      "products/labels-packaging-2d/packaging-tissue-paper-back.png": {
+        "status": "unconfirmed",
+        "products": 1
+      },
+      "products/labels-packaging-2d/packaging-tissue-paper-front.png": {
+        "status": "unconfirmed",
+        "products": 1
+      },
+      "products/labels-packaging-2d/pkg-bag-carry-printed-back.png": {
+        "status": "unconfirmed",
+        "products": 1
+      },
+      "products/labels-packaging-2d/pkg-bag-carry-printed-front.png": {
+        "status": "unconfirmed",
+        "products": 1
+      },
+      "products/labels-packaging-2d/pkg-bag-courier-back.png": {
+        "status": "unconfirmed",
+        "products": 1
+      },
+      "products/labels-packaging-2d/pkg-bag-courier-front.png": {
+        "status": "unconfirmed",
+        "products": 1
+      },
+      "products/labels-packaging-2d/pkg-bag-gift-premium-back.png": {
+        "status": "unconfirmed",
+        "products": 1
+      },
+      "products/labels-packaging-2d/pkg-bag-gift-premium-front.png": {
+        "status": "unconfirmed",
+        "products": 1
+      },
+      "products/labels-packaging-2d/pkg-bag-handle-die-cut-back.png": {
+        "status": "unconfirmed",
+        "products": 1
+      },
+      "products/labels-packaging-2d/pkg-bag-handle-die-cut-front.png": {
+        "status": "unconfirmed",
+        "products": 1
+      },
+      "products/labels-packaging-2d/pkg-bag-paper-custom-back.png": {
+        "status": "unconfirmed",
+        "products": 1
+      },
+      "products/labels-packaging-2d/pkg-bag-paper-custom-front.png": {
+        "status": "unconfirmed",
+        "products": 1
+      },
+      "products/labels-packaging-2d/pkg-bag-shopping-metallic-back.png": {
+        "status": "unconfirmed",
+        "products": 1
+      },
+      "products/labels-packaging-2d/pkg-bag-shopping-metallic-front.png": {
+        "status": "unconfirmed",
+        "products": 1
+      },
+      "products/labels-packaging-2d/pkg-box-auto-lock-bottom-back.png": {
+        "status": "unconfirmed",
+        "products": 1
+      },
+      "products/labels-packaging-2d/pkg-box-auto-lock-bottom-front.png": {
+        "status": "unconfirmed",
+        "products": 1
+      },
+      "products/labels-packaging-2d/pkg-box-burger-back.png": {
+        "status": "unconfirmed",
+        "products": 1
+      },
+      "products/labels-packaging-2d/pkg-box-burger-front.png": {
+        "status": "unconfirmed",
+        "products": 1
+      },
+      "products/labels-packaging-2d/pkg-box-chocolate-bar-back.png": {
+        "status": "unconfirmed",
+        "products": 1
+      },
+      "products/labels-packaging-2d/pkg-box-chocolate-bar-front.png": {
+        "status": "unconfirmed",
+        "products": 1
+      },
+      "products/labels-packaging-2d/pkg-box-corrugated-back.png": {
+        "status": "unconfirmed",
+        "products": 1
+      },
+      "products/labels-packaging-2d/pkg-box-corrugated-front.png": {
+        "status": "unconfirmed",
+        "products": 1
+      },
+      "products/labels-packaging-2d/pkg-box-lock-bottom-back.png": {
+        "status": "unconfirmed",
+        "products": 1
+      },
+      "products/labels-packaging-2d/pkg-box-lock-bottom-front.png": {
+        "status": "unconfirmed",
+        "products": 1
+      },
+      "products/labels-packaging-2d/pkg-box-mailer-flat-back.png": {
+        "status": "unconfirmed",
+        "products": 1
+      },
+      "products/labels-packaging-2d/pkg-box-mailer-flat-front.png": {
+        "status": "unconfirmed",
+        "products": 1
+      },
+      "products/labels-packaging-2d/pkg-box-popcorn-back.png": {
+        "status": "unconfirmed",
+        "products": 1
+      },
+      "products/labels-packaging-2d/pkg-box-popcorn-front.png": {
+        "status": "unconfirmed",
+        "products": 1
+      },
+      "products/labels-packaging-2d/pkg-box-promotional-product-back.png": {
+        "status": "unconfirmed",
+        "products": 1
+      },
+      "products/labels-packaging-2d/pkg-box-promotional-product-front.png": {
+        "status": "unconfirmed",
+        "products": 1
+      },
+      "products/labels-packaging-2d/pkg-box-pull-out-back.png": {
+        "status": "unconfirmed",
+        "products": 1
+      },
+      "products/labels-packaging-2d/pkg-box-pull-out-front.png": {
+        "status": "unconfirmed",
+        "products": 1
+      },
+      "products/labels-packaging-2d/pkg-box-soap-back.png": {
+        "status": "unconfirmed",
+        "products": 1
+      },
+      "products/labels-packaging-2d/pkg-box-soap-front.png": {
+        "status": "unconfirmed",
+        "products": 1
+      },
+      "products/labels-packaging-2d/pkg-box-tuck-top-back.png": {
+        "status": "unconfirmed",
+        "products": 1
+      },
+      "products/labels-packaging-2d/pkg-box-tuck-top-front.png": {
+        "status": "unconfirmed",
+        "products": 1
+      },
+      "products/labels-packaging-2d/pkg-ribbon-customised-back.png": {
+        "status": "unconfirmed",
+        "products": 1
+      },
+      "products/labels-packaging-2d/pkg-ribbon-customised-front.png": {
+        "status": "unconfirmed",
+        "products": 1
+      },
+      "products/labels-packaging-2d/pkg-tape-self-adhesive-back.png": {
+        "status": "unconfirmed",
+        "products": 1
+      },
+      "products/labels-packaging-2d/pkg-tape-self-adhesive-front.png": {
+        "status": "unconfirmed",
+        "products": 1
+      },
+      "products/labels-packaging-2d/sticker-bumper-back.png": {
+        "status": "unconfirmed",
+        "products": 1
+      },
+      "products/labels-packaging-2d/sticker-bumper-front.png": {
+        "status": "unconfirmed",
+        "products": 1
+      },
+      "products/labels-packaging-2d/sticker-car-back.png": {
+        "status": "unconfirmed",
+        "products": 1
+      },
+      "products/labels-packaging-2d/sticker-car-front.png": {
+        "status": "unconfirmed",
+        "products": 1
+      },
+      "products/labels-packaging-2d/sticker-circle-glossy-back.png": {
+        "status": "unconfirmed",
+        "products": 1
+      },
+      "products/labels-packaging-2d/sticker-circle-glossy-front.png": {
+        "status": "unconfirmed",
+        "products": 1
+      },
+      "products/labels-packaging-2d/sticker-clear-vinyl-back.png": {
+        "status": "unconfirmed",
+        "products": 1
+      },
+      "products/labels-packaging-2d/sticker-clear-vinyl-front.png": {
+        "status": "unconfirmed",
+        "products": 1
+      },
+      "products/labels-packaging-2d/sticker-die-cut-shape-back.png": {
+        "status": "unconfirmed",
+        "products": 1
+      },
+      "products/labels-packaging-2d/sticker-die-cut-shape-front.png": {
+        "status": "unconfirmed",
+        "products": 1
+      },
+      "products/labels-packaging-2d/sticker-die-cut-vinyl-back.png": {
+        "status": "unconfirmed",
+        "products": 1
+      },
+      "products/labels-packaging-2d/sticker-die-cut-vinyl-front.png": {
+        "status": "unconfirmed",
+        "products": 1
+      },
+      "products/labels-packaging-2d/sticker-dome-back.png": {
+        "status": "unconfirmed",
+        "products": 1
+      },
+      "products/labels-packaging-2d/sticker-dome-front.png": {
+        "status": "unconfirmed",
+        "products": 1
+      },
+      "products/labels-packaging-2d/sticker-hang-tag-back.png": {
+        "status": "unconfirmed",
+        "products": 1
+      },
+      "products/labels-packaging-2d/sticker-hang-tag-folded-back.png": {
+        "status": "unconfirmed",
+        "products": 1
+      },
+      "products/labels-packaging-2d/sticker-hang-tag-folded-front.png": {
+        "status": "unconfirmed",
+        "products": 1
+      },
+      "products/labels-packaging-2d/sticker-hang-tag-front.png": {
+        "status": "unconfirmed",
+        "products": 1
+      },
+      "products/labels-packaging-2d/sticker-hang-tag-raised-foil-back.png": {
+        "status": "unconfirmed",
+        "products": 1
+      },
+      "products/labels-packaging-2d/sticker-hang-tag-raised-foil-front.png": {
+        "status": "unconfirmed",
+        "products": 1
+      },
+      "products/labels-packaging-2d/sticker-holographic-back.png": {
+        "status": "unconfirmed",
+        "products": 1
+      },
+      "products/labels-packaging-2d/sticker-holographic-front.png": {
+        "status": "unconfirmed",
+        "products": 1
+      },
+      "products/labels-packaging-2d/sticker-kraft-back.png": {
+        "status": "unconfirmed",
+        "products": 1
+      },
+      "products/labels-packaging-2d/sticker-kraft-front.png": {
+        "status": "unconfirmed",
+        "products": 1
+      },
+      "products/labels-packaging-2d/sticker-kraft-paper-back.png": {
+        "status": "unconfirmed",
+        "products": 1
+      },
+      "products/labels-packaging-2d/sticker-kraft-paper-front.png": {
+        "status": "unconfirmed",
+        "products": 1
+      },
+      "products/labels-packaging-2d/sticker-label-industrial-back.png": {
+        "status": "unconfirmed",
+        "products": 1
+      },
+      "products/labels-packaging-2d/sticker-label-industrial-front.png": {
+        "status": "unconfirmed",
+        "products": 1
+      },
+      "products/labels-packaging-2d/sticker-label-iron-on-back.png": {
+        "status": "unconfirmed",
+        "products": 1
+      },
+      "products/labels-packaging-2d/sticker-label-iron-on-front.png": {
+        "status": "unconfirmed",
+        "products": 1
+      },
+      "products/labels-packaging-2d/sticker-label-product-packaging-back.png": {
+        "status": "unconfirmed",
+        "products": 1
+      },
+      "products/labels-packaging-2d/sticker-label-product-packaging-front.png": {
+        "status": "unconfirmed",
+        "products": 1
+      },
+      "products/labels-packaging-2d/sticker-label-return-address-back.png": {
+        "status": "unconfirmed",
+        "products": 1
+      },
+      "products/labels-packaging-2d/sticker-label-return-address-front.png": {
+        "status": "unconfirmed",
+        "products": 1
+      },
+      "products/labels-packaging-2d/sticker-label-shipping-mailing-back.png": {
+        "status": "unconfirmed",
+        "products": 1
+      },
+      "products/labels-packaging-2d/sticker-label-shipping-mailing-front.png": {
+        "status": "unconfirmed",
+        "products": 1
+      },
+      "products/labels-packaging-2d/sticker-label-transparent-back.png": {
+        "status": "unconfirmed",
+        "products": 1
+      },
+      "products/labels-packaging-2d/sticker-label-transparent-front.png": {
+        "status": "unconfirmed",
+        "products": 1
+      },
+      "products/labels-packaging-2d/sticker-qr-code-back.png": {
+        "status": "unconfirmed",
+        "products": 1
+      },
+      "products/labels-packaging-2d/sticker-qr-code-front.png": {
+        "status": "unconfirmed",
+        "products": 1
+      },
+      "products/labels-packaging-2d/sticker-sheet-back.png": {
+        "status": "unconfirmed",
+        "products": 1
+      },
+      "products/labels-packaging-2d/sticker-sheet-front.png": {
+        "status": "unconfirmed",
+        "products": 1
+      },
+      "products/labels-packaging-2d/sticker-single-back.png": {
+        "status": "unconfirmed",
+        "products": 1
+      },
+      "products/labels-packaging-2d/sticker-single-front.png": {
+        "status": "unconfirmed",
+        "products": 1
+      },
+      "products/labels-packaging-2d/sticker-square-matte-back.png": {
+        "status": "unconfirmed",
+        "products": 1
+      },
+      "products/labels-packaging-2d/sticker-square-matte-front.png": {
+        "status": "unconfirmed",
+        "products": 1
+      },
+      "products/labels-packaging-2d/sticker-tag-baggage-back.png": {
+        "status": "unconfirmed",
+        "products": 1
+      },
+      "products/labels-packaging-2d/sticker-tag-baggage-front.png": {
+        "status": "unconfirmed",
+        "products": 1
+      },
+      "products/labels-packaging-2d/sticker-tag-name-back.png": {
+        "status": "unconfirmed",
+        "products": 1
+      },
+      "products/labels-packaging-2d/sticker-tag-name-front.png": {
+        "status": "unconfirmed",
+        "products": 1
+      },
+      "products/labels-packaging-2d/sticker-uv-ink-transfer-back.png": {
+        "status": "unconfirmed",
+        "products": 1
+      },
+      "products/labels-packaging-2d/sticker-uv-ink-transfer-front.png": {
+        "status": "unconfirmed",
+        "products": 1
+      },
+      "products/labels-packaging-2d/sticker-visiting-card-back.png": {
+        "status": "unconfirmed",
+        "products": 1
+      },
+      "products/labels-packaging-2d/sticker-visiting-card-front.png": {
+        "status": "unconfirmed",
+        "products": 1
+      },
+      "products/labels-packaging-2d/sticker-window-back.png": {
+        "status": "unconfirmed",
+        "products": 1
+      },
+      "products/labels-packaging-2d/sticker-window-front.png": {
+        "status": "unconfirmed",
+        "products": 1
+      },
+      "products/polo/back.png": {
+        "status": "unconfirmed",
+        "products": 43
+      },
+      "products/polo/front.png": {
+        "status": "unconfirmed",
+        "products": 43
+      },
+      "products/signs-posters-2d/banner-backlit-fabric-back.png": {
+        "status": "unconfirmed",
+        "products": 1
+      },
+      "products/signs-posters-2d/banner-backlit-fabric-front.png": {
+        "status": "unconfirmed",
+        "products": 1
+      },
+      "products/signs-posters-2d/banner-feather-flag-back.png": {
+        "status": "unconfirmed",
+        "products": 1
+      },
+      "products/signs-posters-2d/banner-feather-flag-front.png": {
+        "status": "unconfirmed",
+        "products": 1
+      },
+      "products/signs-posters-2d/banner-mesh-windproof-back.png": {
+        "status": "unconfirmed",
+        "products": 1
+      },
+      "products/signs-posters-2d/banner-mesh-windproof-front.png": {
+        "status": "unconfirmed",
+        "products": 1
+      },
+      "products/signs-posters-2d/banner-table-throw-back.png": {
+        "status": "unconfirmed",
+        "products": 1
+      },
+      "products/signs-posters-2d/banner-table-throw-front.png": {
+        "status": "unconfirmed",
+        "products": 1
+      },
+      "products/signs-posters-2d/banner-vinyl-standard-back.png": {
+        "status": "unconfirmed",
+        "products": 1
+      },
+      "products/signs-posters-2d/banner-vinyl-standard-front.png": {
+        "status": "unconfirmed",
+        "products": 1
+      },
+      "products/signs-posters-2d/brochure-bifold-a4-back.png": {
+        "status": "unconfirmed",
+        "products": 1
+      },
+      "products/signs-posters-2d/brochure-bifold-a4-front.png": {
+        "status": "unconfirmed",
+        "products": 1
+      },
+      "products/signs-posters-2d/brochure-trifold-a4-back.png": {
+        "status": "unconfirmed",
+        "products": 1
+      },
+      "products/signs-posters-2d/brochure-trifold-a4-front.png": {
+        "status": "unconfirmed",
+        "products": 1
+      },
+      "products/signs-posters-2d/brochure-zfold-a4-back.png": {
+        "status": "unconfirmed",
+        "products": 1
+      },
+      "products/signs-posters-2d/brochure-zfold-a4-front.png": {
+        "status": "unconfirmed",
+        "products": 1
+      },
+      "products/signs-posters-2d/flyer-a4-standard-back.png": {
+        "status": "unconfirmed",
+        "products": 1
+      },
+      "products/signs-posters-2d/flyer-a4-standard-front.png": {
+        "status": "unconfirmed",
+        "products": 1
+      },
+      "products/signs-posters-2d/flyer-a5-heavyweight-back.png": {
+        "status": "unconfirmed",
+        "products": 1
+      },
+      "products/signs-posters-2d/flyer-a5-heavyweight-front.png": {
+        "status": "unconfirmed",
+        "products": 1
+      },
+      "products/signs-posters-2d/flyer-a5-matte-back.png": {
+        "status": "unconfirmed",
+        "products": 1
+      },
+      "products/signs-posters-2d/flyer-a5-matte-front.png": {
+        "status": "unconfirmed",
+        "products": 1
+      },
+      "products/signs-posters-2d/flyer-a5-recycled-back.png": {
+        "status": "unconfirmed",
+        "products": 1
+      },
+      "products/signs-posters-2d/flyer-a5-recycled-front.png": {
+        "status": "unconfirmed",
+        "products": 1
+      },
+      "products/signs-posters-2d/flyer-a5-standard-back.png": {
+        "status": "unconfirmed",
+        "products": 1
+      },
+      "products/signs-posters-2d/flyer-a5-standard-front.png": {
+        "status": "unconfirmed",
+        "products": 1
+      },
+      "products/signs-posters-2d/flyer-a6-mini-back.png": {
+        "status": "unconfirmed",
+        "products": 1
+      },
+      "products/signs-posters-2d/flyer-a6-mini-front.png": {
+        "status": "unconfirmed",
+        "products": 1
+      },
+      "products/signs-posters-2d/flyer-booklet-back.png": {
+        "status": "unconfirmed",
+        "products": 1
+      },
+      "products/signs-posters-2d/flyer-booklet-front.png": {
+        "status": "unconfirmed",
+        "products": 1
+      },
+      "products/signs-posters-2d/flyer-bookmark-back.png": {
+        "status": "unconfirmed",
+        "products": 1
+      },
+      "products/signs-posters-2d/flyer-bookmark-front.png": {
+        "status": "unconfirmed",
+        "products": 1
+      },
+      "products/signs-posters-2d/flyer-brochure-back.png": {
+        "status": "unconfirmed",
+        "products": 1
+      },
+      "products/signs-posters-2d/flyer-brochure-front.png": {
+        "status": "unconfirmed",
+        "products": 1
+      },
+      "products/signs-posters-2d/flyer-bulk-back.png": {
+        "status": "unconfirmed",
+        "products": 1
+      },
+      "products/signs-posters-2d/flyer-bulk-front.png": {
+        "status": "unconfirmed",
+        "products": 1
+      },
+      "products/signs-posters-2d/flyer-button-badge-back.png": {
+        "status": "unconfirmed",
+        "products": 1
+      },
+      "products/signs-posters-2d/flyer-button-badge-front.png": {
+        "status": "unconfirmed",
+        "products": 1
+      },
+      "products/signs-posters-2d/flyer-canopy-tent-back.png": {
+        "status": "unconfirmed",
+        "products": 1
+      },
+      "products/signs-posters-2d/flyer-canopy-tent-front.png": {
+        "status": "unconfirmed",
+        "products": 1
+      },
+      "products/signs-posters-2d/flyer-car-door-decal-back.png": {
+        "status": "unconfirmed",
+        "products": 1
+      },
+      "products/signs-posters-2d/flyer-car-door-decal-front.png": {
+        "status": "unconfirmed",
+        "products": 1
+      },
+      "products/signs-posters-2d/flyer-custom-keychain-back.png": {
+        "status": "unconfirmed",
+        "products": 1
+      },
+      "products/signs-posters-2d/flyer-custom-keychain-front.png": {
+        "status": "unconfirmed",
+        "products": 1
+      },
+      "products/signs-posters-2d/flyer-dl-slim-back.png": {
+        "status": "unconfirmed",
+        "products": 1
+      },
+      "products/signs-posters-2d/flyer-dl-slim-front.png": {
+        "status": "unconfirmed",
+        "products": 1
+      },
+      "products/signs-posters-2d/flyer-gift-certificate-back.png": {
+        "status": "unconfirmed",
+        "products": 1
+      },
+      "products/signs-posters-2d/flyer-gift-certificate-front.png": {
+        "status": "unconfirmed",
+        "products": 1
+      },
+      "products/signs-posters-2d/flyer-logo-flag-back.png": {
+        "status": "unconfirmed",
+        "products": 1
+      },
+      "products/signs-posters-2d/flyer-logo-flag-front.png": {
+        "status": "unconfirmed",
+        "products": 1
+      },
+      "products/signs-posters-2d/flyer-loyalty-card-back.png": {
+        "status": "unconfirmed",
+        "products": 1
+      },
+      "products/signs-posters-2d/flyer-loyalty-card-front.png": {
+        "status": "unconfirmed",
+        "products": 1
+      },
+      "products/signs-posters-2d/flyer-menu-card-back.png": {
+        "status": "unconfirmed",
+        "products": 1
+      },
+      "products/signs-posters-2d/flyer-menu-card-front.png": {
+        "status": "unconfirmed",
+        "products": 1
+      },
+      "products/signs-posters-2d/flyer-paper-bag-back.png": {
+        "status": "unconfirmed",
+        "products": 1
+      },
+      "products/signs-posters-2d/flyer-paper-bag-front.png": {
+        "status": "unconfirmed",
+        "products": 1
+      },
+      "products/signs-posters-2d/flyer-place-mat-back.png": {
+        "status": "unconfirmed",
+        "products": 1
+      },
+      "products/signs-posters-2d/flyer-place-mat-front.png": {
+        "status": "unconfirmed",
+        "products": 1
+      },
+      "products/signs-posters-2d/flyer-pop-up-banner-back.png": {
+        "status": "unconfirmed",
+        "products": 1
+      },
+      "products/signs-posters-2d/flyer-pop-up-banner-front.png": {
+        "status": "unconfirmed",
+        "products": 1
+      },
+      "products/signs-posters-2d/flyer-portable-backdrop-back.png": {
+        "status": "unconfirmed",
+        "products": 1
+      },
+      "products/signs-posters-2d/flyer-portable-backdrop-front.png": {
+        "status": "unconfirmed",
+        "products": 1
+      },
+      "products/signs-posters-2d/flyer-postcard-back.png": {
+        "status": "unconfirmed",
+        "products": 1
+      },
+      "products/signs-posters-2d/flyer-postcard-front.png": {
+        "status": "unconfirmed",
+        "products": 1
+      },
+      "products/signs-posters-2d/flyer-promo-table-back.png": {
+        "status": "unconfirmed",
+        "products": 1
+      },
+      "products/signs-posters-2d/flyer-promo-table-front.png": {
+        "status": "unconfirmed",
+        "products": 1
+      },
+      "products/signs-posters-2d/flyer-standard-back.png": {
+        "status": "unconfirmed",
+        "products": 1
+      },
+      "products/signs-posters-2d/flyer-standard-front.png": {
+        "status": "unconfirmed",
+        "products": 1
+      },
+      "products/signs-posters-2d/flyer-stretch-table-cover-back.png": {
+        "status": "unconfirmed",
+        "products": 1
+      },
+      "products/signs-posters-2d/flyer-stretch-table-cover-front.png": {
+        "status": "unconfirmed",
+        "products": 1
+      },
+      "products/signs-posters-2d/flyer-table-mat-back.png": {
+        "status": "unconfirmed",
+        "products": 1
+      },
+      "products/signs-posters-2d/flyer-table-mat-front.png": {
+        "status": "unconfirmed",
+        "products": 1
+      },
+      "products/signs-posters-2d/flyer-table-runner-back.png": {
+        "status": "unconfirmed",
+        "products": 1
+      },
+      "products/signs-posters-2d/flyer-table-runner-front.png": {
+        "status": "unconfirmed",
+        "products": 1
+      },
+      "products/signs-posters-2d/flyer-tablecloth-back.png": {
+        "status": "unconfirmed",
+        "products": 1
+      },
+      "products/signs-posters-2d/flyer-tablecloth-front.png": {
+        "status": "unconfirmed",
+        "products": 1
+      },
+      "products/signs-posters-2d/sign-acrylic-holder-back.png": {
+        "status": "unconfirmed",
+        "products": 1
+      },
+      "products/signs-posters-2d/sign-acrylic-holder-front.png": {
+        "status": "unconfirmed",
+        "products": 1
+      },
+      "products/signs-posters-2d/sign-acrylic-premium-back.png": {
+        "status": "unconfirmed",
+        "products": 1
+      },
+      "products/signs-posters-2d/sign-acrylic-premium-front.png": {
+        "status": "unconfirmed",
+        "products": 1
+      },
+      "products/signs-posters-2d/sign-acrylic-sign-back.png": {
+        "status": "unconfirmed",
+        "products": 1
+      },
+      "products/signs-posters-2d/sign-acrylic-sign-front.png": {
+        "status": "unconfirmed",
+        "products": 1
+      },
+      "products/signs-posters-2d/sign-banner-fabric-back.png": {
+        "status": "unconfirmed",
+        "products": 1
+      },
+      "products/signs-posters-2d/sign-banner-fabric-front.png": {
+        "status": "unconfirmed",
+        "products": 1
+      },
+      "products/signs-posters-2d/sign-banner-mesh-back.png": {
+        "status": "unconfirmed",
+        "products": 1
+      },
+      "products/signs-posters-2d/sign-banner-mesh-front.png": {
+        "status": "unconfirmed",
+        "products": 1
+      },
+      "products/signs-posters-2d/sign-banner-vinyl-back.png": {
+        "status": "unconfirmed",
+        "products": 1
+      },
+      "products/signs-posters-2d/sign-banner-vinyl-front.png": {
+        "status": "unconfirmed",
+        "products": 1
+      },
+      "products/signs-posters-2d/sign-banner-x-stand-back.png": {
+        "status": "unconfirmed",
+        "products": 1
+      },
+      "products/signs-posters-2d/sign-banner-x-stand-front.png": {
+        "status": "unconfirmed",
+        "products": 1
+      },
+      "products/signs-posters-2d/sign-board-sign-back.png": {
+        "status": "unconfirmed",
+        "products": 1
+      },
+      "products/signs-posters-2d/sign-board-sign-front.png": {
+        "status": "unconfirmed",
+        "products": 1
+      },
+      "products/signs-posters-2d/sign-canvas-sign-back.png": {
+        "status": "unconfirmed",
+        "products": 1
+      },
+      "products/signs-posters-2d/sign-canvas-sign-front.png": {
+        "status": "unconfirmed",
+        "products": 1
+      },
+      "products/signs-posters-2d/sign-corrugated-yard-back.png": {
+        "status": "unconfirmed",
+        "products": 1
+      },
+      "products/signs-posters-2d/sign-corrugated-yard-front.png": {
+        "status": "unconfirmed",
+        "products": 1
+      },
+      "products/signs-posters-2d/sign-foam-board-back.png": {
+        "status": "unconfirmed",
+        "products": 1
+      },
+      "products/signs-posters-2d/sign-foam-board-front.png": {
+        "status": "unconfirmed",
+        "products": 1
+      },
+      "products/signs-posters-2d/sign-led-clip-on-display-back.png": {
+        "status": "unconfirmed",
+        "products": 1
+      },
+      "products/signs-posters-2d/sign-led-clip-on-display-front.png": {
+        "status": "unconfirmed",
+        "products": 1
+      },
+      "products/signs-posters-2d/sign-led-display-stand-back.png": {
+        "status": "unconfirmed",
+        "products": 1
+      },
+      "products/signs-posters-2d/sign-led-display-stand-front.png": {
+        "status": "unconfirmed",
+        "products": 1
+      },
+      "products/signs-posters-2d/sign-led-lollipop-display-back.png": {
+        "status": "unconfirmed",
+        "products": 1
+      },
+      "products/signs-posters-2d/sign-led-lollipop-display-front.png": {
+        "status": "unconfirmed",
+        "products": 1
+      },
+      "products/signs-posters-2d/sign-led-translite-board-back.png": {
+        "status": "unconfirmed",
+        "products": 1
+      },
+      "products/signs-posters-2d/sign-led-translite-board-front.png": {
+        "status": "unconfirmed",
+        "products": 1
+      },
+      "products/signs-posters-2d/sign-magnetic-sign-back.png": {
+        "status": "unconfirmed",
+        "products": 1
+      },
+      "products/signs-posters-2d/sign-magnetic-sign-front.png": {
+        "status": "unconfirmed",
+        "products": 1
+      },
+      "products/signs-posters-2d/sign-outdoor-sign-back.png": {
+        "status": "unconfirmed",
+        "products": 1
+      },
+      "products/signs-posters-2d/sign-outdoor-sign-front.png": {
+        "status": "unconfirmed",
+        "products": 1
+      },
+      "products/signs-posters-2d/sign-paper-bag-full-print-back.png": {
+        "status": "unconfirmed",
+        "products": 1
+      },
+      "products/signs-posters-2d/sign-paper-bag-full-print-front.png": {
+        "status": "unconfirmed",
+        "products": 1
+      },
+      "products/signs-posters-2d/sign-plastic-signboard-back.png": {
+        "status": "unconfirmed",
+        "products": 1
+      },
+      "products/signs-posters-2d/sign-plastic-signboard-front.png": {
+        "status": "unconfirmed",
+        "products": 1
+      },
+      "products/signs-posters-2d/sign-poster-bulk-back.png": {
+        "status": "unconfirmed",
+        "products": 1
+      },
+      "products/signs-posters-2d/sign-poster-bulk-front.png": {
+        "status": "unconfirmed",
+        "products": 1
+      },
+      "products/signs-posters-2d/sign-poster-standard-back.png": {
+        "status": "unconfirmed",
+        "products": 1
+      },
+      "products/signs-posters-2d/sign-poster-standard-front.png": {
+        "status": "unconfirmed",
+        "products": 1
+      },
+      "products/signs-posters-2d/sign-qr-code-stand-back.png": {
+        "status": "unconfirmed",
+        "products": 1
+      },
+      "products/signs-posters-2d/sign-qr-code-stand-front.png": {
+        "status": "unconfirmed",
+        "products": 1
+      },
+      "products/signs-posters-2d/sign-sail-flag-back.png": {
+        "status": "unconfirmed",
+        "products": 1
+      },
+      "products/signs-posters-2d/sign-sail-flag-front.png": {
+        "status": "unconfirmed",
+        "products": 1
+      },
+      "products/signs-posters-2d/sign-standee-fabric-elegant-back.png": {
+        "status": "unconfirmed",
+        "products": 1
+      },
+      "products/signs-posters-2d/sign-standee-fabric-elegant-front.png": {
+        "status": "unconfirmed",
+        "products": 1
+      },
+      "products/signs-posters-2d/sign-standee-rollup-back.png": {
+        "status": "unconfirmed",
+        "products": 1
+      },
+      "products/signs-posters-2d/sign-standee-rollup-front.png": {
+        "status": "unconfirmed",
+        "products": 1
+      },
+      "products/signs-posters-2d/sign-standee-tabletop-back.png": {
+        "status": "unconfirmed",
+        "products": 1
+      },
+      "products/signs-posters-2d/sign-standee-tabletop-front.png": {
+        "status": "unconfirmed",
+        "products": 1
+      },
+      "products/signs-posters-2d/sign-tabletop-sign-back.png": {
+        "status": "unconfirmed",
+        "products": 1
+      },
+      "products/signs-posters-2d/sign-tabletop-sign-front.png": {
+        "status": "unconfirmed",
+        "products": 1
+      },
+      "products/signs-posters-2d/sign-tension-fabric-display-back.png": {
+        "status": "unconfirmed",
+        "products": 1
+      },
+      "products/signs-posters-2d/sign-tension-fabric-display-front.png": {
+        "status": "unconfirmed",
+        "products": 1
+      },
+      "products/signs-posters-2d/sign-tent-card-back.png": {
+        "status": "unconfirmed",
+        "products": 1
+      },
+      "products/signs-posters-2d/sign-tent-card-front.png": {
+        "status": "unconfirmed",
+        "products": 1
+      },
+      "products/signs-posters-2d/standee-rollup-retractable-back.png": {
+        "status": "unconfirmed",
+        "products": 1
+      },
+      "products/signs-posters-2d/standee-rollup-retractable-front.png": {
+        "status": "unconfirmed",
+        "products": 1
+      },
+      "products/signs-posters-2d/standee-x-stand-back.png": {
+        "status": "unconfirmed",
+        "products": 1
+      },
+      "products/signs-posters-2d/standee-x-stand-front.png": {
+        "status": "unconfirmed",
+        "products": 1
+      },
+      "products/umbrellas-rainwear-2d/cap-rain-waterproof-back.webp": {
+        "status": "unconfirmed",
+        "products": 1
+      },
+      "products/umbrellas-rainwear-2d/cap-rain-waterproof-front.webp": {
+        "status": "unconfirmed",
+        "products": 1
+      },
+      "products/umbrellas-rainwear-2d/jacket-waterproof-rain-back.webp": {
+        "status": "unconfirmed",
+        "products": 1
+      },
+      "products/umbrellas-rainwear-2d/jacket-waterproof-rain-front.webp": {
+        "status": "unconfirmed",
+        "products": 1
+      },
+      "products/umbrellas-rainwear-2d/raincoat-industrial-safety-back.webp": {
+        "status": "unconfirmed",
+        "products": 1
+      },
+      "products/umbrellas-rainwear-2d/raincoat-industrial-safety-front.webp": {
+        "status": "unconfirmed",
+        "products": 1
+      },
+      "products/umbrellas-rainwear-2d/raincoat-kids-back.webp": {
+        "status": "unconfirmed",
+        "products": 1
+      },
+      "products/umbrellas-rainwear-2d/raincoat-kids-front.webp": {
+        "status": "unconfirmed",
+        "products": 1
+      },
+      "products/umbrellas-rainwear-2d/rainsuit-safari-back.webp": {
+        "status": "unconfirmed",
+        "products": 1
+      },
+      "products/umbrellas-rainwear-2d/rainsuit-safari-front.webp": {
+        "status": "unconfirmed",
+        "products": 1
+      },
+      "products/umbrellas-rainwear-2d/rainwear-bag-cover-waterproof-back.webp": {
+        "status": "unconfirmed",
+        "products": 1
+      },
+      "products/umbrellas-rainwear-2d/rainwear-bag-cover-waterproof-front.webp": {
+        "status": "unconfirmed",
+        "products": 1
+      },
+      "products/umbrellas-rainwear-2d/rainwear-kiara-kids-raincoat-back.webp": {
+        "status": "unconfirmed",
+        "products": 1
+      },
+      "products/umbrellas-rainwear-2d/rainwear-kiara-kids-raincoat-front.webp": {
+        "status": "unconfirmed",
+        "products": 1
+      },
+      "products/umbrellas-rainwear-2d/rainwear-kiara-womens-long-raincoat-back.webp": {
+        "status": "unconfirmed",
+        "products": 1
+      },
+      "products/umbrellas-rainwear-2d/rainwear-kiara-womens-long-raincoat-front.webp": {
+        "status": "unconfirmed",
+        "products": 1
+      },
+      "products/umbrellas-rainwear-2d/rainwear-lbw-safari-suit-back.webp": {
+        "status": "unconfirmed",
+        "products": 1
+      },
+      "products/umbrellas-rainwear-2d/rainwear-lbw-safari-suit-front.webp": {
+        "status": "unconfirmed",
+        "products": 1
+      },
+      "products/umbrellas-rainwear-2d/rainwear-mirage-safari-suit-back.webp": {
+        "status": "unconfirmed",
+        "products": 1
+      },
+      "products/umbrellas-rainwear-2d/rainwear-mirage-safari-suit-front.webp": {
+        "status": "unconfirmed",
+        "products": 1
+      },
+      "products/umbrellas-rainwear-2d/rainwear-rain-cap-freedom-back.webp": {
+        "status": "unconfirmed",
+        "products": 1
+      },
+      "products/umbrellas-rainwear-2d/rainwear-rain-cap-freedom-front.webp": {
+        "status": "unconfirmed",
+        "products": 1
+      },
+      "products/umbrellas-rainwear-2d/rainwear-rain-cap-waterproof-back.webp": {
+        "status": "unconfirmed",
+        "products": 1
+      },
+      "products/umbrellas-rainwear-2d/rainwear-rain-cap-waterproof-front.webp": {
+        "status": "unconfirmed",
+        "products": 1
+      },
+      "products/umbrellas-rainwear-2d/rainwear-raincare-safari-suit-back.webp": {
+        "status": "unconfirmed",
+        "products": 1
+      },
+      "products/umbrellas-rainwear-2d/rainwear-raincare-safari-suit-front.webp": {
+        "status": "unconfirmed",
+        "products": 1
+      },
+      "products/umbrellas-rainwear-2d/rainwear-raincoat-industrial-safety-back.webp": {
+        "status": "unconfirmed",
+        "products": 1
+      },
+      "products/umbrellas-rainwear-2d/rainwear-raincoat-industrial-safety-front.webp": {
+        "status": "unconfirmed",
+        "products": 1
+      },
+      "products/umbrellas-rainwear-2d/rainwear-raincoat-poncho-back.webp": {
+        "status": "unconfirmed",
+        "products": 1
+      },
+      "products/umbrellas-rainwear-2d/rainwear-raincoat-poncho-front.webp": {
+        "status": "unconfirmed",
+        "products": 1
+      },
+      "products/umbrellas-rainwear-2d/rainwear-rainsuit-standard-back.webp": {
+        "status": "unconfirmed",
+        "products": 1
+      },
+      "products/umbrellas-rainwear-2d/rainwear-rainsuit-standard-front.webp": {
+        "status": "unconfirmed",
+        "products": 1
+      },
+      "products/umbrellas-rainwear-2d/rainwear-skylark-safari-suit-back.webp": {
+        "status": "unconfirmed",
+        "products": 1
+      },
+      "products/umbrellas-rainwear-2d/rainwear-skylark-safari-suit-front.webp": {
+        "status": "unconfirmed",
+        "products": 1
+      },
+      "products/umbrellas-rainwear-2d/rainwear-waterproof-jacket-foldable-back.webp": {
+        "status": "unconfirmed",
+        "products": 1
+      },
+      "products/umbrellas-rainwear-2d/rainwear-waterproof-jacket-foldable-front.webp": {
+        "status": "unconfirmed",
+        "products": 1
+      },
+      "products/umbrellas-rainwear-2d/rainwear-waterproof-jacket-scott-back.webp": {
+        "status": "unconfirmed",
+        "products": 1
+      },
+      "products/umbrellas-rainwear-2d/rainwear-waterproof-jacket-scott-front.webp": {
+        "status": "unconfirmed",
+        "products": 1
+      },
+      "products/umbrellas-rainwear-2d/rainwear-waterproof-jacket-standard-back.webp": {
+        "status": "unconfirmed",
+        "products": 1
+      },
+      "products/umbrellas-rainwear-2d/rainwear-waterproof-jacket-standard-front.webp": {
+        "status": "unconfirmed",
+        "products": 1
+      },
+      "products/umbrellas-rainwear-2d/umbrella-golf-back.webp": {
+        "status": "unconfirmed",
+        "products": 1
+      },
+      "products/umbrellas-rainwear-2d/umbrella-golf-bulk-back.webp": {
+        "status": "unconfirmed",
+        "products": 1
+      },
+      "products/umbrellas-rainwear-2d/umbrella-golf-bulk-front.webp": {
+        "status": "unconfirmed",
+        "products": 1
+      },
+      "products/umbrellas-rainwear-2d/umbrella-golf-classic-back.webp": {
+        "status": "unconfirmed",
+        "products": 1
+      },
+      "products/umbrellas-rainwear-2d/umbrella-golf-classic-front.webp": {
+        "status": "unconfirmed",
+        "products": 1
+      },
+      "products/umbrellas-rainwear-2d/umbrella-golf-front.webp": {
+        "status": "unconfirmed",
+        "products": 1
+      },
+      "products/umbrellas-rainwear-2d/umbrella-golf-promotional-basic-back.webp": {
+        "status": "unconfirmed",
+        "products": 1
+      },
+      "products/umbrellas-rainwear-2d/umbrella-golf-promotional-basic-front.webp": {
+        "status": "unconfirmed",
+        "products": 1
+      },
+      "products/umbrellas-rainwear-2d/umbrella-photo-custom-back.webp": {
+        "status": "unconfirmed",
+        "products": 1
+      },
+      "products/umbrellas-rainwear-2d/umbrella-photo-custom-front.webp": {
+        "status": "unconfirmed",
+        "products": 1
+      },
+      "products/umbrellas-rainwear-2d/umbrella-photo-print-back.webp": {
+        "status": "unconfirmed",
+        "products": 1
+      },
+      "products/umbrellas-rainwear-2d/umbrella-photo-print-front.webp": {
+        "status": "unconfirmed",
+        "products": 1
+      },
+      "products/umbrellas-rainwear-2d/umbrella-promotional-back.webp": {
+        "status": "unconfirmed",
+        "products": 1
+      },
+      "products/umbrellas-rainwear-2d/umbrella-promotional-front.webp": {
+        "status": "unconfirmed",
+        "products": 1
+      },
+      "products/umbrellas-rainwear-2d/umbrella-single-fold-back.webp": {
+        "status": "unconfirmed",
+        "products": 1
+      },
+      "products/umbrellas-rainwear-2d/umbrella-single-fold-bulk-back.webp": {
+        "status": "unconfirmed",
+        "products": 1
+      },
+      "products/umbrellas-rainwear-2d/umbrella-single-fold-bulk-front.webp": {
+        "status": "unconfirmed",
+        "products": 1
+      },
+      "products/umbrellas-rainwear-2d/umbrella-single-fold-front.webp": {
+        "status": "unconfirmed",
+        "products": 1
+      },
+      "products/umbrellas-rainwear-2d/umbrella-three-fold-back.webp": {
+        "status": "unconfirmed",
+        "products": 1
+      },
+      "products/umbrellas-rainwear-2d/umbrella-three-fold-bulk-back.webp": {
+        "status": "unconfirmed",
+        "products": 1
+      },
+      "products/umbrellas-rainwear-2d/umbrella-three-fold-bulk-front.webp": {
+        "status": "unconfirmed",
+        "products": 1
+      },
+      "products/umbrellas-rainwear-2d/umbrella-three-fold-front.webp": {
+        "status": "unconfirmed",
+        "products": 1
+      },
+      "products/umbrellas-rainwear-2d/umbrella-three-fold-sun-back.webp": {
+        "status": "unconfirmed",
+        "products": 1
+      },
+      "products/umbrellas-rainwear-2d/umbrella-three-fold-sun-front.webp": {
+        "status": "unconfirmed",
+        "products": 1
+      },
+      "products/umbrellas-rainwear-2d/umbrella-two-fold-back.webp": {
+        "status": "unconfirmed",
+        "products": 1
+      },
+      "products/umbrellas-rainwear-2d/umbrella-two-fold-bulk-back.webp": {
+        "status": "unconfirmed",
+        "products": 1
+      },
+      "products/umbrellas-rainwear-2d/umbrella-two-fold-bulk-front.webp": {
+        "status": "unconfirmed",
+        "products": 1
+      },
+      "products/umbrellas-rainwear-2d/umbrella-two-fold-front.webp": {
+        "status": "unconfirmed",
+        "products": 1
+      },
+      "products/umbrellas-rainwear-2d/umbrella-two-fold-sun-back.webp": {
+        "status": "unconfirmed",
+        "products": 1
+      },
+      "products/umbrellas-rainwear-2d/umbrella-two-fold-sun-front.webp": {
+        "status": "unconfirmed",
+        "products": 1
+      },
+      "shirt_baked.glb": {
+        "status": "unconfirmed",
+        "products": 1
+      }
+    }
+  },
+  "missing": []
+}
