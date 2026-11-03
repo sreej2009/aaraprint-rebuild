@@ -19,6 +19,7 @@
  */
 import fs from 'node:fs/promises';
 import path from 'node:path';
+import { PRODUCT_TYPES, productTypeFor } from './product-types.mjs';
 
 const args = parseArgs(process.argv.slice(2));
 const ROOT = process.cwd();
@@ -93,11 +94,14 @@ async function main() {
     const prices = variants.map((v) => v.priceCents);
     const printConfig = printConfigs.configs?.[slug];
 
+    const productType = category ? productTypeFor(category.slug, slug) : null;
+    if (category && !productType) problems.push(`${slug}: no product type rule for ${category.slug}`);
     products.push({
       id: raw.productId,
       slug,
       name: raw.productName,
       categorySlug: category?.slug ?? null,
+      typeSlug: productType?.slug ?? null,
       shortDescription: raw.description ?? '',
       description: page.details || raw.description || '',
       isCustomizable: Boolean(raw.isCustomizable),
@@ -149,6 +153,9 @@ async function main() {
       const nav = navCategories.find((n) => n.slug === record.slug);
       const items = productsByCategory.get(record.slug) ?? [];
       const subTypes = subTypesByCategory.get(record.slug) ?? [];
+      const types = (PRODUCT_TYPES[record.slug] ?? [])
+        .map((rule) => ({ slug: rule.slug, name: rule.name, productCount: items.filter((p) => p.typeSlug === rule.slug).length }))
+        .filter((t) => t.productCount > 0);
       return {
         id: record.id,
         slug: record.slug,
@@ -159,7 +166,9 @@ async function main() {
         productCount: items.length,
         fromPriceCents: items.length ? Math.min(...items.map((p) => p.fromPriceCents)) : null,
         heroImage: record.hero_image_url ? toImage(record.hero_image_url, record.name) : null,
-        subTypes,
+        types,
+        /** Sub-type links found on the original site (most never filtered anything). */
+        legacySubTypes: subTypes,
         navGroups: (nav?.groups ?? []).map((group) => ({
           id: group.id,
           name: group.name,
@@ -173,6 +182,7 @@ async function main() {
     slug: p.slug,
     name: p.name,
     categorySlug: p.categorySlug,
+    typeSlug: p.typeSlug,
     shortDescription: p.shortDescription,
     fromPriceCents: p.fromPriceCents,
     toPriceCents: p.toPriceCents,
@@ -181,7 +191,8 @@ async function main() {
     isNew: p.isNew,
     image: p.images[0] ?? null,
     printCategory: p.print?.category ?? null,
-    optionGroupNames: p.optionGroups.map((g) => g.name),
+    /** Option values by group name, for listing filters. */
+    options: Object.fromEntries(p.optionGroups.map((g) => [g.name, g.values.map((v) => v.label)])),
   }));
 
   await fs.rm(path.join(OUT_PUBLIC, 'products'), { recursive: true, force: true });
@@ -200,6 +211,7 @@ async function main() {
       name: c.name,
       productCount: c.productCount,
       fromPriceCents: c.fromPriceCents,
+      types: c.types,
     })),
     true,
   );

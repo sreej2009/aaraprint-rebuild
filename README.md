@@ -4,7 +4,7 @@ A new storefront and Design Studio for Aaraprint — custom print and merchandis
 
 **Source of truth:** the four reports in this folder — `AARAPRINT_RECONNAISSANCE.md`, `AARAPRINT_UI_UX_BLUEPRINT.md`, `AARAPRINT_ASSET_INVENTORY.md`, `AARAPRINT_IMPLEMENTATION_PLAN.md`.
 
-**Status:** Phase 1 (Foundations) complete. See [Phase plan](#phases).
+**Status:** Phases 1 (Foundations) and 2 (Catalogue, product pages and content) complete. See [Phase plan](#phases) and the phase reports in `AARAPRINT_IMPLEMENTATION_PLAN.md` §17.
 
 ## Quick start
 
@@ -19,7 +19,7 @@ npm run preview        # serve the build with production routing rules (http://l
 npm run test:e2e       # Playwright + axe against the preview server (run `npm run build` first)
 ```
 
-Useful pages: `/` (interim home) and `/design-system` (tokens and every component, with live catalogue data).
+Useful pages: `/`, `/categories/view-all`, any `/categories/<slug>`, `/products/<slug>`, `/search?q=mug`, `/privacy`, and `/design-system` (tokens and components).
 
 ## Stack
 
@@ -40,16 +40,24 @@ Useful pages: `/` (interim home) and `/design-system` (tokens and every componen
 src/
   root.tsx                 document, fonts, providers, error boundary, loading fallback
   routes.ts                route map — mirrors the original site's URLs
-  routes/                  route modules (home, design-system, planned placeholders, 404, studio placeholder)
+  routes/                  route modules: home, category, product, search, content-page, faq, contact, credits,
+                           design-system, planned (Phase 6 placeholders), 404, studio placeholder
+  features/catalogue/      listing logic (filters, facets, sort, pages), search, product card/image, filter panel, listing view
+  features/product/        option selection & price display, gallery, purchase panel, details, print specs
+  components/content/      prose renderer for imported content blocks
+  config/business.ts       business details (support email, hours, shipping rules)
   design-system/           tokens.ts + ~30 components (Button, Field, OptionChips, QuantityTiers, Dialog, Sheet, Toast …)
   components/shell/        header, products menu, mobile menu, search, utility bar, footer, skip link
   components/docs/         sections of the /design-system reference page
-  lib/                     cn, INR formatting, contrast, media URLs, SEO meta, pricing, API client, catalogue types
+  lib/                     cn, INR formatting, contrast, media URLs, SEO meta, pricing, API client, catalogue types;
+                           *.server.ts = build-time data access (never bundled for the browser)
   data/generated/          slim navigation data bundled into the shell (generated)
   styles/                  app.css → Tailwind + fonts + theme.css (tokens) + base.css
 public/api/v1/catalogue/   mock catalogue API: categories, collections, 533 products (generated)
 scripts/
   catalogue/import-catalogue.mjs        builds the catalogue data from ../recovered (+ print configs)
+  catalogue/product-types.mjs           product-type rules used for the "Type" filter
+  content/import-content.mjs            converts the original content/policy pages into structured blocks
   recovery/recover-additional-assets.mjs downloads assets missing from ../recovered into ../recovered-additional
   serve-build.mjs                       production preview server (static-hosting rules)
 tooling/local-media.ts     serves /media/* from the recovered folders in dev/preview
@@ -58,7 +66,7 @@ e2e/                       Playwright specs (routing, navigation, keyboard, axe 
 
 ## Data and media
 
-- `npm run data:import` regenerates `public/api/v1/catalogue/**` and `src/data/generated/**` from `../recovered/pages` and `../recovered-additional/data/print-configs.json`. Generated files are committed so the app runs without the recovered folders.
+- `npm run data:import` regenerates `public/api/v1/catalogue/**` and `src/data/generated/navigation.json`; `npm run content:import` regenerates `src/data/generated/content/**`. Both read `../recovered` (and the print configs in `../recovered-additional`). Generated files are committed so the app runs without the recovered folders.
 - Media are referenced by path (e.g. `products/pens-2d/classic-front.png`) and resolved by `mediaUrl()`. In dev/preview `/media/*` is served from `../recovered-additional` then `../recovered` (override with `AARAPRINT_MEDIA_ROOTS`). In production set `VITE_MEDIA_BASE_URL` to the CDN.
 - `../recovered/` is read-only. Recovery scripts refuse to write inside it.
 
@@ -69,6 +77,7 @@ e2e/                       Playwright specs (routing, navigation, keyboard, axe 
 | `VITE_API_BASE_URL` | Catalogue API base | `/api/v1` (static mock) |
 | `VITE_MEDIA_BASE_URL` | Product media base | `/media` |
 | `VITE_SITE_URL` | Origin for canonical / Open Graph URLs | unset (tags omitted) |
+| `VITE_SUPPORT_EMAIL` | Support / grievance email shown on content pages | unset (links to /contact) |
 | `AARAPRINT_MEDIA_ROOTS` | Local media folders for dev/preview | `../recovered-additional;../recovered` |
 
 ## Deploying the build
@@ -93,9 +102,21 @@ e2e/                       Playwright specs (routing, navigation, keyboard, axe 
 | # | Phase | Status |
 |---|-------|--------|
 | 1 | Foundations — tokens, components, shell, routing + pre-rendering, data layer, tests, asset recovery | ✅ Done |
-| 2 | Catalogue, product pages and content pages | Next |
-| 3 | Design Studio core (flat products) | — |
+| 2 | Catalogue, product pages and content pages | ✅ Done |
+| 3 | Design Studio core (flat products) | Next |
 | 4 | Studio advanced (snapping, QR, preflight, apparel & wrap modes, mobile Studio) | — |
 | 5 | 3D previews and remaining product modes | — |
 | 6 | Cart, checkout (pay on delivery), accounts, tracking — needs backend | — |
 | 7 | Polish, performance, SEO and launch | — |
+
+## Test results (end of Phase 2)
+
+| Check | Result |
+|-------|--------|
+| `npm run lint` | clean |
+| `npm run typecheck` | clean |
+| `npm test` | 97 passed (11 files), including all 5,546 SKU prices |
+| `npm run build` | 555 pre-rendered pages |
+| `npm run test:e2e` | 112 passed, 10 skipped by design (desktop/mobile only), including axe WCAG 2.2 AA on 19 page types |
+
+Known limitations are listed in `AARAPRINT_IMPLEMENTATION_PLAN.md` §17.

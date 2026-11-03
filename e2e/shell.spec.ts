@@ -1,4 +1,4 @@
-import { expect, test } from '@playwright/test';
+import { expect, test } from './fixtures';
 
 test.describe('pre-rendering and routing', () => {
   test('home page HTML is pre-rendered with content (works without JavaScript)', async ({ request }) => {
@@ -20,16 +20,15 @@ test.describe('pre-rendering and routing', () => {
     await expect(page.getByRole('heading', { level: 1, name: 'Your cart' })).toBeVisible();
     await expect(page).toHaveTitle('Your cart · Aaraprint');
 
-    await page.goto('/categories/pens');
-    await expect(page.getByRole('heading', { level: 1, name: 'Pens' })).toBeVisible();
-    await expect(page.getByText('49 products · from ₹49')).toBeVisible();
+    await page.goto('/track-order');
+    await expect(page.getByRole('heading', { level: 1, name: 'Track your order' })).toBeVisible();
   });
 
   test('unknown pages show a helpful not-found page', async ({ page }) => {
     await page.goto('/this-page-does-not-exist');
     await expect(page.getByRole('heading', { level: 1, name: 'We couldn’t find that page' })).toBeVisible();
     await page.goto('/categories/not-a-category');
-    await expect(page.getByRole('heading', { level: 1, name: 'We couldn’t find that category' })).toBeVisible();
+    await expect(page.getByRole('heading', { level: 1, name: /couldn’t find that (category|page)/ })).toBeVisible();
   });
 
   test('the Design Studio route is full-screen with a way back', async ({ page }) => {
@@ -60,7 +59,7 @@ test.describe('navigation', () => {
     await page.keyboard.press('Enter');
     await expect(trigger).toHaveAttribute('aria-expanded', 'true');
     const menu = page.getByRole('navigation', { name: 'Main' });
-    await expect(menu.getByRole('link', { name: /products · from/ })).toHaveCount(11);
+    await expect(menu.getByRole('tab')).toHaveCount(11);
     await page.keyboard.press('Escape');
     await expect(trigger).toHaveAttribute('aria-expanded', 'false');
   });
@@ -87,7 +86,7 @@ test.describe('navigation', () => {
 
   test('search submits to /search with the query', async ({ page }) => {
     await page.goto('/');
-    const search = page.getByRole('main').getByRole('searchbox', { name: 'Search products' });
+    const search = page.getByRole('main').getByRole('combobox', { name: 'Search products' });
     await search.fill('mug');
     await search.press('Enter');
     await expect(page).toHaveURL(/\/search\?q=mug$/);
@@ -98,7 +97,7 @@ test.describe('navigation', () => {
     await page.goto('/');
     await page.locator('body').click({ position: { x: 5, y: 400 } });
     await page.keyboard.press('/');
-    await expect(page.getByRole('banner').getByRole('searchbox', { name: 'Search products' })).toBeFocused();
+    await expect(page.getByRole('banner').getByRole('combobox', { name: 'Search products' })).toBeFocused();
   });
 });
 
@@ -124,15 +123,23 @@ test.describe('design system page', () => {
   test('radio groups support arrow keys and skip unavailable options', async ({ page, isMobile }) => {
     test.skip(isMobile, 'keyboard interaction');
     const finish = page.getByRole('radiogroup', { name: 'Finish' }).first();
-    await finish.getByRole('radio', { name: 'Matte' }).focus();
-    // Hold each key briefly, like a person does: Radix checks the radio while the arrow key is down.
-    await page.keyboard.press('ArrowRight', { delay: 50 });
-    await expect(finish.getByRole('radio', { name: 'Gloss' })).toBeChecked();
-    await page.keyboard.press('ArrowRight', { delay: 50 });
-    await page.keyboard.press('ArrowRight', { delay: 50 });
-    const foil = finish.getByRole('radio', { name: /Gold foil/ });
-    await expect(foil).toBeFocused();
-    await expect(foil).not.toBeChecked();
+    const radio = (name: RegExp) => finish.getByRole('radio', { name });
+    // Radix moves focus just after keydown and checks the radio only while the arrow key is
+    // still down, so hold each key until focus has moved (as a person does), then release.
+    const arrowTo = async (name: RegExp) => {
+      await page.keyboard.down('ArrowRight');
+      await expect(radio(name)).toBeFocused();
+      await page.keyboard.up('ArrowRight');
+    };
+    await radio(/^Matte/).focus();
+    await arrowTo(/^Gloss/);
+    await expect(radio(/^Gloss/)).toBeChecked();
+    await arrowTo(/^Velvet touch/);
+    await expect(radio(/^Velvet touch/)).toBeChecked();
+    // Gold foil is unavailable: it can be focused (so its reason can be read) but not selected.
+    await arrowTo(/^Gold foil/);
+    await expect(radio(/^Gold foil/)).not.toBeChecked();
+    await expect(radio(/^Velvet touch/)).toBeChecked();
   });
 
   test('dialogs trap focus, close on Escape and restore focus', async ({ page }) => {

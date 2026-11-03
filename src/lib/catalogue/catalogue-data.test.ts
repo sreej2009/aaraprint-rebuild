@@ -54,6 +54,14 @@ describe('catalogue data', () => {
     }
   });
 
+  it('gives every product a type, and type counts add up to the category', () => {
+    for (const category of categories) {
+      const items = products.filter((p) => p.categorySlug === category.slug);
+      expect(items.every((p) => category.types.some((t) => t.slug === p.typeSlug)), category.slug).toBe(true);
+      expect(category.types.reduce((n, t) => n + t.productCount, 0), category.slug).toBe(category.productCount);
+    }
+  });
+
   it('has a print configuration for every customisable product', () => {
     const missing = products.filter((p) => p.isCustomizable && !p.print).map((p) => p.slug);
     expect(missing).toEqual([]);

@@ -1,14 +1,26 @@
+import fs from 'node:fs';
 import type { Config } from '@react-router/dev/config';
 
 /**
- * Public, indexable pages rendered to static HTML at build time.
- * Phase 2 adds every `/categories/:slug` and `/products/:slug` path from the catalogue data.
- * Everything else (Studio, cart, checkout, account) is served by the SPA fallback.
+ * Public, indexable pages rendered to static HTML at build time: home, content pages,
+ * every category (plus /categories/view-all) and all product pages, from the catalogue data.
+ * Everything else (search, Studio, cart, checkout, account) is served by the SPA fallback.
  */
-const prerenderPaths = ['/', '/about', '/contact', '/faq', '/shipping', '/refund-policy', '/privacy', '/terms', '/credits'];
+const catalogue = (file: string) => JSON.parse(fs.readFileSync(`public/api/v1/catalogue/${file}`, 'utf8')) as { slug: string }[];
+
+const contentPaths = ['/about', '/contact', '/faq', '/shipping', '/refund-policy', '/privacy', '/terms', '/credits'];
 
 export default {
   appDirectory: 'src',
   ssr: false,
-  prerender: prerenderPaths,
+  prerender: {
+    paths: async () => [
+      '/',
+      ...contentPaths,
+      '/categories/view-all',
+      ...catalogue('categories.json').map((c) => `/categories/${c.slug}`),
+      ...catalogue('products.json').map((p) => `/products/${p.slug}`),
+    ],
+    concurrency: 4,
+  },
 } satisfies Config;

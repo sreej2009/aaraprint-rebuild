@@ -1,0 +1,41 @@
+{
+  "slug": "about",
+  "eyebrow": null,
+  "title": "We make print feel personal again.",
+  "updated": null,
+  "intro": [],
+  "summary": null,
+  "sections": [
+    {
+      "id": null,
+      "title": null,
+      "blocks": [
+        {
+          "type": "p",
+          "content": [
+            {
+              "text": "Aaraprint started with a simple frustration: ordering custom print and merch online usually meant clunky uploaders, vague previews, and a week of guessing whether your order would look right. We built Aaraprint to fix that — a storefront where you can design, preview, and order business cards, signage, apparel, and gifts with total confidence."
+            }
+          ]
+        },
+        {
+          "type": "p",
+          "content": [
+            {
+              "text": "Every product on Aaraprint is built around our live design studio, so what you see on screen is what arrives at your door. We work with a network of print partners across India to keep turnaround fast without cutting corners on quality."
+            }
+          ]
+        },
+        {
+          "type": "p",
+          "content": [
+            {
+              "text": "We're a small team obsessed with the details — paper stock, color accuracy, packaging, and the little things that make a printed piece feel like it was made just for you."
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "toc": false
+}

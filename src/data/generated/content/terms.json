@@ -1,0 +1,632 @@
+{
+  "slug": "terms",
+  "eyebrow": "Terms of Service",
+  "title": "Clear terms, no surprises.",
+  "updated": {
+    "iso": "2026-10-29",
+    "label": "29 October 2026"
+  },
+  "intro": [
+    [
+      {
+        "text": "These terms cover browsing Aaraprint, designing in the studio and ordering from us. Please read them before you place an order."
+      }
+    ]
+  ],
+  "summary": {
+    "title": "The short version",
+    "items": [
+      {
+        "title": "You approve, we print",
+        "text": [
+          {
+            "text": "We print your design exactly as you approve it, so check text, spelling and images first."
+          }
+        ]
+      },
+      {
+        "title": "Your artwork stays yours",
+        "text": [
+          {
+            "text": "You keep the rights to your designs, and you must own or have permission to use what you upload."
+          }
+        ]
+      },
+      {
+        "title": "Upfront pricing",
+        "text": [
+          {
+            "text": "Prices are in rupees. GST and shipping are shown before you place an order."
+          }
+        ]
+      },
+      {
+        "title": "Your consumer rights stay",
+        "text": [
+          {
+            "text": "These terms never reduce your rights under the Consumer Protection Act, 2019."
+          }
+        ]
+      }
+    ],
+    "note": [
+      {
+        "text": "This summary is here to help. The full policy below is what applies."
+      }
+    ]
+  },
+  "sections": [
+    {
+      "id": "about",
+      "title": "About these terms",
+      "blocks": [
+        {
+          "type": "p",
+          "content": [
+            {
+              "text": "These Terms of Service are an agreement between you and Aaraprint (“we”, “us”) for using this website and buying from it. They work together with our "
+            },
+            {
+              "text": "Privacy Policy",
+              "href": "/privacy"
+            },
+            {
+              "text": ", "
+            },
+            {
+              "text": "Refund & Cancellation Policy",
+              "href": "/refund-policy"
+            },
+            {
+              "text": " and "
+            },
+            {
+              "text": "Shipping & Returns",
+              "href": "/shipping"
+            },
+            {
+              "text": " page."
+            }
+          ]
+        },
+        {
+          "type": "p",
+          "content": [
+            {
+              "text": "By using the site, creating an account or placing an order, you accept these terms. If you don't agree with them, please don't use Aaraprint."
+            }
+          ]
+        },
+        {
+          "type": "p",
+          "content": [
+            {
+              "text": "These terms are an electronic record under the Information Technology Act, 2000 and the rules made under it, so they don't need a physical or digital signature."
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "accounts",
+      "title": "Accounts and eligibility",
+      "blocks": [
+        {
+          "type": "ul",
+          "items": [
+            [
+              {
+                "text": "You must be 18 or older and able to enter a binding contract under the Indian Contract Act, 1872. If you're under 18, a parent or guardian must place the order for you."
+              }
+            ],
+            [
+              {
+                "text": "You can order as a guest or with an account. Either way, the details you give us must be accurate, and either your own or those of someone who has agreed to share them."
+              }
+            ],
+            [
+              {
+                "text": "Keep your password private. You're responsible for what happens in your account, so tell us straight away if you think someone else has used it."
+              }
+            ],
+            [
+              {
+                "text": "We may suspend or close accounts used for fraud, abuse or anything else that breaks these terms."
+              }
+            ]
+          ]
+        }
+      ]
+    },
+    {
+      "id": "orders",
+      "title": "Orders and pricing",
+      "blocks": [
+        {
+          "type": "ul",
+          "items": [
+            [
+              {
+                "text": "Product photos, mock-ups and 3D previews show how your item will look, but they're illustrations. The finished product can differ slightly (see "
+              },
+              {
+                "text": "Print quality and colours",
+                "href": "#print-quality"
+              },
+              {
+                "text": ")."
+              }
+            ],
+            [
+              {
+                "text": "Prices are in Indian Rupees. GST (currently 5%) and shipping are added at checkout. Shipping is a flat ₹99 per order, and free when your subtotal is ₹1,999 or more. Before you confirm, checkout shows the full breakup (items, discount, shipping, GST) and the total you pay, with no hidden charges."
+              }
+            ],
+            [
+              {
+                "text": "All our products are printed and made in India (country of origin: India)."
+              }
+            ],
+            [
+              {
+                "text": "Placing an order is an offer to buy. The contract is formed when we confirm your order on the confirmation page and by email. For online payments, that happens once your payment succeeds."
+              }
+            ],
+            [
+              {
+                "text": "We may cancel an order, with a full refund of anything you've paid, if an item is unavailable, a price was clearly wrong, your file can't be printed to an acceptable standard, the order looks fraudulent, or its content breaks these terms."
+              }
+            ],
+            [
+              {
+                "text": "Discount codes have their own conditions, such as a minimum order value, an expiry date or a limit on uses per customer. One code can be used per order, and codes can't be exchanged for cash."
+              }
+            ]
+          ]
+        }
+      ]
+    },
+    {
+      "id": "payment",
+      "title": "Payment",
+      "blocks": [
+        {
+          "type": "ul",
+          "items": [
+            [
+              {
+                "text": "Pay on delivery:",
+                "strong": true
+              },
+              {
+                "text": " pay the courier when your order arrives. Nothing is charged online."
+              }
+            ],
+            [
+              {
+                "text": "Pay online:",
+                "strong": true
+              },
+              {
+                "text": " where available, pay securely through Razorpay by UPI, card or netbanking. Your order is confirmed once the payment is verified."
+              }
+            ],
+            [
+              {
+                "text": "We never see or store your card or bank details. Razorpay handles them under its own terms."
+              }
+            ]
+          ]
+        }
+      ]
+    },
+    {
+      "id": "your-designs",
+      "title": "Your designs and uploads",
+      "blocks": [
+        {
+          "type": "p",
+          "content": [
+            {
+              "text": "You keep ownership of the designs and images you create or upload. You give us a limited permission to store, copy, resize and adjust them only as needed to show you previews, print and deliver your order, and handle any reprint. We won't use your designs in our marketing without asking you first."
+            }
+          ]
+        },
+        {
+          "type": "p",
+          "content": [
+            {
+              "text": "When you upload or order a design, you confirm that you own it or have permission to use it, including any logos, trademarks, artwork, fonts and photos of people. You must not upload or order designs that:"
+            }
+          ]
+        },
+        {
+          "type": "ul",
+          "items": [
+            [
+              {
+                "text": "copy someone else's copyright or trademark without permission, including counterfeit brand logos;"
+              }
+            ],
+            [
+              {
+                "text": "are unlawful, defamatory, obscene, hateful or harassing, or encourage violence or discrimination;"
+              }
+            ],
+            [
+              {
+                "text": "show someone's photo or personal details without their consent;"
+              }
+            ],
+            [
+              {
+                "text": "reproduce currency notes, government ID cards, or official government seals and emblems."
+              }
+            ]
+          ]
+        },
+        {
+          "type": "p",
+          "content": [
+            {
+              "text": "We may refuse or cancel an order that breaks these rules, with a refund, and report it where the law requires. If someone makes a claim against us because of content you supplied, you agree to cover the losses that result."
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "print-quality",
+      "title": "Print quality and colours",
+      "blocks": [
+        {
+          "type": "ul",
+          "items": [
+            [
+              {
+                "text": "You approve the design.",
+                "strong": true
+              },
+              {
+                "text": " We print what you approve in the studio. Check spelling, phone numbers, dates and layout carefully: we can't refund mistakes in an approved design."
+              }
+            ],
+            [
+              {
+                "text": "We check it before printing.",
+                "strong": true
+              },
+              {
+                "text": " Our team looks over every custom design after you order. If something looks wrong, such as text cut off at an edge, a blurry image or a sample placeholder left in, we'll email you and hold the order until it's sorted. This check isn't a full proofread, so the design you approve is still your responsibility."
+              }
+            ],
+            [
+              {
+                "text": "Screen and print differ.",
+                "strong": true
+              },
+              {
+                "text": " Screens show colour differently from ink on paper, fabric or other materials, so small differences in shade are normal and aren't a defect."
+              }
+            ],
+            [
+              {
+                "text": "Image quality matters.",
+                "strong": true
+              },
+              {
+                "text": " Low-resolution images can print blurry. For sharp results, upload artwork at 300 DPI or higher at its final size."
+              }
+            ],
+            [
+              {
+                "text": "Some variation is natural.",
+                "strong": true
+              },
+              {
+                "text": " Slight differences in trimming position, material texture and colour between print runs are part of the printing process."
+              }
+            ]
+          ]
+        }
+      ]
+    },
+    {
+      "id": "delivery",
+      "title": "Shipping and delivery",
+      "blocks": [
+        {
+          "type": "p",
+          "content": [
+            {
+              "text": "We deliver within India only. See "
+            },
+            {
+              "text": "Shipping & Returns",
+              "href": "/shipping"
+            },
+            {
+              "text": " for current delivery timelines. Responsibility for an order passes to you once it's delivered to the address you gave us."
+            }
+          ]
+        },
+        {
+          "type": "p",
+          "content": [
+            {
+              "text": "If your order arrives later than the delivery time we gave you, for reasons within our control, you can return it for a full refund, as set out in our "
+            },
+            {
+              "text": "Refund & Cancellation Policy",
+              "href": "/refund-policy"
+            },
+            {
+              "text": ". Delays caused by events outside our control are covered under "
+            },
+            {
+              "text": "Events beyond our control",
+              "href": "#beyond-our-control"
+            },
+            {
+              "text": "."
+            }
+          ]
+        },
+        {
+          "type": "p",
+          "content": [
+            {
+              "text": "If an order comes back to us because the address or phone number you gave was incomplete or wrong, or because the delivery was refused, we'll contact you to arrange redelivery, which is charged as a new shipment. Because the item was printed for you, it can't be refunded."
+            }
+          ]
+        },
+        {
+          "type": "p",
+          "content": [
+            {
+              "text": "Please check your order when it arrives. If it's damaged or wrong, tell us within 7 days of delivery, as explained in our "
+            },
+            {
+              "text": "Refund & Cancellation Policy",
+              "href": "/refund-policy"
+            },
+            {
+              "text": "."
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "cancellations",
+      "title": "Cancellations and refunds",
+      "blocks": [
+        {
+          "type": "p",
+          "content": [
+            {
+              "text": "Because items are printed to order, you can cancel only before printing starts, and we don't accept change-of-mind returns. We never charge a fee for cancelling. Damaged, misprinted, wrong, not-as-described or late items are reprinted or refunded. The full rules are in our "
+            },
+            {
+              "text": "Refund & Cancellation Policy",
+              "href": "/refund-policy"
+            },
+            {
+              "text": ", which forms part of these terms."
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "our-content",
+      "title": "Our content",
+      "blocks": [
+        {
+          "type": "p",
+          "content": [
+            {
+              "text": "The Aaraprint name and logo, this website, the design studio, and our templates, graphics and product photos belong to us or to people who have licensed them to us (see "
+            },
+            {
+              "text": "Credits",
+              "href": "/credits"
+            },
+            {
+              "text": "). You may use our templates and studio graphics only to design products you order from Aaraprint. Please don't copy, resell or scrape any of it."
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "fair-use",
+      "title": "Using the site fairly",
+      "blocks": [
+        {
+          "type": "p",
+          "content": [
+            {
+              "text": "Please don't:"
+            }
+          ]
+        },
+        {
+          "type": "ul",
+          "items": [
+            [
+              {
+                "text": "try to get into accounts, systems or data that aren't yours, or disrupt the site;"
+              }
+            ],
+            [
+              {
+                "text": "use bots or scrapers to copy content or prices;"
+              }
+            ],
+            [
+              {
+                "text": "place fake orders, misuse discount codes, or give someone else's details without their permission."
+              }
+            ]
+          ]
+        }
+      ]
+    },
+    {
+      "id": "beyond-our-control",
+      "title": "Events beyond our control",
+      "blocks": [
+        {
+          "type": "p",
+          "content": [
+            {
+              "text": "We aren't responsible for delays or failures caused by events we can't reasonably control, such as natural disasters, floods, epidemics, strikes, government orders, or courier and internet outages. If one of these affects your order, we'll tell you and deliver as soon as we can. While the delay continues, you can cancel any order that hasn't shipped yet for a full refund."
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "liability",
+      "title": "Our responsibility to you",
+      "blocks": [
+        {
+          "type": "p",
+          "content": [
+            {
+              "text": "We make and deliver your order with reasonable care and skill. If something goes wrong because of us, we reprint the item or refund it, as set out in our "
+            },
+            {
+              "text": "Refund & Cancellation Policy",
+              "href": "/refund-policy"
+            },
+            {
+              "text": "."
+            }
+          ]
+        },
+        {
+          "type": "p",
+          "content": [
+            {
+              "text": "As far as the law allows, our total liability for any order is limited to the amount you paid for it, and we aren't liable for indirect losses, such as lost profits or an event that went ahead without your printed items. Please order time-sensitive items, like invitations, with enough time for printing and delivery."
+            }
+          ]
+        },
+        {
+          "type": "p",
+          "content": [
+            {
+              "text": "Nothing in these terms limits your rights as a consumer under the Consumer Protection Act, 2019, or any liability that the law doesn't allow us to limit."
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "disputes",
+      "title": "Governing law and disputes",
+      "blocks": [
+        {
+          "type": "p",
+          "content": [
+            {
+              "text": "These terms are governed by the laws of India. If you have a problem, please contact us first: most issues are fixed quickly. If it isn't resolved, you can write to our Grievance Officer (details below) or contact the National Consumer Helpline on 1915 or at "
+            },
+            {
+              "text": "consumerhelpline.gov.in",
+              "href": "https://consumerhelpline.gov.in"
+            },
+            {
+              "text": ". You can also file a consumer complaint online through the government's e-Daakhil portal at "
+            },
+            {
+              "text": "edaakhil.nic.in",
+              "href": "https://edaakhil.nic.in"
+            },
+            {
+              "text": "."
+            }
+          ]
+        },
+        {
+          "type": "p",
+          "content": [
+            {
+              "text": "Subject to your rights as a consumer, the competent courts in India have jurisdiction over any dispute about these terms or your orders."
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "changes",
+      "title": "Changes to these terms",
+      "blocks": [
+        {
+          "type": "p",
+          "content": [
+            {
+              "text": "We may update these terms from time to time, and the “Last updated” date at the top shows when. Changes apply to orders placed from that date. Orders you've already placed stay under the terms that applied when you placed them."
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "contact",
+      "title": "Contact us",
+      "blocks": [
+        {
+          "type": "p",
+          "content": [
+            {
+              "text": "Questions about these terms? Get in touch and a real person will reply within one business day."
+            }
+          ]
+        },
+        {
+          "type": "dl",
+          "items": [
+            {
+              "term": "Business",
+              "details": [
+                {
+                  "text": "Aaraprint"
+                }
+              ]
+            },
+            {
+              "term": "Customer support",
+              "details": [
+                {
+                  "type": "support-email",
+                  "text": ""
+                }
+              ]
+            },
+            {
+              "term": "Grievance Officer",
+              "details": [
+                {
+                  "type": "support-email",
+                  "text": ""
+                }
+              ]
+            },
+            {
+              "term": "Hours",
+              "details": [
+                {
+                  "text": "Monday to Saturday, 10am–7pm IST"
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "toc": true
+}

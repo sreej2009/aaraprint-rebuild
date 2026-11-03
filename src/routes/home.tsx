@@ -2,12 +2,25 @@ import { ArrowRight, CircleCheck, ImagePlus, Palette, PenTool, Truck, Type, Uplo
 import { Link } from 'react-router';
 import { CategoryIcon, HeaderSearch } from '@/components/shell';
 import { Badge, Button, Card } from '@/design-system';
+import { ProductCard } from '@/features/catalogue/product-card';
+import { getProductSummaries } from '@/lib/catalogue/catalogue.server';
 import { categories, categoryHref } from '@/lib/catalogue/navigation';
 import { formatINR, pluralize } from '@/lib/format';
 import { seo } from '@/lib/seo';
 import type { Route } from './+types/home';
 
 export const meta: Route.MetaFunction = () => seo({ path: '/' });
+
+/** Bestsellers with real product imagery, chosen at build time. */
+export async function loader() {
+  const summaries = await getProductSummaries();
+  const seen = new Set<string>();
+  const bestsellers = summaries
+    .filter((p) => p.isFeatured && p.image && p.image.kind !== 'stock')
+    .filter((p) => (seen.has(p.categorySlug ?? '') ? false : (seen.add(p.categorySlug ?? ''), true)))
+    .slice(0, 8);
+  return { bestsellers };
+}
 
 const totalProducts = categories.reduce((sum, c) => sum + c.productCount, 0);
 
@@ -17,7 +30,7 @@ const steps = [
   { Icon: Truck, title: 'We print and deliver', text: 'Every file is checked before printing. Pay on delivery anywhere in India.' },
 ];
 
-export default function Home() {
+export default function Home({ loaderData }: Route.ComponentProps) {
   return (
     <>
       <section className="border-b border-border bg-linear-to-b from-surface to-surface-subtle">
@@ -83,6 +96,31 @@ export default function Home() {
           ))}
         </ul>
       </section>
+
+      {loaderData.bestsellers.length > 0 && (
+        <section aria-labelledby="bestsellers-heading" className="border-t border-border">
+          <div className="container-page py-14 md:py-20">
+            <div className="mb-8 flex flex-wrap items-baseline justify-between gap-3">
+              <div className="flex flex-col gap-2">
+                <h2 id="bestsellers-heading" className="text-h2 font-bold text-fg">
+                  Bestsellers
+                </h2>
+                <p className="text-body text-fg-muted">Popular picks from across the catalogue.</p>
+              </div>
+              <Link to="/categories/view-all?show=bestsellers" className="inline-flex items-center gap-1 text-body-sm font-semibold text-accent-strong hover:underline">
+                All bestsellers <ArrowRight aria-hidden="true" className="size-4" />
+              </Link>
+            </div>
+            <ul className="grid grid-cols-2 gap-x-4 gap-y-8 md:grid-cols-4">
+              {loaderData.bestsellers.map((product) => (
+                <li key={product.slug}>
+                  <ProductCard product={product} />
+                </li>
+              ))}
+            </ul>
+          </div>
+        </section>
+      )}
 
       <section aria-labelledby="how-heading" className="border-t border-border bg-surface-subtle">
         <div className="container-page py-14 md:py-20">

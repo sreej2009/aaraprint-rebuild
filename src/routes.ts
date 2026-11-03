@@ -6,15 +6,26 @@ import { type RouteConfig, index, layout, prefix, route } from '@react-router/de
  * shared `planned` module; each gets a stable route id used for its copy.
  */
 const planned = (path: string, id: string) => route(path, 'routes/planned.tsx', { id });
+const content = (path: string) => route(path, 'routes/content-page.tsx', { id: `content-${path}` });
 
 export default [
   layout('routes/storefront-layout.tsx', [
     index('routes/home.tsx'),
 
-    // Catalogue — Phase 2
-    planned('categories/:categorySlug', 'category'),
-    planned('products/:productSlug', 'product'),
-    planned('search', 'search'),
+    // Catalogue — Phase 2 (`/categories/view-all` lists every product)
+    route('categories/:categorySlug', 'routes/category.tsx'),
+    route('products/:productSlug', 'routes/product.tsx'),
+    route('search', 'routes/search.tsx'),
+
+    // Content — Phase 2
+    content('about'),
+    content('shipping'),
+    content('refund-policy'),
+    content('privacy'),
+    content('terms'),
+    route('faq', 'routes/faq.tsx'),
+    route('contact', 'routes/contact.tsx'),
+    route('credits', 'routes/credits.tsx'),
 
     // Commerce — Phase 6
     planned('cart', 'cart'),
@@ -30,16 +41,6 @@ export default [
     planned('login', 'login'),
     planned('signup', 'signup'),
     planned('forgot-password', 'forgot-password'),
-
-    // Content — Phase 2
-    planned('about', 'about'),
-    planned('contact', 'contact'),
-    planned('faq', 'faq'),
-    planned('shipping', 'shipping'),
-    planned('refund-policy', 'refund-policy'),
-    planned('privacy', 'privacy'),
-    planned('terms', 'terms'),
-    planned('credits', 'credits'),
 
     // Internal component reference (noindex)
     route('design-system', 'routes/design-system.tsx'),

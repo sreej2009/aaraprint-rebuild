@@ -13,11 +13,18 @@ export interface ProductImage {
   alt: string;
 }
 
+export interface ProductType {
+  slug: string;
+  name: string;
+  productCount: number;
+}
+
 export interface CategorySummary {
   slug: string;
   name: string;
   productCount: number;
   fromPriceCents: number | null;
+  types: ProductType[];
 }
 
 export interface NavItem {
@@ -38,7 +45,8 @@ export interface Category extends CategorySummary {
   sortOrder: number;
   isFeatured: boolean;
   heroImage: ProductImage | null;
-  subTypes: { slug: string; name: string }[];
+  /** Sub-type links from the original site (kept for reference; `types` drives filtering). */
+  legacySubTypes: { slug: string; name: string }[];
   navGroups: NavGroup[];
 }
 
@@ -97,6 +105,8 @@ export interface ProductSummary {
   slug: string;
   name: string;
   categorySlug: string | null;
+  /** Product type within the category (see scripts/catalogue/product-types.mjs). */
+  typeSlug: string | null;
   shortDescription: string;
   fromPriceCents: number;
   toPriceCents: number;
@@ -105,10 +115,11 @@ export interface ProductSummary {
   isNew: boolean;
   image: ProductImage | null;
   printCategory: PrintCategory | null;
-  optionGroupNames: string[];
+  /** Option value labels by group name, e.g. { Colour: ['White', 'Navy'] }. */
+  options: Record<string, string[]>;
 }
 
-export interface Product extends Omit<ProductSummary, 'image' | 'optionGroupNames'> {
+export interface Product extends Omit<ProductSummary, 'image' | 'options'> {
   description: string;
   basePriceCents: number;
   freeShippingThresholdCents: number | null;

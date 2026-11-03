@@ -3,10 +3,16 @@ import { test } from '@playwright/test';
 /** Full-page screenshots of key pages for design review (not assertions). Run with SCREENSHOTS=1. */
 const pages = [
   { name: 'home', path: '/' },
+  { name: 'category', path: '/categories/clothing-caps-bags' },
+  { name: 'category-filtered', path: '/categories/custom-polo-t-shirts?colour=navy&sort=price-asc' },
+  { name: 'product-cards', path: '/products/business-card-classic' },
+  { name: 'product-polo', path: '/products/apparel-polo-classic' },
+  { name: 'product-bottle', path: '/products/drinkware-bottle-cello-swift' },
+  { name: 'search', path: '/search?q=mug' },
+  { name: 'privacy', path: '/privacy' },
+  { name: 'faq', path: '/faq' },
+  { name: 'contact', path: '/contact' },
   { name: 'design-system', path: '/design-system', ready: 'text=Live data: Classic Visiting Cards' },
-  { name: 'category-planned', path: '/categories/visiting-cards' },
-  { name: 'not-found', path: '/no-such-page' },
-  { name: 'studio-planned', path: '/products/business-card-classic/design' },
 ];
 
 for (const { name, path, ready } of pages) {
@@ -23,26 +29,25 @@ test('screenshot products menu (desktop)', async ({ page, isMobile }, testInfo) 
   test.skip(isMobile, 'desktop navigation only');
   await page.goto('/');
   await page.getByRole('button', { name: 'Products' }).click();
-  await page.getByRole('link', { name: /Visiting Cards/ }).first().waitFor();
+  await page.getByRole('tab', { name: 'Drinkware' }).hover();
+  await page.waitForTimeout(600);
   await page.screenshot({ path: `review-screens/${testInfo.project.name}-products-menu.png` });
 });
 
-test('screenshot mobile menu', async ({ page, isMobile }, testInfo) => {
-  test.skip(!isMobile, 'mobile navigation only');
+test('screenshot search suggestions', async ({ page }, testInfo) => {
   await page.goto('/');
-  await page.getByRole('button', { name: 'Open menu' }).click();
-  await page.getByRole('dialog', { name: 'Menu' }).waitFor();
-  await page.waitForTimeout(400);
-  await page.screenshot({ path: `review-screens/${testInfo.project.name}-menu.png` });
+  const box = page.getByRole('combobox', { name: 'Search products' }).first();
+  await box.click();
+  await box.fill('bottle');
+  await page.getByRole('option').first().waitFor();
+  await page.screenshot({ path: `review-screens/${testInfo.project.name}-suggestions.png` });
 });
 
-test('screenshot design-system sections', async ({ page, isMobile }, testInfo) => {
-  test.skip(isMobile, 'desktop sections only');
-  await page.goto('/design-system');
-  await page.getByText('Live data: Classic Visiting Cards').waitFor();
-  await page.waitForLoadState('networkidle');
-  for (const id of ['colour', 'typography', 'buttons', 'forms', 'options', 'feedback', 'overlays', 'navigation']) {
-    await page.locator(`#${id}`).screenshot({ path: `review-screens/section-${id}.png` });
-  }
-  void testInfo;
+test('screenshot mobile filters', async ({ page, isMobile }, testInfo) => {
+  test.skip(!isMobile, 'mobile only');
+  await page.goto('/categories/drinkware');
+  await page.getByRole('button', { name: /Filters/ }).click();
+  await page.getByRole('dialog', { name: 'Filters' }).waitFor();
+  await page.waitForTimeout(400);
+  await page.screenshot({ path: `review-screens/${testInfo.project.name}-filters.png` });
 });

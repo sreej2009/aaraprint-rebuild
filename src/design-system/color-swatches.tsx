@@ -7,6 +7,8 @@ import { ChoiceGroupFrame, ChoiceItem, type ChoiceGroupBaseProps, type ChoiceOpt
 export interface ColorOption extends ChoiceOption {
   /** #rrggbb */
   hex: string;
+  /** Optional second colour for two-tone products, shown as a diagonal split. */
+  secondHex?: string;
 }
 
 export type ColorSwatchesProps = ChoiceGroupBaseProps<ColorOption>;
@@ -33,7 +35,9 @@ export function ColorSwatches(props: ColorSwatchesProps) {
                   'relative grid size-8 place-items-center overflow-hidden rounded-full border',
                   light ? 'border-border-strong' : 'border-transparent',
                 )}
-                style={{ backgroundColor: option.hex }}
+                style={{
+                  background: option.secondHex ? `linear-gradient(135deg, ${option.hex} 50%, ${option.secondHex} 50%)` : option.hex,
+                }}
               >
                 <Check
                   aria-hidden="true"

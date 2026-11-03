@@ -1,0 +1,513 @@
+{
+  "slug": "refund-policy",
+  "eyebrow": "Refund & Cancellation",
+  "title": "If it's not right, we'll make it right.",
+  "updated": {
+    "iso": "2026-10-29",
+    "label": "29 October 2026"
+  },
+  "intro": [
+    [
+      {
+        "text": "Everything on Aaraprint is printed just for you. Here's when you can cancel, what we do if an order arrives damaged, wrong or late, and how refunds work."
+      }
+    ]
+  ],
+  "summary": {
+    "title": "The short version",
+    "items": [
+      {
+        "title": "Cancel before printing",
+        "text": [
+          {
+            "text": "Cancel while your order is still “Confirmed”, before printing starts. We never charge a cancellation fee."
+          }
+        ]
+      },
+      {
+        "title": "Damaged, wrong or late? We fix it",
+        "text": [
+          {
+            "text": "Tell us within 7 days of delivery and we'll reprint it free, or refund you in full."
+          }
+        ]
+      },
+      {
+        "title": "No change-of-mind returns",
+        "text": [
+          {
+            "text": "Each item is made to your design, so we can't take back orders printed correctly."
+          }
+        ]
+      },
+      {
+        "title": "Refunds go where you paid",
+        "text": [
+          {
+            "text": "Online payments go back to the original UPI, card or bank account."
+          }
+        ]
+      }
+    ],
+    "note": [
+      {
+        "text": "This summary is here to help. The full policy below is what applies."
+      }
+    ]
+  },
+  "sections": [
+    {
+      "id": "overview",
+      "title": "How this policy works",
+      "blocks": [
+        {
+          "type": "p",
+          "content": [
+            {
+              "text": "This policy applies to every order placed on Aaraprint and forms part of our "
+            },
+            {
+              "text": "Terms of Service",
+              "href": "/terms"
+            },
+            {
+              "text": ". Each item is printed to your design, so it can't be resold if you change your mind. That's why cancellations are possible only until printing starts, and why we always put it right if we get something wrong."
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "cancelling",
+      "title": "Cancelling an order",
+      "blocks": [
+        {
+          "type": "table",
+          "head": [
+            "Order status",
+            "Can you cancel?"
+          ],
+          "rows": [
+            [
+              [
+                {
+                  "text": "Awaiting payment"
+                }
+              ],
+              [
+                {
+                  "text": "Nothing to cancel: the order isn't confirmed or printed until your online payment succeeds."
+                }
+              ]
+            ],
+            [
+              [
+                {
+                  "text": "Confirmed"
+                }
+              ],
+              [
+                {
+                  "text": "Yes, free of charge."
+                }
+              ]
+            ],
+            [
+              [
+                {
+                  "text": "Processing"
+                }
+              ],
+              [
+                {
+                  "text": "Usually not, because printing has started. Contact us straight away and we'll see what we can do."
+                }
+              ]
+            ],
+            [
+              [
+                {
+                  "text": "Shipped or Delivered"
+                }
+              ],
+              [
+                {
+                  "text": "No. If something is wrong with the item, or it arrived late, see “Damaged, wrong, late or not-as-described items” below."
+                }
+              ]
+            ]
+          ]
+        },
+        {
+          "type": "p",
+          "content": [
+            {
+              "text": "How to cancel:",
+              "strong": true
+            }
+          ]
+        },
+        {
+          "type": "ul",
+          "items": [
+            [
+              {
+                "text": "Pay on delivery, with an account:",
+                "strong": true
+              },
+              {
+                "text": " open the order in "
+              },
+              {
+                "text": "your orders",
+                "href": "/account/orders"
+              },
+              {
+                "text": " and choose “Cancel order”. It's cancelled straight away and we email you a confirmation."
+              }
+            ],
+            [
+              {
+                "text": "Paid online, or a guest order:",
+                "strong": true
+              },
+              {
+                "text": " email "
+              },
+              {
+                "type": "support-email",
+                "text": ""
+              },
+              {
+                "text": " with your order number. Within one business day we confirm whether it can still be cancelled. If printing hasn't started, we cancel it and refund any online payment in full."
+              }
+            ]
+          ]
+        },
+        {
+          "type": "p",
+          "content": [
+            {
+              "text": "No cancellation fees.",
+              "strong": true
+            },
+            {
+              "text": " Cancelling is always free. When we cancel an order ourselves, you get everything you paid back in full."
+            }
+          ]
+        },
+        {
+          "type": "p",
+          "content": [
+            {
+              "text": "We may cancel an order if an item is unavailable, a price was clearly wrong, we can't print your file to an acceptable standard, or the order breaks our Terms of Service. We'll always tell you why."
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "returns",
+      "title": "Returns",
+      "blocks": [
+        {
+          "type": "p",
+          "content": [
+            {
+              "text": "We can't accept returns or exchanges for a change of mind on items made correctly to your approved design. That includes:"
+            }
+          ]
+        },
+        {
+          "type": "ul",
+          "items": [
+            [
+              {
+                "text": "choosing the wrong size, colour, quantity or material;"
+              }
+            ],
+            [
+              {
+                "text": "spelling, wording or layout mistakes in a design you approved;"
+              }
+            ],
+            [
+              {
+                "text": "low-resolution images you uploaded that print less sharply;"
+              }
+            ],
+            [
+              {
+                "text": "small differences in shade between your screen and the printed item;"
+              }
+            ],
+            [
+              {
+                "text": "orders returned to us because the delivery address or phone number was wrong, or the delivery was refused."
+              }
+            ]
+          ]
+        },
+        {
+          "type": "p",
+          "content": [
+            {
+              "text": "Anything that's our fault, such as damage, misprints, wrong items or late delivery, is covered below."
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "problems",
+      "title": "Damaged, wrong, late or not-as-described items",
+      "blocks": [
+        {
+          "type": "p",
+          "content": [
+            {
+              "text": "We put it right free of charge if your order:"
+            }
+          ]
+        },
+        {
+          "type": "ul",
+          "items": [
+            [
+              {
+                "text": "arrives damaged;"
+              }
+            ],
+            [
+              {
+                "text": "has a clear printing defect, such as smudged, faded or missing print;"
+              }
+            ],
+            [
+              {
+                "text": "doesn't match the design you approved;"
+              }
+            ],
+            [
+              {
+                "text": "isn't the size, material or quality described on the product page;"
+              }
+            ],
+            [
+              {
+                "text": "is the wrong product, or has items missing."
+              }
+            ]
+          ]
+        },
+        {
+          "type": "p",
+          "content": [
+            {
+              "text": "Late delivery:",
+              "strong": true
+            },
+            {
+              "text": " if your order arrives later than the delivery time we gave you, for reasons within our control, you can return it for a full refund. We arrange the pickup. Delays caused by events outside our control, such as natural disasters, strikes or courier shutdowns, aren't counted (see our "
+            },
+            {
+              "text": "Terms of Service",
+              "href": "/terms#beyond-our-control"
+            },
+            {
+              "text": ")."
+            }
+          ]
+        },
+        {
+          "type": "p",
+          "content": [
+            {
+              "text": "How to report it:",
+              "strong": true
+            },
+            {
+              "text": " email "
+            },
+            {
+              "type": "support-email",
+              "text": ""
+            },
+            {
+              "text": " within 7 days of delivery with:"
+            }
+          ]
+        },
+        {
+          "type": "ul",
+          "items": [
+            [
+              {
+                "text": "your order number;"
+              }
+            ],
+            [
+              {
+                "text": "clear photos of the item, the problem and the packaging;"
+              }
+            ],
+            [
+              {
+                "text": "a short description of what's wrong."
+              }
+            ]
+          ]
+        },
+        {
+          "type": "p",
+          "content": [
+            {
+              "text": "If the parcel looks damaged when it arrives, take photos before you open it. Please keep the item and packaging until we've sorted it out. We reply within one business day and reprint the affected items free of charge. If a reprint doesn't fix the problem, we refund those items in full. If we need the item back, we arrange and pay for the return."
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "refunds",
+      "title": "Refunds",
+      "blocks": [
+        {
+          "type": "ul",
+          "items": [
+            [
+              {
+                "text": "Paid online:",
+                "strong": true
+              },
+              {
+                "text": " refunded to the original payment method (UPI, card or netbanking) through Razorpay."
+              }
+            ],
+            [
+              {
+                "text": "Pay on delivery:",
+                "strong": true
+              },
+              {
+                "text": " refunded by bank transfer or UPI to an account you share with us. We don't refund in cash."
+              }
+            ],
+            [
+              {
+                "text": "Timing:",
+                "strong": true
+              },
+              {
+                "text": " we start the refund within 2 business days of approving it. Banks usually take 5–7 business days to show it in your account, following Reserve Bank of India timelines."
+              }
+            ],
+            [
+              {
+                "text": "Amount:",
+                "strong": true
+              },
+              {
+                "text": " the full amount paid for the affected items, including GST, plus shipping when the whole order is cancelled or the mistake was ours. If you used a discount code, we refund what you actually paid."
+              }
+            ],
+            [
+              {
+                "text": "Confirmation:",
+                "strong": true
+              },
+              {
+                "text": " we email you once the refund is on its way."
+              }
+            ],
+            [
+              {
+                "text": "Failed payments:",
+                "strong": true
+              },
+              {
+                "text": " if money left your account but the payment failed, Reserve Bank of India rules require it to be reversed automatically, usually within 1–5 working days depending on how you paid. If it isn't, email us the details and we'll follow it up with Razorpay."
+              }
+            ]
+          ]
+        }
+      ]
+    },
+    {
+      "id": "contact",
+      "title": "Contact us",
+      "blocks": [
+        {
+          "type": "p",
+          "content": [
+            {
+              "text": "Questions about a cancellation or refund? Email us with your order number and a real person will reply within one business day. If you're not happy with how we've handled it, you can write to our Grievance Officer, who acknowledges every complaint within 48 hours with a reference number and resolves it within one month."
+            }
+          ]
+        },
+        {
+          "type": "dl",
+          "items": [
+            {
+              "term": "Business",
+              "details": [
+                {
+                  "text": "Aaraprint"
+                }
+              ]
+            },
+            {
+              "term": "Customer support",
+              "details": [
+                {
+                  "type": "support-email",
+                  "text": ""
+                }
+              ]
+            },
+            {
+              "term": "Grievance Officer",
+              "details": [
+                {
+                  "type": "support-email",
+                  "text": ""
+                }
+              ]
+            },
+            {
+              "term": "Hours",
+              "details": [
+                {
+                  "text": "Monday to Saturday, 10am–7pm IST"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "type": "p",
+          "content": [
+            {
+              "text": "You can also contact the National Consumer Helpline on 1915 or at "
+            },
+            {
+              "text": "consumerhelpline.gov.in",
+              "href": "https://consumerhelpline.gov.in"
+            },
+            {
+              "text": ", or file a consumer complaint online at "
+            },
+            {
+              "text": "edaakhil.nic.in",
+              "href": "https://edaakhil.nic.in"
+            },
+            {
+              "text": "."
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "toc": true
+}

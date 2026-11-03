@@ -1,0 +1,68 @@
+{
+  "slug": "shipping",
+  "eyebrow": null,
+  "title": "Delivered fast, made right.",
+  "updated": null,
+  "intro": [],
+  "summary": null,
+  "sections": [
+    {
+      "id": "shipping",
+      "title": "Shipping",
+      "blocks": [
+        {
+          "type": "p",
+          "content": [
+            {
+              "text": "We ship pan-India via trusted courier partners. Standard orders are delivered in 3–6 business days after printing; if yours arrives later because of a delay on our side, you can return it for a full refund. Orders of ₹1,999 or more ship free — all other orders carry a flat ₹99 shipping fee, shown at checkout."
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "turnaround-time",
+      "title": "Turnaround time",
+      "blocks": [
+        {
+          "type": "p",
+          "content": [
+            {
+              "text": "Most products go to print within 24–48 hours of order confirmation. Custom or bulk orders may take longer — if yours will, we'll email you."
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "returns-and-reprints",
+      "title": "Returns & reprints",
+      "blocks": [
+        {
+          "type": "p",
+          "content": [
+            {
+              "text": "Because most Aaraprint products are made to order, we can't accept returns for a change of mind. If your order arrives damaged or doesn't match your approved design, contact us within 7 days of delivery and we'll reprint it free, or refund you if a reprint doesn't fix it."
+            }
+          ]
+        },
+        {
+          "type": "p",
+          "content": [
+            {
+              "text": "The full rules for cancellations, reprints and refunds are in our "
+            },
+            {
+              "text": "Refund & Cancellation Policy",
+              "href": "/refund-policy"
+            },
+            {
+              "text": "."
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "toc": false
+}

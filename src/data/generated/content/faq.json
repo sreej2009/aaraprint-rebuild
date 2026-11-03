@@ -1,0 +1,34 @@
+[
+  {
+    "question": "How does the design studio work?",
+    "answer": "Pick a product, then use the live design studio to upload your artwork or start from a layout, adjust colors and text, and preview it in real time. What you see is what gets printed."
+  },
+  {
+    "question": "Can I order without creating an account?",
+    "answer": "Yes — you can check out as a guest. Creating an account just lets you save designs, track orders, and reorder faster next time."
+  },
+  {
+    "question": "What file formats can I upload?",
+    "answer": "PNG, JPG, and SVG work best for the design studio. For best print quality, upload artwork at high resolution (300 DPI or higher at final size)."
+  },
+  {
+    "question": "How long does printing and delivery take?",
+    "answer": "Most orders go to print within 24–48 hours and arrive within 3–6 business days after that. See our Shipping & Returns page for full details."
+  },
+  {
+    "question": "Do you offer bulk or business pricing?",
+    "answer": "Yes — reach out via our Contact page with your quantities and we'll get back to you with volume pricing."
+  },
+  {
+    "question": "Can I cancel my order?",
+    "answer": "Yes, free of charge, while it's still Confirmed and hasn't gone to print. Pay-on-delivery orders can be cancelled from your account's order page; for orders paid online or placed as a guest, email us with your order number and we'll cancel it and refund any payment. See our Refund & Cancellation Policy for details."
+  },
+  {
+    "question": "What if my order arrives late?",
+    "answer": "If it arrives later than the delivery time we gave you because of a delay on our side, you can return it for a full refund — we arrange the pickup. Delays from events outside our control, like natural disasters or courier shutdowns, aren't counted. Email us within 7 days of delivery with your order number."
+  },
+  {
+    "question": "What if my order arrives damaged or incorrect?",
+    "answer": "Contact us within 7 days of delivery with photos of the issue and we'll reprint it free, or refund you if a reprint doesn't fix it. See our Refund & Cancellation Policy for details."
+  }
+]

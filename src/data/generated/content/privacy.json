@@ -1,0 +1,858 @@
+{
+  "slug": "privacy",
+  "eyebrow": "Privacy Policy",
+  "title": "Your data, handled with care.",
+  "updated": {
+    "iso": "2026-10-29",
+    "label": "29 October 2026"
+  },
+  "intro": [
+    [
+      {
+        "text": "We collect only what we need to make and deliver your order, we never sell it, and we don't track you with ads. Here's the detail."
+      }
+    ]
+  ],
+  "summary": {
+    "title": "The short version",
+    "items": [
+      {
+        "title": "We never sell your data",
+        "text": [
+          {
+            "text": "Your details are used to make and deliver your orders, and nothing else."
+          }
+        ]
+      },
+      {
+        "title": "No ad or analytics trackers",
+        "text": [
+          {
+            "text": "We only use the cookies that keep you signed in and remember your cart."
+          }
+        ]
+      },
+      {
+        "title": "Card details never reach us",
+        "text": [
+          {
+            "text": "Online payments go through Razorpay. We only see whether a payment succeeded."
+          }
+        ]
+      },
+      {
+        "title": "You stay in control",
+        "text": [
+          {
+            "text": "Update your details any time, or ask us to delete your account."
+          }
+        ]
+      }
+    ],
+    "note": [
+      {
+        "text": "This summary is here to help. The full policy below is what applies."
+      }
+    ]
+  },
+  "sections": [
+    {
+      "id": "who-we-are",
+      "title": "Who we are",
+      "blocks": [
+        {
+          "type": "p",
+          "content": [
+            {
+              "text": "This policy explains how Aaraprint (“we”, “us”) collects, uses, shares and protects personal data when you browse this website, use the design studio, create an account or place an order."
+            }
+          ]
+        },
+        {
+          "type": "p",
+          "content": [
+            {
+              "text": "We publish it as required by the Information Technology Act, 2000 and the rules made under it, and we handle personal data in line with the Digital Personal Data Protection Act, 2023. Under that Act, Aaraprint is the “Data Fiduciary” for the data described here."
+            }
+          ]
+        },
+        {
+          "type": "p",
+          "content": [
+            {
+              "text": "When you create an account or place an order, you consent to us using your personal data as this policy describes."
+            }
+          ]
+        },
+        {
+          "type": "p",
+          "content": [
+            {
+              "text": "You can ask for this policy in English or in any language listed in the Eighth Schedule to the Constitution of India, such as Hindi, Tamil or Bengali, by emailing "
+            },
+            {
+              "type": "support-email",
+              "text": ""
+            },
+            {
+              "text": ". If a translation differs from this English version, the English version applies."
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "what-we-collect",
+      "title": "What we collect",
+      "blocks": [
+        {
+          "type": "p",
+          "content": [
+            {
+              "text": "We only ask for what we need to make and deliver your order:"
+            }
+          ]
+        },
+        {
+          "type": "ul",
+          "items": [
+            [
+              {
+                "text": "Account details:",
+                "strong": true
+              },
+              {
+                "text": " your name, email address and password. Our sign-in provider stores the password only as a secure hash, so no one at Aaraprint can read it. If you choose “Continue with Google”, Google shares your name, email address and profile picture with us."
+              }
+            ],
+            [
+              {
+                "text": "Contact and delivery details:",
+                "strong": true
+              },
+              {
+                "text": " your mobile number, the addresses you save, and the recipient's name, phone number and address on each order. If you check out as a guest, we also collect your email address."
+              }
+            ],
+            [
+              {
+                "text": "Order details:",
+                "strong": true
+              },
+              {
+                "text": " the products, options and quantities you order, prices, discount codes, your payment method and whether payment succeeded."
+              }
+            ],
+            [
+              {
+                "text": "Your designs:",
+                "strong": true
+              },
+              {
+                "text": " images you upload to the design studio, designs you save, and the print-ready previews created when you order."
+              }
+            ],
+            [
+              {
+                "text": "Messages:",
+                "strong": true
+              },
+              {
+                "text": " anything you send us by email, such as questions or photos of a problem with an order."
+              }
+            ],
+            [
+              {
+                "text": "Technical data:",
+                "strong": true
+              },
+              {
+                "text": " the cookies described below. Our hosting providers also keep standard server logs (such as IP address, browser type and the pages requested) to keep the site secure and fix problems."
+              }
+            ]
+          ]
+        },
+        {
+          "type": "p",
+          "content": [
+            {
+              "text": "We never see or store your card number, CVV, UPI PIN or netbanking password. You enter those directly with our payment partner, Razorpay."
+            }
+          ]
+        },
+        {
+          "type": "p",
+          "content": [
+            {
+              "text": "Of the “sensitive personal data” listed in the IT (Reasonable Security Practices) Rules, 2011, the only item we hold is your password, and only as a secure hash. We don't collect health, biometric, sexual-orientation or similar information."
+            }
+          ]
+        },
+        {
+          "type": "p",
+          "content": [
+            {
+              "text": "If you enter someone else's details, for example to send them a gift, please make sure they're happy for you to share them with us."
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "how-we-use",
+      "title": "How we use it",
+      "blocks": [
+        {
+          "type": "ul",
+          "items": [
+            [
+              {
+                "text": "To fulfil your orders:",
+                "strong": true
+              },
+              {
+                "text": " printing, packing, shipping and delivering them, and handling cancellations, reprints and refunds."
+              }
+            ],
+            [
+              {
+                "text": "To run your account:",
+                "strong": true
+              },
+              {
+                "text": " saved addresses, saved designs and order history. If you create an account from the prompt after a guest checkout, we link the guest orders placed with that email address to your new account."
+              }
+            ],
+            [
+              {
+                "text": "To keep you updated:",
+                "strong": true
+              },
+              {
+                "text": " account emails (a welcome email, confirming your email address, password changes) and order emails (confirmation and status updates). We don't send marketing emails. If we ever start, we'll ask for your consent first, and every marketing email will include an unsubscribe link."
+              }
+            ],
+            [
+              {
+                "text": "To keep Aaraprint safe:",
+                "strong": true
+              },
+              {
+                "text": " preventing fraud and abuse, applying discount-code limits and securing our systems."
+              }
+            ],
+            [
+              {
+                "text": "To meet legal duties:",
+                "strong": true
+              },
+              {
+                "text": " keeping the tax, accounting and other records the law requires, and answering requests from authorities that we're legally bound to answer."
+              }
+            ]
+          ]
+        },
+        {
+          "type": "p",
+          "content": [
+            {
+              "text": "We use your data on the basis of your consent, given when you create an account or place an order, or for legitimate uses the law allows, such as completing an order you asked for or meeting a legal obligation. We don't use your data for advertising, and we never sell it."
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "sharing",
+      "title": "Who we share it with",
+      "blocks": [
+        {
+          "type": "p",
+          "content": [
+            {
+              "text": "We share only what each partner needs to do their part:"
+            }
+          ]
+        },
+        {
+          "type": "ul",
+          "items": [
+            [
+              {
+                "text": "Print and courier partners:",
+                "strong": true
+              },
+              {
+                "text": " your design, so it can be printed, and the recipient's name, phone number and delivery address, so it can be delivered."
+              }
+            ],
+            [
+              {
+                "text": "Razorpay:",
+                "strong": true
+              },
+              {
+                "text": " when you pay online, the order amount and order number, plus your name and phone number to fill in the payment window for you. Razorpay's own "
+              },
+              {
+                "text": "privacy policy",
+                "href": "https://razorpay.com/privacy/"
+              },
+              {
+                "text": " covers the payment details you enter with them."
+              }
+            ],
+            [
+              {
+                "text": "Supabase:",
+                "strong": true
+              },
+              {
+                "text": " hosts our database, sign-in and file storage."
+              }
+            ],
+            [
+              {
+                "text": "Resend:",
+                "strong": true
+              },
+              {
+                "text": " delivers our account and order emails."
+              }
+            ],
+            [
+              {
+                "text": "Google:",
+                "strong": true
+              },
+              {
+                "text": " only if you choose to sign in with Google."
+              }
+            ],
+            [
+              {
+                "text": "Our website host:",
+                "strong": true
+              },
+              {
+                "text": " serves the site and keeps the server logs mentioned above."
+              }
+            ],
+            [
+              {
+                "text": "Authorities:",
+                "strong": true
+              },
+              {
+                "text": " when the law, a court or a government agency requires it, or to protect the rights and safety of our customers, staff or the public."
+              }
+            ]
+          ]
+        },
+        {
+          "type": "p",
+          "content": [
+            {
+              "text": "Some of these providers may store or process data outside India, under their own security and data-protection commitments. We don't transfer data to any country the Government of India has restricted transfers to."
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "cookies",
+      "title": "Cookies and browser storage",
+      "blocks": [
+        {
+          "type": "p",
+          "content": [
+            {
+              "text": "We use a few cookies and browser storage entries. Each one either makes the site work or remembers something you did in the design studio, and none of them track you:"
+            }
+          ]
+        },
+        {
+          "type": "table",
+          "head": [
+            "Name",
+            "Purpose",
+            "How long"
+          ],
+          "rows": [
+            [
+              [
+                {
+                  "text": "nx_access_tokenCookie"
+                }
+              ],
+              [
+                {
+                  "text": "Keeps you signed in"
+                }
+              ],
+              [
+                {
+                  "text": "1 hour"
+                }
+              ]
+            ],
+            [
+              [
+                {
+                  "text": "nx_refresh_tokenCookie"
+                }
+              ],
+              [
+                {
+                  "text": "Renews your sign-in so you don't have to log in again"
+                }
+              ],
+              [
+                {
+                  "text": "30 days"
+                }
+              ]
+            ],
+            [
+              [
+                {
+                  "text": "nx_guest_cartCookie"
+                }
+              ],
+              [
+                {
+                  "text": "Remembers a guest's cart"
+                }
+              ],
+              [
+                {
+                  "text": "60 days"
+                }
+              ]
+            ],
+            [
+              [
+                {
+                  "text": "nexuz-cart-cacheLocal storage"
+                }
+              ],
+              [
+                {
+                  "text": "Shows your cart instantly as pages load"
+                }
+              ],
+              [
+                {
+                  "text": "Until you clear your browser data"
+                }
+              ]
+            ],
+            [
+              [
+                {
+                  "text": "nexuz-checkoutSession storage"
+                }
+              ],
+              [
+                {
+                  "text": "Keeps your delivery details between checkout steps"
+                }
+              ],
+              [
+                {
+                  "text": "Until the order is placed or the tab is closed"
+                }
+              ]
+            ],
+            [
+              [
+                {
+                  "text": "nexuz-design-studioIndexedDB"
+                }
+              ],
+              [
+                {
+                  "text": "Keeps your latest design drafts on this device, up to 5 per product"
+                }
+              ],
+              [
+                {
+                  "text": "Until you clear your browser data"
+                }
+              ]
+            ],
+            [
+              [
+                {
+                  "text": "aaraprint:recent-design-coloursLocal storage"
+                }
+              ],
+              [
+                {
+                  "text": "Remembers the colours you recently used in the design studio"
+                }
+              ],
+              [
+                {
+                  "text": "Until you clear your browser data"
+                }
+              ]
+            ],
+            [
+              [
+                {
+                  "text": "aaraprint:restore-design-after-sign-inSession storage"
+                }
+              ],
+              [
+                {
+                  "text": "Reopens your design after you sign in from the design studio"
+                }
+              ],
+              [
+                {
+                  "text": "Until the design reopens or the tab is closed"
+                }
+              ]
+            ]
+          ]
+        },
+        {
+          "type": "p",
+          "content": [
+            {
+              "text": "We don't use advertising, analytics or third-party tracking cookies, which is why there's no cookie banner. When you pay online, Razorpay's payment window may set its own cookies to process the payment securely."
+            }
+          ]
+        },
+        {
+          "type": "p",
+          "content": [
+            {
+              "text": "You can block or delete cookies in your browser settings, but sign-in and the cart won't work without them."
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "retention",
+      "title": "How long we keep it",
+      "blocks": [
+        {
+          "type": "ul",
+          "items": [
+            [
+              {
+                "text": "Your account:",
+                "strong": true
+              },
+              {
+                "text": " your profile, saved addresses and saved designs stay while your account is open. When you ask us to delete your account, we erase them within 30 days."
+              }
+            ],
+            [
+              {
+                "text": "Order records:",
+                "strong": true
+              },
+              {
+                "text": " orders, including the delivery details on them, are kept for as long as Indian tax and accounting laws require (generally up to 8 years), even after an account is deleted."
+              }
+            ],
+            [
+              {
+                "text": "Designs on orders:",
+                "strong": true
+              },
+              {
+                "text": " the artwork and print previews for an order are kept with the order, so we can handle reprints and quality issues."
+              }
+            ],
+            [
+              {
+                "text": "Emails you send us:",
+                "strong": true
+              },
+              {
+                "text": " kept for as long as we need them to resolve your request."
+              }
+            ],
+            [
+              {
+                "text": "Cookies and browser storage:",
+                "strong": true
+              },
+              {
+                "text": " for the periods shown in the table above."
+              }
+            ],
+            [
+              {
+                "text": "Security and server logs:",
+                "strong": true
+              },
+              {
+                "text": " for the period Indian law requires, then deleted."
+              }
+            ]
+          ]
+        },
+        {
+          "type": "p",
+          "content": [
+            {
+              "text": "Once data is no longer needed for any of these purposes, we delete it or make it anonymous."
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "security",
+      "title": "How we protect it",
+      "blocks": [
+        {
+          "type": "ul",
+          "items": [
+            [
+              {
+                "text": "The site runs over encrypted HTTPS connections."
+              }
+            ],
+            [
+              {
+                "text": "Access rules in our database mean each customer can reach only their own account, addresses, orders and designs. Only authorised Aaraprint staff can see orders and saved designs, to fulfil orders, check designs before printing and help you."
+              }
+            ],
+            [
+              {
+                "text": "Sign-in cookies can't be read by scripts on the page, and passwords are stored only as secure hashes."
+              }
+            ],
+            [
+              {
+                "text": "Uploaded images and design previews are kept in private storage and shared only through links that expire."
+              }
+            ]
+          ]
+        },
+        {
+          "type": "p",
+          "content": [
+            {
+              "text": "No system is completely secure. If a breach affects your personal data, we'll tell you and the Data Protection Board of India without delay, as the DPDP Act and its rules require, and explain what happened, what it means for you and what we're doing about it."
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "your-rights",
+      "title": "Your rights and choices",
+      "blocks": [
+        {
+          "type": "p",
+          "content": [
+            {
+              "text": "Under the Digital Personal Data Protection Act, 2023, you can:"
+            }
+          ]
+        },
+        {
+          "type": "ul",
+          "items": [
+            [
+              {
+                "text": "Access:",
+                "strong": true
+              },
+              {
+                "text": " ask for a summary of the personal data we hold about you and who we've shared it with."
+              }
+            ],
+            [
+              {
+                "text": "Correct and update:",
+                "strong": true
+              },
+              {
+                "text": " change your name and phone number in "
+              },
+              {
+                "text": "account settings",
+                "href": "/account/settings"
+              },
+              {
+                "text": " and manage your "
+              },
+              {
+                "text": "saved addresses",
+                "href": "/account/addresses"
+              },
+              {
+                "text": " at any time. For anything else, email us."
+              }
+            ],
+            [
+              {
+                "text": "Erase:",
+                "strong": true
+              },
+              {
+                "text": " ask us to delete your account and personal data. We delete everything except the records the law requires us to keep."
+              }
+            ],
+            [
+              {
+                "text": "Withdraw consent:",
+                "strong": true
+              },
+              {
+                "text": " at any time, as easily as you gave it, by choosing “Request account deletion” in "
+              },
+              {
+                "text": "account settings",
+                "href": "/account/settings"
+              },
+              {
+                "text": " or by emailing us. This doesn't undo what we've already done, but we may not be able to complete open orders."
+              }
+            ],
+            [
+              {
+                "text": "Nominate someone:",
+                "strong": true
+              },
+              {
+                "text": " name a person who can use these rights for you if you die or become unable to."
+              }
+            ],
+            [
+              {
+                "text": "Complain:",
+                "strong": true
+              },
+              {
+                "text": " raise a grievance with our Grievance Officer and, if you're not satisfied with the answer, with the Data Protection Board of India."
+              }
+            ]
+          ]
+        },
+        {
+          "type": "p",
+          "content": [
+            {
+              "text": "To use any of these rights, email "
+            },
+            {
+              "type": "support-email",
+              "text": ""
+            },
+            {
+              "text": " from the email address on your account, or the one you used at checkout. We may ask you to confirm your identity. We'll acknowledge your request within 48 hours and respond within 30 days."
+            }
+          ]
+        },
+        {
+          "type": "p",
+          "content": [
+            {
+              "text": "The Act also gives you some duties: give us accurate information, don't pretend to be someone else, and don't file false or frivolous complaints."
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "children",
+      "title": "Children",
+      "blocks": [
+        {
+          "type": "p",
+          "content": [
+            {
+              "text": "Aaraprint is meant for adults. If you're under 18, please ask a parent or guardian to create the account or place the order for you. We don't knowingly collect personal data from children without a parent's or guardian's consent. If you think a child has given us their details, contact us and we'll delete them."
+            }
+          ]
+        },
+        {
+          "type": "p",
+          "content": [
+            {
+              "text": "If your design includes photos of other people, such as a child on a birthday invitation, we use them only to print your order."
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "changes",
+      "title": "Changes to this policy",
+      "blocks": [
+        {
+          "type": "p",
+          "content": [
+            {
+              "text": "We may update this policy as Aaraprint or the law changes. We'll change the “Last updated” date at the top, and for significant changes we'll tell you by email or with a notice on the site before they take effect."
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "contact",
+      "title": "Contact us",
+      "blocks": [
+        {
+          "type": "p",
+          "content": [
+            {
+              "text": "For questions about this policy or your data, or to raise a grievance, get in touch. Our Grievance Officer acknowledges every complaint within 48 hours with a reference number you can use to follow it up, and resolves it within one month."
+            }
+          ]
+        },
+        {
+          "type": "dl",
+          "items": [
+            {
+              "term": "Business",
+              "details": [
+                {
+                  "text": "Aaraprint"
+                }
+              ]
+            },
+            {
+              "term": "Customer support",
+              "details": [
+                {
+                  "type": "support-email",
+                  "text": ""
+                }
+              ]
+            },
+            {
+              "term": "Grievance Officer",
+              "details": [
+                {
+                  "type": "support-email",
+                  "text": ""
+                }
+              ]
+            },
+            {
+              "term": "Hours",
+              "details": [
+                {
+                  "text": "Monday to Saturday, 10am–7pm IST"
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "toc": true
+}

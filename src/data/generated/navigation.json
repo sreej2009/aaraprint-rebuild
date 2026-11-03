@@ -3,66 +3,338 @@
     "slug": "visiting-cards",
     "name": "Visiting Cards",
     "productCount": 33,
-    "fromPriceCents": 9900
+    "fromPriceCents": 9900,
+    "types": [
+      {
+        "slug": "card-holders",
+        "name": "Card holders",
+        "productCount": 4
+      },
+      {
+        "slug": "design-services",
+        "name": "Design services",
+        "productCount": 2
+      },
+      {
+        "slug": "visiting-cards",
+        "name": "Visiting cards",
+        "productCount": 27
+      }
+    ]
   },
   {
     "slug": "stationery-letterheads-notebooks",
     "name": "Stationery, Letterheads & Notebooks",
     "productCount": 68,
-    "fromPriceCents": 14900
+    "fromPriceCents": 14900,
+    "types": [
+      {
+        "slug": "weddings",
+        "name": "Wedding stationery",
+        "productCount": 4
+      },
+      {
+        "slug": "invitations-announcements",
+        "name": "Invitations & cards",
+        "productCount": 15
+      },
+      {
+        "slug": "notebooks-diaries",
+        "name": "Notebooks & diaries",
+        "productCount": 9
+      },
+      {
+        "slug": "business-stationery",
+        "name": "Business stationery",
+        "productCount": 16
+      },
+      {
+        "slug": "awards-certificates",
+        "name": "Awards & certificates",
+        "productCount": 5
+      },
+      {
+        "slug": "technology",
+        "name": "Tech accessories",
+        "productCount": 4
+      },
+      {
+        "slug": "id-cards-lanyards",
+        "name": "ID cards, lanyards & keychains",
+        "productCount": 7
+      },
+      {
+        "slug": "desk-gifting",
+        "name": "Desk & gifting",
+        "productCount": 8
+      }
+    ]
   },
   {
     "slug": "stamps-and-ink",
     "name": "Stamps and Ink",
     "productCount": 17,
-    "fromPriceCents": 19900
+    "fromPriceCents": 19900,
+    "types": [
+      {
+        "slug": "date-stamps",
+        "name": "Date stamps",
+        "productCount": 2
+      },
+      {
+        "slug": "seals-embossers",
+        "name": "Seals & embossers",
+        "productCount": 3
+      },
+      {
+        "slug": "self-inking",
+        "name": "Self-inking & pre-inked",
+        "productCount": 5
+      },
+      {
+        "slug": "specialty-stamps",
+        "name": "Specialty stamps",
+        "productCount": 7
+      }
+    ]
   },
   {
     "slug": "signs-posters-marketing-materials",
     "name": "Signs, Posters & Marketing Materials",
     "productCount": 69,
-    "fromPriceCents": 19900
+    "fromPriceCents": 19900,
+    "types": [
+      {
+        "slug": "posters",
+        "name": "Posters",
+        "productCount": 2
+      },
+      {
+        "slug": "banners-standees",
+        "name": "Banners, flags & standees",
+        "productCount": 19
+      },
+      {
+        "slug": "flyers-brochures",
+        "name": "Flyers & brochures",
+        "productCount": 14
+      },
+      {
+        "slug": "event-table-displays",
+        "name": "Event & table displays",
+        "productCount": 9
+      },
+      {
+        "slug": "signs-displays",
+        "name": "Signs & displays",
+        "productCount": 16
+      },
+      {
+        "slug": "promotional-print",
+        "name": "Promotional print",
+        "productCount": 9
+      }
+    ]
   },
   {
     "slug": "labels-stickers-packaging",
     "name": "Labels, Stickers & Packaging",
     "productCount": 60,
-    "fromPriceCents": 14900
+    "fromPriceCents": 14900,
+    "types": [
+      {
+        "slug": "labels",
+        "name": "Labels",
+        "productCount": 12
+      },
+      {
+        "slug": "boxes",
+        "name": "Boxes",
+        "productCount": 14
+      },
+      {
+        "slug": "bags-mailers",
+        "name": "Bags & mailers",
+        "productCount": 7
+      },
+      {
+        "slug": "tape-tags-wrapping",
+        "name": "Tape, tags & wrapping",
+        "productCount": 8
+      },
+      {
+        "slug": "stickers",
+        "name": "Stickers",
+        "productCount": 19
+      }
+    ]
   },
   {
     "slug": "clothing-caps-bags",
     "name": "Clothing, Caps & Bags",
     "productCount": 65,
-    "fromPriceCents": 9900
+    "fromPriceCents": 9900,
+    "types": [
+      {
+        "slug": "printed-t-shirts",
+        "name": "T-shirts",
+        "productCount": 14
+      },
+      {
+        "slug": "custom-office-shirts",
+        "name": "Office shirts",
+        "productCount": 9
+      },
+      {
+        "slug": "caps",
+        "name": "Caps",
+        "productCount": 11
+      },
+      {
+        "slug": "bags",
+        "name": "Bags",
+        "productCount": 24
+      },
+      {
+        "slug": "sportswear-hoodies",
+        "name": "Hoodies & sportswear",
+        "productCount": 7
+      }
+    ]
   },
   {
     "slug": "mugs-albums-gifts",
     "name": "Mugs, Albums & Gifts",
     "productCount": 46,
-    "fromPriceCents": 14900
+    "fromPriceCents": 14900,
+    "types": [
+      {
+        "slug": "mugs",
+        "name": "Mugs",
+        "productCount": 9
+      },
+      {
+        "slug": "calendars",
+        "name": "Calendars",
+        "productCount": 10
+      },
+      {
+        "slug": "magnets",
+        "name": "Magnets",
+        "productCount": 3
+      },
+      {
+        "slug": "gift-hampers",
+        "name": "Gift hampers",
+        "productCount": 3
+      },
+      {
+        "slug": "frames-albums",
+        "name": "Photo frames, prints & albums",
+        "productCount": 12
+      },
+      {
+        "slug": "personalised-gifts",
+        "name": "Personalised gifts",
+        "productCount": 9
+      }
+    ]
   },
   {
     "slug": "pens",
     "name": "Pens",
     "productCount": 49,
-    "fromPriceCents": 4900
+    "fromPriceCents": 4900,
+    "types": [
+      {
+        "slug": "eco-pens",
+        "name": "Eco-friendly pens",
+        "productCount": 2
+      },
+      {
+        "slug": "premium-pens",
+        "name": "Premium & gift pens",
+        "productCount": 23
+      },
+      {
+        "slug": "everyday-pens",
+        "name": "Everyday pens",
+        "productCount": 24
+      }
+    ]
   },
   {
     "slug": "drinkware",
     "name": "Drinkware",
     "productCount": 48,
-    "fromPriceCents": 19900
+    "fromPriceCents": 19900,
+    "types": [
+      {
+        "slug": "tumblers",
+        "name": "Tumblers",
+        "productCount": 10
+      },
+      {
+        "slug": "flasks",
+        "name": "Flasks",
+        "productCount": 3
+      },
+      {
+        "slug": "glassware",
+        "name": "Glassware",
+        "productCount": 2
+      },
+      {
+        "slug": "mugs-cups",
+        "name": "Mugs & cups",
+        "productCount": 6
+      },
+      {
+        "slug": "bottles",
+        "name": "Bottles",
+        "productCount": 27
+      }
+    ]
   },
   {
     "slug": "custom-polo-t-shirts",
     "name": "Custom Polo T-shirts",
     "productCount": 43,
-    "fromPriceCents": 34900
+    "fromPriceCents": 34900,
+    "types": [
+      {
+        "slug": "branded-polos",
+        "name": "Branded polos",
+        "productCount": 25
+      },
+      {
+        "slug": "classic-polos",
+        "name": "Classic & performance polos",
+        "productCount": 18
+      }
+    ]
   },
   {
     "slug": "umbrellas-rainwear",
     "name": "Umbrellas & Rainwear",
     "productCount": 35,
-    "fromPriceCents": 19900
+    "fromPriceCents": 19900,
+    "types": [
+      {
+        "slug": "umbrellas",
+        "name": "Umbrellas",
+        "productCount": 15
+      },
+      {
+        "slug": "rain-caps-covers",
+        "name": "Rain caps & bag covers",
+        "productCount": 4
+      },
+      {
+        "slug": "raincoats-jackets",
+        "name": "Raincoats & jackets",
+        "productCount": 16
+      }
+    ]
   }
 ]

@@ -384,7 +384,7 @@ Contracts: OpenAPI or a typed RPC; the frontend generates/hand-writes zod schema
 | Phase | Scope | Exit criteria |
 |-------|-------|---------------|
 | **1. Foundations** ✅ done | Tailwind v4 + tokens, fonts, Radix primitives styled to the Blueprint, router + layouts (React Router 8 framework mode, SPA + pre-rendering), API client + mock data from the recovered catalogue, asset recovery into `recovered-additional/`, Vitest/Playwright/axe setup, lint/typecheck | Storybook-like component page (or Ladle) shows Button, Chip, Swatch, Tier, Dialog, Sheet in all states; a11y checks pass. |
-| **2. Catalogue, PDP & content** (≈2 wks) | Header/mega-menu/search with suggestions, home, listing with real filters/sort/pagination, quick view, PDP with option stepper, tiers, pricing engine, specs, mockup gallery; static content pages | All 533 products render from mock data; pricing engine tests match original prices; Lighthouse ≥ 90 on PDP. |
+| **2. Catalogue, PDP & content** ✅ done | Mega-menu, search with suggestions, category / all-products / search listings with data-driven filters, sort and pagination, 533 product pages with option-driven pricing, quantity tiers, print specs and gallery, content & policy pages | All 533 products render from the catalogue data; every SKU price verified in unit tests; 11 sample products verified in the browser. Lighthouse not yet measured (see §17). |
 | **3. Studio core — flat mode** (≈3 wks) | Stage, zoom/pan, guides, text/image/shape nodes, selection/transform, inspector, layers, undo/redo (patches), keyboard shortcuts, uploads (local blob), IndexedDB drafts, autosave indicator, templates engine + first 15 templates, proof PNG | A visiting card and an A5 flyer can be designed front/back, survive reload, export a proof. |
 | **4. Studio advanced** (≈3 wks) | Smart guides/snapping, multi-select/align/group, crop, curved text, QR, tables, background/CMYK, Studio fonts incl. Indic, preflight + review modal, apparel mode (mockups, placements, colours), wrap mode (unwrap + parts), product options panel, mobile Studio layout | Polo, mug, bottle, pen editable with correct mockups; preflight blocks placeholder text; mobile usability test passes. |
 | **5. 3D & remaining modes** (≈2 wks) | Lazy 3D previews (card, cylinder, cone, box, stamp, round pad, polo GLB), folded (envelopes, folders, notebooks/diaries), umbrella, box/packaging, stamp, gift-perspective modes; remaining templates | Every product family opens in the right mode; 3D toggles work and fall back gracefully. |
@@ -442,3 +442,51 @@ Fixtures come from the recovered catalogue (product JSON + print configs) so tes
 4. Backend platform (keep Supabase-style auth/storage or new backend) — affects auth and upload adapters only.
 5. Approve the visual direction and palette adjustments in the Blueprint.
 6. Approve additional dependencies listed in §2 (Tailwind v4, Radix, React Router, TanStack Query, immer, three/R3F/drei, idb, react-hook-form, zod, qrcode, nanoid, sonner, fontsource).
+
+## 17. Phase reports
+
+### Phase 1 — Foundations (complete)
+
+Design tokens, ~30 accessible components, app shell, routing with pre-rendering, catalogue import, asset recovery (189 files into `recovered-additional/`), unit/E2E/axe test setup. Initial commit `4282fb3`.
+
+### Phase 2 — Catalogue, product pages and content (complete)
+
+**Delivered**
+
+| Area | What was built |
+|------|----------------|
+| Category pages | All 11 categories plus `/categories/view-all` (533 products), pre-rendered. Product-type chips, filters, sort, 24 per page, active-filter chips, empty states, mobile filter sheet. |
+| Product types | Every product classified by slug rules (`scripts/catalogue/product-types.mjs`) into 2–8 types per category. Original `?type=` slugs reused where meaningful (`caps`, `bags`, `printed-t-shirts`, `custom-office-shirts`, `notebooks-diaries`, `invitations-announcements`, `weddings`, `technology`, `mugs`, `calendars`, `magnets`, `gift-hampers`); unknown values are ignored instead of emptying the page. |
+| Filters | Generated from the products' own option data (e.g. Colour, Size, Finish, Capacity, Lid type), with disjunctive counts, OR within a group and AND across groups. Plus price range, Bestsellers and New. All state is in the URL. |
+| Sorting | Recommended (bestsellers, then new), price low→high and high→low, newest, name. Search keeps relevance order for "Recommended". |
+| Search | `/search?q=` (client-rendered) with word-prefix matching, plural folding and synonyms (business/visiting card, tee/t-shirt, cup/mug…). Header autocomplete is an ARIA combobox showing categories, 6 products and "see all", with the index loaded on first focus. |
+| Product pages | All 533 pre-rendered with Product and Breadcrumb structured data. Gallery (photos + Studio mockups, shared polo mockup). Options render automatically as quantity tiers, colour swatches (incl. two-tone), chips or a dropdown; unavailable combinations stay focusable and say why. Sets/quantity stepper. Live price, per-unit price and SKU. `?variantId=` deep links in both directions. Design / upload buttons to the Studio route. Print specs in mm with a "for designers" pixel view. Delivery & returns. Related products. Sticky mobile buy bar. |
+| Mega-menu | Vertical category tabs (hover or arrow keys); each panel shows product types and the original curated product groups (fetched once on first open), plus "view all". New "All products" nav item. |
+| Content | About, shipping, refund policy, privacy and terms imported as structured blocks (`scripts/content/import-content.mjs`) with summary cards, table of contents and numbered sections. FAQ (accordion + FAQPage structured data), contact (support cards + grievance redressal), credits (131 Unsplash credits + polo model CC BY 4.0). |
+| Home | Added a bestsellers rail (one per category, real imagery only). |
+| Responsive | Desktop: filter sidebar, 4-column grid, sticky gallery. Tablet: 3 columns, filter sheet. Phone: 2 columns, bottom filter sheet, horizontally scrolling chips, sticky buy bar. |
+
+**Test results (all passing)**
+
+- Lint (oxlint with jsx-a11y) and typecheck: clean.
+- Unit: 97 tests in 11 files. Covers listing filters and facets on every category, sorting, URL helpers, search ranking and synonyms, option display rules, availability, deep links, print-spec conversion, and **every one of the 5,546 SKU prices reproduced by the product-page price logic** (× 1 and × 3 sets).
+- End-to-end (Chrome, desktop 1440×900 and Pixel 7): 112 passed, 10 skipped by design (desktop-only or mobile-only).
+  - All 11 categories and "all products" show the right counts.
+  - Type chips and legacy `?type=` links, option filters, price filter, sorting and pagination all work.
+  - Mobile filter sheet, card → product → breadcrumb navigation.
+  - On one product per category, the displayed price matches the selected SKU in the data after every option change; Classic Visiting Cards is checked in detail, including deep links.
+  - Search results, empty states, keyboard suggestions, mega-menu, and all 8 content pages.
+- Accessibility: axe WCAG 2.2 AA + best practices on 19 page types × 2 viewports, no violations. Fixed during the phase: low-contrast number labels, a missing results heading, unlinked price labels.
+- Production build: 555 pre-rendered pages in about 75 s.
+- Before the Phase 2 commit, two timing-sensitive E2E tests were hardened: specs now use `e2e/fixtures.ts`, whose `page.goto` waits for the pre-rendered page to hydrate, and the radio arrow-key test holds each key until focus moves. The full suite then passed again (112 passed, 10 skipped).
+
+**Remaining limitations**
+
+- Add to cart, checkout and accounts are Phase 6. Product pages link to the Studio placeholder and show a note instead of a cart button.
+- Quick view, product comparison, recently viewed and PIN-code delivery estimates are not built (the last needs a backend).
+- 83 products have no image (a calm placeholder is shown) and 67 use Unsplash stock photos (credited). Real photography is still needed.
+- The support email is not configured: set `VITE_SUPPORT_EMAIL`. Until then pages link to the contact page.
+- Pre-rendered pages show unfiltered results for a moment before applying URL filters or `?variantId=` (this avoids hydration mismatches). Actions taken in the first moments after load, before hydration, are ignored.
+- `/categories/view-all` embeds all 533 summaries (≈80 KB gzipped). Fine for now; move to server-side pagination when the backend exists.
+- Structured data uses relative URLs until `VITE_SITE_URL` is set.
+- Lighthouse and real-device performance have not been measured yet (planned for Phase 7).
