@@ -103,8 +103,8 @@ e2e/                       Playwright specs (routing, navigation, keyboard, axe 
 |---|-------|--------|
 | 1 | Foundations — tokens, components, shell, routing + pre-rendering, data layer, tests, asset recovery | ✅ Done |
 | 2 | Catalogue, product pages and content pages | ✅ Done |
-| 3 | Design Studio core (flat products) | Next |
-| 4 | Studio advanced (snapping, QR, preflight, apparel & wrap modes, mobile Studio) | — |
+| 3 | Design Studio core — all customisable products, flat artwork view, desktop/tablet/phone | Planned (see plan §18) — awaiting approval |
+| 4 | Studio advanced (snapping, QR, preflight, on-product apparel & wrap modes, options panel) | — |
 | 5 | 3D previews and remaining product modes | — |
 | 6 | Cart, checkout (pay on delivery), accounts, tracking — needs backend | — |
 | 7 | Polish, performance, SEO and launch | — |

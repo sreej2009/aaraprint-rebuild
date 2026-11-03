@@ -385,8 +385,8 @@ Contracts: OpenAPI or a typed RPC; the frontend generates/hand-writes zod schema
 |-------|-------|---------------|
 | **1. Foundations** ✅ done | Tailwind v4 + tokens, fonts, Radix primitives styled to the Blueprint, router + layouts (React Router 8 framework mode, SPA + pre-rendering), API client + mock data from the recovered catalogue, asset recovery into `recovered-additional/`, Vitest/Playwright/axe setup, lint/typecheck | Storybook-like component page (or Ladle) shows Button, Chip, Swatch, Tier, Dialog, Sheet in all states; a11y checks pass. |
 | **2. Catalogue, PDP & content** ✅ done | Mega-menu, search with suggestions, category / all-products / search listings with data-driven filters, sort and pagination, 533 product pages with option-driven pricing, quantity tiers, print specs and gallery, content & policy pages | All 533 products render from the catalogue data; every SKU price verified in unit tests; 11 sample products verified in the browser. Lighthouse not yet measured (see §17). |
-| **3. Studio core — flat mode** (≈3 wks) | Stage, zoom/pan, guides, text/image/shape nodes, selection/transform, inspector, layers, undo/redo (patches), keyboard shortcuts, uploads (local blob), IndexedDB drafts, autosave indicator, templates engine + first 15 templates, proof PNG | A visiting card and an A5 flyer can be designed front/back, survive reload, export a proof. |
-| **4. Studio advanced** (≈3 wks) | Smart guides/snapping, multi-select/align/group, crop, curved text, QR, tables, background/CMYK, Studio fonts incl. Indic, preflight + review modal, apparel mode (mockups, placements, colours), wrap mode (unwrap + parts), product options panel, mobile Studio layout | Polo, mug, bottle, pen editable with correct mockups; preflight blocks placeholder text; mobile usability test passes. |
+| **3. Studio core** (≈5 wks) — detailed plan in §18, awaiting approval | Studio profiles and print geometry, design schema and commands, store with undo/redo, Studio route and **responsive shell (desktop, tablet, phone)**, Konva stage with zoom/pan and trim/bleed/safe guides, text/shape/graphic/image elements with selection and transform, inspector and layers, front/back, IndexedDB drafts with autosave and restore, version history, templates engine + first 15 templates, preview and proof PNG | A visiting card (rectangle, round, rounded), an A4 flyer and a polo's flat print area can be designed front/back, survive reload (uploads and undo history included) and export a proof; keyboard-only task and axe pass on desktop, tablet and phone. |
+| **4. Studio advanced** (≈3 wks) | Smart guides/snapping, multi-select/align/group, crop, curved text, QR, tables, background/CMYK, Studio fonts incl. Indic, preflight + review modal, apparel mode (mockups, placements, colours), wrap mode (unwrap + parts), product options panel, mobile Studio refinements and usability test | Polo, mug, bottle, pen editable with correct mockups; preflight blocks placeholder text; mobile usability test passes. |
 | **5. 3D & remaining modes** (≈2 wks) | Lazy 3D previews (card, cylinder, cone, box, stamp, round pad, polo GLB), folded (envelopes, folders, notebooks/diaries), umbrella, box/packaging, stamp, gift-perspective modes; remaining templates | Every product family opens in the right mode; 3D toggles work and fall back gracefully. |
 | **6. Commerce & accounts** (≈3 wks, needs backend) | Auth (email + Google), cart (guest + merge), checkout (COD first, Razorpay if confirmed), confirmation, account (orders, designs, addresses, settings), tracking, cloud design sync + conflict handling, return-after-login | End-to-end: guest designs → adds to cart → checks out (COD) → tracks order; signed-in user sees saved designs. |
 | **7. Polish & launch** (≈2 wks) | Accessibility audit and fixes, performance (code-split, image CDN, font subsetting), SEO (SSR/prerender, sitemap, structured data `Product`/`Offer`), analytics, error monitoring, content QA, redirects | WCAG 2.2 AA audit clean; Core Web Vitals green; production checklist signed off. |
@@ -490,3 +490,675 @@ Design tokens, ~30 accessible components, app shell, routing with pre-rendering,
 - `/categories/view-all` embeds all 533 summaries (≈80 KB gzipped). Fine for now; move to server-side pagination when the backend exists.
 - Structured data uses relative URLs until `VITE_SITE_URL` is set.
 - Lighthouse and real-device performance have not been measured yet (planned for Phase 7).
+
+## 18. Phase 3 — Design Studio core: detailed plan
+
+**Status:** proposed, awaiting approval. Nothing below is implemented yet.
+
+**Goal.** A customer can open any customisable product at `/products/:slug/design` and design the front and back with text, shapes, graphics and their own images. They can see exactly what will be trimmed, undo anything, close the tab and come back to the same design, and download a proof, on desktop, tablet and phone. Flat-print products (354) get the complete experience. Apparel and wrap products (178) open the same editor on their flat print area; their on-product workspaces follow in Phase 4 (decision D4).
+
+**Not in Phase 3**
+
+| Later phase | Items |
+|-------------|-------|
+| Phase 4 | Smart guides and snapping; multi-select, group, align and distribute; image crop UI; curved text; QR codes; tables; CMYK input; the full font library including Indian scripts; preflight list with blocking; review and approval flow; on-product workspaces (apparel, wrap, umbrella, sign, gift); product options panel inside the Studio; PDF proof |
+| Phase 5 | 3D previews; folded and multi-panel products (envelope flap, folder pockets, notebook covers) |
+| Phase 6 | Cloud save, sign-in, return after login, add to cart, server-side print files, importing original v1 designs |
+
+### 18.1 What the research shows
+
+| Source | Finding | Consequence |
+|--------|---------|-------------|
+| Print configs (532 products) | 354 `flat_print`, 104 `apparel`, 74 `wrap`. 493 at 300 DPI, the rest 100–200 DPI. Trim: 499 rectangle, 17 circle, 16 rounded. Bleed is 0 on 304 products (all pens, stamps and apparel, plus some gifts and stationery) and 12–40 px elsewhere. Safe zone 15–60 px. 181 different canvas sizes, from 450×450 px (stamps) to 9000×3358 px (canopy tent, 30 MP). | One engine driven by data. The canvas never renders at print resolution on screen. Proof export must respect browser canvas limits. |
+| Mockups | 277 products have front and back mockups. All of them are now in `recovered/` + `recovered-additional/`. 153 of these are flat-print (signs, labels, bags). They are photos (1024–2119 px) with sample artwork baked in. | Use mockups as side thumbnails and an "on the product" reference in Preview. Keep the editing surface a clean sheet (§18.14). |
+| Original layout code (`recovered/_next/static/chunks/10tigen5gn4-f.js`) | Flat products: stage = print area, mockup stretched behind it. Generic apparel: stage 2.4× the print area, area centred at 32 % of the height. Polos: 3.6×, at 51 %. Pens, mugs, drinkware, umbrellas, gifts and the round mouse pad each have their own `…PrintRect` functions. Signs and gifts use hard-coded per-product "face" profiles. | Phase 4's mode registry reuses these numbers; Phase 3 doesn't need them. |
+| Original guides | The canvas edge is drawn as the **bleed** edge. The trim line is inset by `bleedPx` and the safe zone by `bleedPx + safeZonePx`. | This conflicts with our product pages, which present the canvas as the finished size (decision **D1**). |
+| Size audit | Several products' canvas sizes don't match the size in their name: `flyer-a5-*` = 105×148 mm (that's A6); `flyer-a6-mini` = 74×105 mm (A7); `stationery-notepad-a5` = 148×105 mm; `stationery-notebook-a4` = 76×102 mm; `stationery-diary-a5-personalised` = 72×102 mm. A4 and DL products are correct. | Decision **D2**. |
+| Graphics | 33 SVGs are stored as strings in the original Studio chunk (`eJ("Business growth", '<svg …>')`). | They can be extracted read-only into app data (M9). |
+| Templates | 95 templates exist as `build()` functions with relative geometry (e.g. `x = .07 × width`), set in Fraunces and Plus Jakarta Sans. | Re-author them as data. The first 15 are in Phase 3 (M14, decision **D3** for fonts). |
+| 3D | `polo-shirt.glb` (CC BY 4.0) is in `recovered-additional/models/` and `shirt_baked.glb` (licence unknown) is in `recovered/`. three.js and React Three Fiber are not installed. | Phase 3 records the models in Studio profiles and checks they're valid. Rendering is Phase 5. |
+
+### 18.2 Architecture and routing
+
+- **URL (unchanged from the original):** `/products/:productSlug/design`. Query parameters:
+  - `variantId` — the product pages already send it.
+  - `mode=upload` — the product page's "Upload your design" button; opens the Uploads panel.
+  - `draftId` — opens a specific design saved on this device.
+  - `side=front|back`.
+- **Route module:** `routes/studio.tsx` replaces `routes/studio-planned.tsx`. It's client-only:
+  - `clientLoader` loads `catalogueApi.getProduct(slug)` and the Studio profile `/api/v1/studio/<slug>.json` in parallel.
+  - No build-time loader and no pre-rendering; the host's `__spa-fallback.html` rule serves it, as it already does for the placeholder.
+  - `HydrateFallback` shows a Studio-shaped skeleton. `meta` sets noindex.
+  - `ErrorBoundary` handles an unknown product (404 with "Browse all products").
+  - The one non-customisable product (`card-accessory-metal-holder`) shows a friendly "printed as shown" page linking back to the product.
+- **Layout:** full screen, outside the storefront layout (like the placeholder today). Uses only the existing tokens and design-system components.
+- **Code splitting:** React Router splits route modules. Konva and react-konva are imported only under `features/studio/canvas/`, so storefront pages never download them. An E2E test enforces this.
+- **Module layout** (refines §7.1):
+
+```
+src/features/studio/
+  profile/      Studio profile types, side list, trim profile (data from M1)
+  geometry/     units (px ↔ mm ↔ pt), trim/bleed/safe boxes, trim-shape paths, rotated bounds, DPI, viewport maths — pure TS
+  schema/       DesignDoc v2 types, createBlankDesign, parseDesign / migrate
+  commands/     pure document commands (add, update, remove, duplicate, reorder, background, sides…)
+  store/        createStudioStore (zustand vanilla), StudioProvider, selectors, history
+  canvas/       StudioCanvas (Konva Stage), layers/, nodes/, selection transformer, gestures, text-edit overlay
+  shell/        TopBar, ToolRail, ToolPanel, InspectorPanel, MobileToolbar, SideSwitcher, ZoomControl, SaveStatus, ProjectMenu
+  tools/        TextTool, ShapesTool, GraphicsTool, UploadsTool, TemplatesTool, BackgroundTool
+  inspector/    Content, Style, PositionSize, Effects sections; LayersPanel
+  persistence/  IndexedDB wrapper, draft repository (IndexedDB + in-memory), autosave, restore, versions, blob store
+  assets/       font registry and loader, image decode/downscale, upload validation, SVG sanitiser, graphics library
+  templates/    template types, layout engine, data/
+  export/       render a side to a canvas, proof PNG
+  keyboard/     shortcut map and handler
+```
+
+- **New design-system components** (reusable, documented on `/design-system`):
+  - `NumberField` — numeric input with unit, steppers, arrow keys and Shift for ×10.
+  - `ColorField` — swatches, recent colours and hex input.
+  - `Slider` — Radix Slider, styled.
+  - `IconToggle` — toolbar toggle buttons.
+
+### 18.3 Canvas (React Konva)
+
+**Coordinates**
+- World units are print pixels. The origin is the **trim** top-left (if D1 is accepted).
+- The bleed area has negative coordinates down to `-bleedPx`. The safe box is the trim inset by `safeZonePx`.
+- Elements store their unrotated box (`x, y, width, height`) and a rotation in degrees around the box centre.
+
+**Stage**
+- Sized to the workspace with a ResizeObserver.
+- View transform `{ scale, x, y }`. `pixelRatio` is `devicePixelRatio`, capped at 2.
+
+**Konva layers**
+
+| # | Layer | Listening | Contents |
+|---|-------|-----------|----------|
+| 1 | Workspace | no | Workspace backdrop, sheet shadow, side background colour filled to the bleed edge |
+| 2 | Design | yes | Group clipped to the bleed box using the trim-shape path (rect, rounded rect, ellipse); elements in array order |
+| 3 | Guides | no | Bleed edge, trim line, dashed safe zone; centre lines while dragging. Toggle with `Ctrl ;` |
+| 4 | Overlay | partly | Transformer, hover outline, amber (outside safe zone) and red (outside trim) outlines |
+
+Labels such as the guide legend, the DPI badge and the empty-canvas card are HTML positioned over the stage, so screen readers can read them.
+
+**Nodes**
+- `TextNode`: Konva `Text`.
+- `ShapeNode`: `Rect`, `Ellipse`, `Line`, `RegularPolygon`, `Star` or `Arrow`.
+- `ImageNode`: Konva `Image` drawn from a decoded, downscaled preview bitmap. Used for both uploads and graphics.
+- Each node is memoised and subscribes only to its own element.
+
+**Interaction**
+- During a drag or transform, Konva nodes move directly without React re-renders. One command is dispatched on `dragend`/`transformend`, so each gesture is one undo step (the original does the same with `{commit: true}`).
+- Transformer:
+  - 8 anchors, minimum size 2 mm.
+  - Images and graphics keep their proportions unless Shift is held.
+  - Text: side anchors change the box width (text re-wraps); corner anchors scale the font size.
+  - Rotation handle snaps to 0/45/90° within 5°.
+  - Anchors are 10 px for a mouse and 24 px for touch, chosen by `pointer: coarse`.
+- Outside-the-print-area warnings use the rotated corners. Amber means part of the element is outside the safe zone; red means outside the trim. The inspector repeats it in words, e.g. "Part of this layer is outside the safe area and may be trimmed."
+- **Text editing:**
+  - Desktop: double-click or Enter opens an HTML textarea over the node, matched to font, size and rotation. Esc cancels; Ctrl+Enter or clicking away commits.
+  - Phones: editing opens a full-width bottom sheet.
+
+### 18.4 State management and data model
+
+**Store**
+- `createStudioStore({ product, variant, profile, draft })` creates one Zustand vanilla store per Studio session, provided through React context.
+- It's recreated per product, has no global singletons, and is easy to test.
+
+| Slice | State | Saved? |
+|-------|-------|--------|
+| `document` | `DesignDoc` (all sides), active side | Yes, the only thing saved |
+| `selection` | selected id, editing-text id, hovered id | No |
+| `viewport` | zoom, pan, guides on/off | Preferences in localStorage |
+| `history` | past / future entries | Last 50 entries, saved with the draft |
+| `save` | status, last saved time, error | No |
+| `ui` | active tool, panel open, sheet and dialog state | Last tool in localStorage |
+| `product` | product, variant, Studio profile (read-only) | No |
+
+**Commands**
+- Pure functions `(doc, args) => doc` dispatched through `dispatch(command, { label, coalesceKey })`.
+- Components never change the document directly.
+
+**Undo/redo without Immer** (a change from §2 and §9)
+- Documents are immutable and commands replace only the side that changed.
+- So a history entry is `{ label, sideId, before, after, selectionBefore, selectionAfter }`, where `before`/`after` are side objects that share structure.
+- Edits with the same `coalesceKey` within 600 ms merge into one entry (typing, slider drags). The history holds up to 100 entries.
+- Undo switches to the side it affects.
+
+**DesignDoc v2.** As in §7.4, with these refinements:
+- `sides: Record<'front' | 'back', SideDesign>`; other side ids are reserved for Phase 5.
+- `ImageEl.src` is one of:
+  - `{ kind: 'upload', blobId, name, mime, naturalWidth, naturalHeight }`
+  - `{ kind: 'graphic', graphicId }`
+- `TextEl` has `fontSize` stored in print px and shown in pt, plus `letterSpacing` and `isPlaceholder` (used by Phase 4 preflight).
+- `hidden` is a real hide, not opacity 0 as in the original.
+- `meta.revision` goes up on every save. History lives in the draft record, not inside the document.
+- `parseDesign()` validates with hand-written type guards: zod is not installed and isn't needed until Phase 6 forms. `migrate()` is keyed on `schemaVersion`.
+
+**IDs:** `crypto.randomUUID()`, falling back to `crypto.getRandomValues()`. `randomUUID` only works over HTTPS, and the staging server is plain HTTP. No `nanoid` needed.
+
+### 18.5 Tools
+
+| Tool | Phase 3 scope |
+|------|---------------|
+| **Text** | Presets: Heading, Subheading, Body, Name + title. Font, size (pt), weight, italic, underline, colour, alignment, line height and letter spacing (the original had no letter spacing). New text is placed centred inside the safe area. |
+| **Shapes** | Rectangle, rounded rectangle, circle/ellipse, line, triangle, star, arrow (the original had 3). Fill, border colour and width, corner radius, opacity. |
+| **Graphics** | The 33 original SVGs (M9), grouped Business, Contact, Celebration, Badges, Backgrounds, with search. Inserted at 30 % of the trim width, centred. Recolouring is Phase 4. |
+| **Uploads** | Drop zone, file picker, drop onto the canvas, paste from clipboard. PNG, JPG, WEBP, GIF (first frame) and SVG up to 20 MB, as in the original; HEIC is rejected with a clear message. Decoded with `createImageBitmap`; the canvas uses a preview of at most 2048 px on the long side, and the original file is kept for proofs. Placement: Fit (inside the safe area) or Fill (cover to the bleed edge). Replace keeps the box. Recent uploads on this device. |
+| **Effective DPI** | `naturalWidth × productDPI / elementWidthPx`. Shown in the inspector and as a badge: warning below 75 % of the product DPI, "may look blurry" below 40 % (Blueprint §11.7 wording). Blocking is Phase 4. |
+| **SVG safety** | Uploaded SVGs are parsed with `DOMParser`; scripts, `foreignObject`, event-handler attributes and external references are removed before storing. They are drawn through `<img>`, so scripts never run. |
+| **Background** | Swatches, recent colours (this device) and hex input; fills to the bleed edge automatically. CMYK is Phase 4. |
+| **Templates** | Engine and 15 templates (M14). |
+
+### 18.6 Selection, resizing, rotation and positioning
+
+- Click or tap to select; click empty space or press Esc to deselect. Locked items can't be selected on the canvas; select them from Layers instead.
+- **Nudge:** arrow keys move 0.5 mm, Shift+arrow 5 mm, converted to pixels from the product DPI. This differs from the original's 1 px / 10 px: at 300 DPI, 1 px is 0.08 mm and too small to notice.
+- **Shortcuts:**
+  - Delete or Backspace removes the selection.
+  - Ctrl D duplicates it, offset by 3 mm.
+  - Ctrl ] / Ctrl [ moves it forward or back one layer.
+  - Shortcuts are ignored while typing in an input.
+- **Inspector "Position & size":**
+  - X, Y, W, H in mm (one decimal), with proportion lock and rotation.
+  - Actions: Centre horizontally, Centre vertically, Fit inside safe area, and Fill to bleed (images and shapes).
+- Every inspector change is one undo step per commit (Enter, blur or end of a slider drag).
+
+### 18.7 Layers panel and properties
+
+- **Inspector sections** (Blueprint §11.5): Content, Style, Position & size (collapsed), Effects (collapsed).
+  - Empty state: "Select something on the canvas to edit it — or add text from the left."
+- **Layers:**
+  - Top item first. Names are automatic (text content, shape type, file name) and can be renamed.
+  - Each row: select, show/hide, lock, delete.
+  - Reorder by dragging, or with Move up/down buttons and Alt+↑/↓ for keyboard and screen-reader users.
+- The side switcher shows the element count per side.
+- **Canvas accessibility:**
+  - The stage container is a labelled, focusable region, e.g. "Design canvas, Front, 3 items".
+  - A polite live region announces changes such as "Heading selected, 12.0 mm from left, 8.0 mm from top" and "Moved", "Deleted · Undo available".
+  - Everything doable on the canvas can also be done from the layers list and inspector.
+
+### 18.8 Front/back design support
+
+- Every Phase 3 product gets a front and a back side. Labels come from the Studio profile (e.g. polos: "Left chest" / "Upper back", as in the original).
+- Each side has its own background and elements.
+- **Copy front to back** offers Replace / Keep both (from the original); copied elements get new ids.
+- **Clear side** asks for confirmation and can be undone.
+- An empty back shows "The back is blank." Linking this to "Sides"/"Sides printed" options and their prices is Phase 4, with the options panel.
+- `?side=` follows the active side (replace, no history entry). Undo and redo switch to the side they change.
+
+### 18.9 Zoom, pan and canvas controls
+
+- **Zoom range:** shown as a percentage of real size (100 % ≈ the printed size on a typical screen). It runs from 10 % (or the fitted size, if smaller, for large banners) to 400 %. Opens at **Fit**.
+- **Zoom controls:**
+  - − / + buttons step through 10, 25, 50, 75, 100, 150, 200, 300, 400 %.
+  - A zoom menu offers Fit (Shift 1), 50 %, 100 % and 200 %.
+  - Ctrl + / Ctrl −.
+  - Ctrl or ⌘ + wheel, and trackpad pinch, zoom around the pointer.
+- **Pan:**
+  - Wheel or trackpad scroll; Space + drag; middle-button drag.
+  - Touch: two-finger pan and pinch. One finger drags the selected element, or deselects when tapping empty space.
+  - Panning is limited so the sheet can't be lost off-screen.
+- **Guides:** toggle (Ctrl ;) plus a small legend (Trim · Safe area · Bleed).
+- Zoom stays relative to Fit when the window resizes or a phone rotates. The guides preference is remembered.
+
+### 18.10 Undo/redo and design history
+
+- **Undo/redo:**
+  - Top-bar buttons with tooltips naming the step ("Undo move heading"), plus Ctrl Z / Ctrl Shift Z / Ctrl Y.
+  - 100 steps; the last 50 survive a reload.
+- **Version history** (on this device):
+  - Snapshots are taken automatically every 5 minutes of active editing, and before Copy front to back, Clear side and Apply template.
+  - The last 20 per design are kept.
+  - The "Version history" dialog lists time, side thumbnails and element counts.
+  - Restoring replaces the current design as one undoable step, with the toast "Version restored · Undo".
+
+### 18.11 Autosave and local draft restoration
+
+**Storage**
+- IndexedDB database `aaraprint-studio` v1, using the native API through a ~100-line promise wrapper (no `idb` dependency; a change from §2).
+- Stores:
+  - `drafts` (indexes `productSlug`, `updatedAt`)
+  - `versions` (index `draftId`)
+  - `blobs` (uploaded files; index `draftId`)
+  - `meta` (recent colours, recent uploads, onboarding flags, preferences)
+
+**Autosave**
+- Runs 500 ms after each committed change and flushes on `visibilitychange`/`pagehide`. Each save is one transaction.
+- Status: *Saving…* → *Saved on this device* (tooltip with the time).
+- Failure shows a *Couldn't save on this device* banner with Retry and a suggestion to download a proof.
+- Private mode or a full disk falls back to memory, with a visible banner.
+
+**Restore**
+- `?draftId=` opens that draft. Otherwise the most recent draft for the product opens, with the toast "Restored your last design · Start fresh".
+- *Start fresh* keeps the old draft.
+- The project menu lists **Designs on this device** for the product: open, rename, duplicate, delete (with confirmation).
+
+**Edge cases**
+- Opening with a different `variantId` keeps the design and updates the variant; all variants of a product share one print size in Phase 3.
+- A second tab on the same draft shows "This design is open in another tab" (BroadcastChannel). The newer revision wins only after the customer confirms.
+- No "leave page?" prompt is needed, because local saves happen right away. This matches Blueprint §11.12; cloud save in Phase 6 adds the prompt.
+- Drafts untouched for 90 days are pruned when the Studio opens (local only).
+
+### 18.12 Responsive editor (desktop, tablet, mobile)
+
+| Width | Layout |
+|-------|--------|
+| ≥ 1280 px | Top bar 56 px · tool rail 64 px + panel 320 px (collapsible) · workspace · inspector 300 px with layers |
+| 1024–1279 px | Rail + panel; the inspector becomes a right drawer that opens on selection |
+| 768–1023 px | Rail; the panel overlays the canvas; inspector drawer |
+| < 768 px | Top bar 52 px (back, name, save status, undo/redo, Next) · side switcher as a segmented control · full-screen canvas · bottom toolbar 64 px (Templates, Text, Uploads, Graphics, Shapes, More). Tools open as bottom sheets (peek 40 % / expanded 90 %) with the canvas visible above. A contextual pill above the selection offers Edit, Font, Colour and ⋯. Inspector and layers live in "More". |
+
+- Touch targets are at least 44 px; canvas handles are 24 px.
+- Handle size follows `pointer: coarse`, not screen width, so touch laptops work too.
+- On a landscape phone, the bottom toolbar becomes a side rail.
+
+### 18.13 Print dimensions, DPI, bleed and safe zone
+
+- **Trim** = `canvasWidthPx × canvasHeightPx` at `dpi` (D1), with bleed added outside and the safe zone inside. Products with bleed 0 show only trim and safe guides.
+- **Trim shapes:**
+  - Rectangle.
+  - Rounded rectangle: default corner radius 3 mm. Per-product overrides in the profile; for example `business-card-oval` and `business-card-leaf`, which the original detected by slug.
+  - Circle: drawn as an ellipse when not square.
+  - Clipping and guides follow the shape.
+- **Units:** the inspector uses mm and text sizes use pt; a "for designers" toggle shows px. This matches the product page's print-spec view.
+- **DPI and warnings:** product DPI and the safe-zone explanation are in Help → Print tips. Image DPI and outside-safe/trim warnings are live (above). The full preflight list and blocking are Phase 4.
+- **Proofs** show the trim line and a light bleed tint. Print-ready files are made server-side in Phase 6; browser exports are proofs only.
+
+### 18.14 Recovered mockups and 3D assets
+
+**Studio profiles**
+- A new script `scripts/studio/build-studio-profiles.mjs` reads both recovered folders (read-only) and the catalogue. It writes `public/api/v1/studio/<slug>.json` with:
+  - mode hint (`flat` / `apparel` / `wrap`) and family (polo, pen, mug, drinkware, umbrella-rainwear, sign-poster, gift-flat, round-pad, card-orientation, oval…), from the original's detector rules
+  - sides and labels
+  - trim profile
+  - mockups `{ front, back, width, height, frontMask?, backMask? }`
+  - `model3d { src, licence }`
+- It also reports missing files and the size audit (D2).
+- Image sizes are read from the PNG/WebP headers; no image library is needed.
+
+**How Phase 3 uses mockups**
+- As side-switcher thumbnails.
+- As an "On the product" reference photo next to the trimmed design in Preview.
+
+**Why the editing surface stays a clean sheet**
+- Most mockups contain sample artwork.
+- Placement on signs and gifts depends on per-product face profiles hard-coded in the original.
+- Compositing artwork onto mockups is mode work for Phase 4/5, reusing the numbers in §18.1.
+
+**Serving and optimisation**
+- Served through `/media` (dev and preview) or `VITE_MEDIA_BASE_URL`. Recovered folders are never written to.
+- Mockups (0.3–1.6 MB PNGs) load lazily, only when shown. WebP/AVIF conversion is part of the Phase 7 image-CDN work.
+
+**3D**
+- Profiles record each model and its licence. A unit test checks both GLB files have a valid glTF header.
+- The CC BY 4.0 credit for the polo model is already on `/credits`.
+- Rendering (three + @react-three/fiber + drei, lazy chunk) is Phase 5.
+
+### 18.15 Testing strategy and performance
+
+**Testing**
+
+| Layer | What |
+|-------|------|
+| Unit (Vitest) | Geometry and unit conversion, viewport maths, every command, history and coalescing (fake timers), schema parse/migrate, draft repository contract (in-memory), autosave debounce, upload validation and DPI, SVG sanitiser, template layout at extreme aspect ratios, Studio profiles for all 532 products (every mockup file exists) |
+| Component (Testing Library) | Inspector sections, NumberField/ColorField, layers list keyboard use, side switcher, save status, tool panels. The Konva canvas is replaced by a stub in jsdom: jsdom has no canvas, and the native `canvas` package isn't worth adding |
+| E2E (Playwright, Chrome) | Desktop 1440×900, Pixel 7, plus a new tablet project (820×1180) for Studio specs. Results are read through the accessible UI (inspector values, layers list, live region), the saved IndexedDB draft (`page.evaluate`) and proof PNG dimensions (PNG header) |
+| Visual regression | Fixed Studio fixtures (business card front/back, circle and rounded trims, a banner) with `toHaveScreenshot` at three viewports; baselines committed |
+| Accessibility | axe on the empty Studio, with a selection, on each panel and each dialog; a keyboard-only task (add text, edit, move via the inspector, reorder, switch side, download proof) |
+| Bundle | E2E asserts storefront pages never load the Konva chunk; the build reports the Studio chunk size against the 350 KB gzip budget (§13) |
+| Regression | All Phase 1–2 suites stay green after every milestone |
+
+**Performance**
+- Target 60 fps when dragging among 50 elements on a mid-range phone, checked with a Chrome trace at 4× CPU throttling.
+- Konva: `listening: false` on static layers, `perfectDrawEnabled: false` on shapes, `batchDraw`. Drag state never goes through React.
+- Narrow Zustand selectors; nodes are memoised per element.
+- Images are drawn from downscaled bitmaps; object URLs are revoked on unmount.
+- The stage is never rendered at print resolution.
+- Proof export is capped at 16 MP (the iOS canvas limit). The 30 MP canopy tent exports a scaled proof.
+- Fonts load on demand; text renders after `document.fonts.load`.
+- Autosave is debounced and never blocks input.
+
+### 18.16 Milestones
+
+Each milestone is small, can be tested on its own, leaves all existing tests green, and ends with lint, typecheck, unit tests, build and E2E.
+
+| # | Milestone | Depends on | Est. |
+|---|-----------|-----------|------|
+| M1 | Studio profiles and print geometry (data only) | — | 1 d |
+| M2 | Design document schema and commands | M1 | 1 d |
+| M3 | Studio store, history and selection | M2 | 1 d |
+| M4 | Studio route and responsive shell | M1, M3 | 2 d |
+| M5 | Canvas: stage, zoom/pan and guides | M4 | 2 d |
+| M6 | Elements, selection and transform | M5 | 2 d |
+| M7 | Inspector and layers panel | M6 | 2 d |
+| M8 | Text tool | M7 | 1.5 d |
+| M9 | Shapes and graphics | M7 | 1.5 d |
+| M10 | Front/back sides | M6 | 1 d |
+| M11 | Local drafts, autosave and restore | M3, M10 | 2 d |
+| M12 | Image uploads | M11 | 2 d |
+| M13 | Version history | M11 | 1 d |
+| M14 | Templates engine and first 15 templates | M8, M9, M10 | 2 d |
+| M15 | Preview, proof, shortcuts and help | M8–M14 | 1.5 d |
+| M16 | Hardening and Phase 3 report | all | 1.5 d |
+
+Total ≈ 25 working days (≈ 5 weeks). The original estimate was 3 weeks; the mobile Studio layout (moved here from Phase 4) and the drafts/versions work add the rest.
+
+#### M1 — Studio profiles and print geometry
+
+- **Features:**
+  - Profile builder script (§18.14).
+  - Pure geometry module: px/mm/pt conversion; trim, bleed and safe boxes; trim-shape paths; rotated bounds; effective DPI.
+  - Size audit output (D2).
+  - API client method `getStudioProfile(slug)`.
+- **Files:**
+  - new `scripts/studio/build-studio-profiles.mjs`, `scripts/studio/studio-families.mjs`
+  - generated `public/api/v1/studio/*.json`
+  - new `src/features/studio/profile/types.ts`, `src/features/studio/geometry/{units,boxes,shapes,bounds,dpi}.ts`
+  - modify `src/lib/api/catalogue.ts` (or new `src/lib/api/studio.ts`)
+  - modify `package.json` (`studio:profiles` script)
+- **Dependencies:** none.
+- **Acceptance:**
+  - 532 profiles, and none for `card-accessory-metal-holder`.
+  - Every referenced mockup resolves to a file in the recovered folders (expect 0 missing).
+  - Recovered folder file counts unchanged (1,722 / 192).
+  - Audit list produced.
+- **Unit:**
+  - 1050 px @ 300 DPI = 88.9 mm.
+  - Boxes for each trim shape; rotated bounds; DPI formula.
+  - Profile test across all products; GLB header check.
+- **E2E:** the preview server returns `/api/v1/studio/business-card-classic.json`.
+
+#### M2 — Design document schema and commands
+
+- **Features:**
+  - `DesignDoc` v2 types.
+  - `createBlankDesign(product, variant, profile)`.
+  - `parseDesign`/`migrate`.
+  - Commands: add, update, remove, duplicate, reorder, set background, show/hide, lock, rename, copy side, clear side.
+  - ID helper.
+- **Files:** new `src/features/studio/schema/{types,create,parse}.ts`, `src/features/studio/commands/*.ts`, `src/features/studio/ids.ts`.
+- **Dependencies:** none.
+- **Acceptance:**
+  - A blank design can be created for every customisable product.
+  - Commands never mutate their input.
+  - `parseDesign` rejects malformed data with a reason.
+- **Unit:**
+  - Each command on deep-frozen input.
+  - Z-order rules; copy side produces new ids.
+  - Parse round trip; migration from a stub v1.
+- **E2E:** none (logic only).
+
+#### M3 — Studio store, history and selection
+
+- **Features:**
+  - `createStudioStore` with the slices in §18.4 and `StudioProvider`.
+  - `dispatch` with history: coalescing, 100-step cap, selection restore, switching side on undo.
+- **Files:** new `src/features/studio/store/{create-store,provider,selectors,history}.ts`.
+- **Dependencies:** Zustand (installed).
+- **Acceptance:**
+  - Undo/redo restores documents exactly.
+  - Coalesced typing is one step; the 101st step drops the oldest.
+- **Unit:** history sequences, coalescing with fake timers, cap, selection restore, side switching.
+- **E2E:** none.
+
+#### M4 — Studio route and responsive shell
+
+- **Features:**
+  - `routes/studio.tsx` with `clientLoader`, skeleton, noindex and error states.
+  - Top bar:
+    - back to product (keeps `variantId`)
+    - design name
+    - product · variant · price, using the existing pricing lib
+    - placeholders for save status, undo/redo and zoom
+  - Tool rail and panel; inspector region.
+  - Responsive layouts from §18.12; mobile bottom toolbar and sheets.
+  - `?mode=upload` selects Uploads.
+- **Files:**
+  - new `src/routes/studio.tsx`, `src/features/studio/shell/*.tsx`
+  - modify `src/routes.ts` (point the existing path at the new module)
+  - delete `src/routes/studio-planned.tsx`
+  - modify `e2e/a11y.spec.ts` (placeholder entry → Studio)
+  - modify `playwright.config.ts` (tablet project for `studio*.spec.ts`)
+  - new `e2e/studio.spec.ts`
+- **Dependencies:** M1, M3.
+- **Acceptance:**
+  - "Start designing" on a product page opens the Studio with the right product, variant and price; Back returns with the same `variantId`.
+  - An unknown slug shows a 404; the non-customisable product shows its message.
+  - Layouts are correct at 1440, 1024, 820 and 390 px.
+  - axe clean. The storefront never loads Konva. Phase 2 suites unchanged.
+- **Unit:** variant resolution from `variantId` (invalid → default).
+- **E2E:** product page → Studio → back; error states; layout per viewport; axe; Konva-not-loaded check on home, category and product pages.
+
+#### M5 — Canvas: stage, zoom/pan and guides
+
+- **Features:**
+  - Konva stage with ResizeObserver sizing; workspace, design and guides layers.
+  - Background to the bleed edge.
+  - Trim/bleed/safe guides for rectangle, rounded and circle; guides toggle and legend.
+  - Zoom (all inputs in §18.9) and pan (mouse, trackpad, touch).
+  - Zoom control in the top bar.
+- **Files:** new `src/features/studio/canvas/{studio-canvas,layers/workspace-layer,layers/guides-layer,gestures}.tsx`, `src/features/studio/geometry/viewport.ts`, `src/features/studio/shell/zoom-control.tsx`.
+- **Dependencies:** Konva, react-konva (installed).
+- **Acceptance:**
+  - The sheet fits on open at every viewport.
+  - Zoom stays within 10–400 % and keeps the point under the pointer fixed.
+  - Fit restores; panning can't lose the sheet.
+  - Bleed-0 products show no bleed guide.
+- **Unit:** viewport maths (zoom at point, clamps, fit, resize keeps relative zoom).
+- **E2E:**
+  - Buttons and keyboard change the percentage; Fit.
+  - Ctrl+wheel zoom.
+  - Two-finger pinch on mobile via CDP touch events.
+  - Screenshots of the three trim shapes.
+
+#### M6 — Elements, selection and transform
+
+- **Features:**
+  - Text, shape and image nodes rendered from the document.
+  - Click/tap selection; Transformer (resize, rotate with snaps, keep ratio).
+  - Drag with a commit at the end; locked and hidden behaviour.
+  - Amber/red bounds outlines.
+  - Keyboard: nudge, delete, duplicate, Esc, layer order; undo/redo buttons and shortcuts.
+  - Selection summary live region (also the screen-reader announcement).
+- **Files:** new `src/features/studio/canvas/nodes/{element-node,text-node,shape-node,image-node}.tsx`, `canvas/selection-transformer.tsx`, `canvas/bounds-outline.tsx`, `keyboard/{shortcuts,use-studio-shortcuts}.ts`.
+- **Dependencies:** M5.
+- **Acceptance:**
+  - Fixture designs render correctly.
+  - One drag = one undo step; resize and rotate work.
+  - Locked elements can't move; hidden ones aren't drawn.
+  - Outlines appear at the right boundaries.
+  - All shortcuts work and are ignored while typing.
+- **Unit:** transform → element mapping (text width vs font scale, images keep ratio), nudge in mm, bounds classification.
+- **E2E:** mouse drag changes the announced position; rotate handle; nudge with arrows; delete then undo; locked element can't be dragged.
+
+#### M7 — Inspector and layers panel
+
+- **Features:**
+  - Inspector sections by element type.
+  - Position & size in mm with ratio lock, rotation and centre/fit actions; opacity.
+  - Layers: select, rename, show/hide, lock, delete, reorder (drag + buttons + Alt+↑/↓).
+  - Empty state. Mobile "More" sheet. New `NumberField`, `ColorField`, `Slider`, `IconToggle`, added to `/design-system`.
+- **Files:**
+  - new `src/features/studio/inspector/*.tsx`
+  - new `src/design-system/{number-field,color-field,slider,icon-toggle}.tsx`
+  - modify `src/design-system/index.ts` and `src/components/docs/component-demos.tsx`
+- **Dependencies:** M6; `radix-ui` Slider (already part of the installed package).
+- **Acceptance:**
+  - Every field updates the canvas, and one commit is one undo step.
+  - Layer actions mirror the canvas.
+  - Reorder is possible with the keyboard alone. axe clean.
+- **Unit/component:** NumberField (units, steppers, Shift ×10, invalid input), ColorField (hex validation), LayersPanel keyboard reorder, inspector dispatches.
+- **E2E:** keyboard-only: select via layers, set X/Y/W in mm, rotate, hide, lock, reorder; design-system page axe still clean.
+
+#### M8 — Text tool
+
+- **Features:**
+  - Text presets.
+  - Inline editing overlay (desktop) and sheet editing (mobile).
+  - All text properties in §18.5.
+  - Font registry and loader. Fonts: Inter and Manrope (installed), plus Fraunces and Plus Jakarta Sans if D3 is approved.
+- **Files:** new `src/features/studio/tools/text-tool.tsx`, `canvas/text-edit-overlay.tsx`, `assets/fonts.ts`, `inspector/text-style-section.tsx`; `package.json` only if D3 is approved.
+- **Dependencies:** M7.
+- **Acceptance:**
+  - Each preset lands centred in the safe area.
+  - Typing a word is one undo step.
+  - Size is shown in pt and converts correctly.
+  - Proofs never show a fallback font.
+- **Unit:** pt ↔ px at 100/150/300 DPI; font loader (mocked `document.fonts`); preset placement.
+- **E2E:** add a heading, type "Riya Sharma", set 14 pt, bold and centred; undo removes the typing in one step; mobile sheet editing.
+
+#### M9 — Shapes and graphics
+
+- **Features:**
+  - 7 shapes with style properties.
+  - Graphics extraction script (read-only on `recovered/`) producing 33 sanitised SVGs with names and groups.
+  - Graphics panel with search.
+  - SVG sanitiser (shared with uploads).
+- **Files:** new `scripts/studio/extract-graphics.mjs`, generated `src/data/generated/studio/graphics.json`, `src/features/studio/tools/{shapes-tool,graphics-tool}.tsx`, `assets/svg-sanitise.ts`, `inspector/shape-style-section.tsx`.
+- **Dependencies:** M7.
+- **Acceptance:**
+  - All 33 graphics appear with the names in Asset Inventory §7.
+  - Search works; inserted graphics render crisply at any zoom.
+  - Shapes are fully editable.
+- **Unit:** sanitiser (scripts, `on*` attributes, `javascript:`, external `href`, `foreignObject` removed; valid SVG kept); extraction count and names.
+- **E2E:** add a star and change its fill; search "phone" and add the graphic; it appears in Layers.
+
+#### M10 — Front/back sides
+
+- **Features:**
+  - Side switcher with labels, counts and thumbnails.
+  - Copy front to back (Replace / Keep both); Clear side with confirmation and undo.
+  - `?side=` deep link; undo follows the side.
+- **Files:** new `src/features/studio/shell/side-switcher.tsx`, `commands/sides.ts`, `shell/dialogs/{copy-side,clear-side}-dialog.tsx`.
+- **Dependencies:** M6.
+- **Acceptance:**
+  - Sides are independent.
+  - Copy creates new ids; Keep both appends.
+  - Clear can be undone; the deep link opens the back.
+- **Unit:** copy/clear semantics.
+- **E2E:** design both sides; copy with both choices; clear then undo; open with `?side=back`.
+
+#### M11 — Local drafts, autosave and restore
+
+- **Features:**
+  - IndexedDB wrapper and draft repository (with an in-memory version for tests and fallback); autosave and save status.
+  - Restore on open with Start fresh; Designs on this device (open, rename, duplicate, delete).
+  - History saved with the draft; storage-failure banner; second-tab notice; 90-day pruning.
+- **Files:** new `src/features/studio/persistence/{idb,draft-repository,memory-repository,autosave,restore,tab-channel}.ts`, `shell/{save-status,project-menu}.tsx`, `shell/dialogs/designs-on-device-dialog.tsx`.
+- **Dependencies:** M3, M10.
+- **Acceptance:**
+  - A reload restores the design, active side and undo history exactly.
+  - Start fresh keeps the old draft; delete asks first.
+  - Blocked storage shows the banner without losing the session.
+  - Nothing is sent over the network.
+- **Unit:** repository contract on the in-memory version, autosave debounce and flush, pruning rule, draft record serialisation.
+- **E2E:**
+  - Design, reload, everything restored; Start fresh; open an older draft.
+  - IndexedDB blocked through `addInitScript` → banner.
+  - Two pages → notice.
+  - The same repository contract run against real IndexedDB in Chrome.
+
+#### M12 — Image uploads
+
+- **Features:**
+  - Uploads panel: drop zone, picker, drop onto the canvas, paste.
+  - Validation; decode and downscaled preview; blobs in IndexedDB.
+  - Fit/Fill placement; Replace; recent uploads.
+  - Effective-DPI badge and inspector line; `?mode=upload`.
+- **Files:** new `src/features/studio/tools/uploads-tool.tsx`, `assets/{upload-validate,image-decode}.ts`, `persistence/blob-store.ts`, `canvas/drop-target.tsx`, `inspector/image-section.tsx`.
+- **Dependencies:** M11.
+- **Acceptance:**
+  - Supported files are added inside the safe area.
+  - Wrong type or more than 20 MB gives a clear message.
+  - DPI is correct (a 600 px-wide image at 50.8 mm wide = 300 DPI).
+  - Uploads survive a reload.
+- **Unit:** type/size/dimension validation, DPI, Fit/Fill maths, preview size.
+- **E2E:**
+  - Upload a PNG generated in the test.
+  - Reject a .txt file and a 21 MB file.
+  - Drop onto the canvas; low-DPI badge; reload keeps the image.
+  - The product page "Upload your design" button opens Uploads.
+
+#### M13 — Version history
+
+- **Features:**
+  - Automatic snapshots (5-minute timer, before destructive actions); keep 20.
+  - Version history dialog; undoable restore.
+- **Files:** new `src/features/studio/persistence/versions.ts`, `shell/dialogs/version-history-dialog.tsx`.
+- **Dependencies:** M11.
+- **Acceptance:** snapshots appear when expected; restore can be undone; the oldest are pruned beyond 20.
+- **Unit:** snapshot policy with fake timers; pruning.
+- **E2E:** clear a side → restore the previous version → undo the restore.
+
+#### M14 — Templates engine and first 15 templates
+
+- **Features:**
+  - Templates as data with relative geometry (§7.5).
+  - Layout engine that fits any canvas size, aspect ratio and trim shape inside the safe box.
+  - Panel with style filters and live thumbnails.
+  - Apply to the current side or both; confirmation when the side isn't empty; Undo toast.
+  - Placeholder text marked `isPlaceholder`.
+- **The 15 templates:**
+  - 8 generic: Blank, Minimal centred, Bold left-aligned, Photo + text, Centred badge, Logo + tagline, Diagonal spotlight, Classic emblem.
+  - 7 product-specific: 3 visiting card, 2 flyer, 1 letterhead, 1 label/sticker.
+  - All re-authored from Reconnaissance Appendix B in the new visual style.
+- **Files:** new `src/features/studio/templates/{types,layout,catalogue}.ts`, `templates/data/*.ts`, `tools/templates-tool.tsx`.
+- **Dependencies:** M8, M9, M10.
+- **Acceptance:** every template stays inside the safe box on business card, pen barrel (1200×240), A4, circle and banner (9000×3358) canvases; applying is one undo step.
+- **Unit:** layout at extreme aspect ratios and on circle trims; placeholder flags.
+- **E2E:** apply to an empty card, apply over content (confirm), undo; apply to both sides.
+
+#### M15 — Preview, proof, shortcuts and help
+
+- **Features:**
+  - Preview dialog: trimmed render per side, plus the mockup photo as an "on the product" reference where one exists.
+  - **Download proof** PNG: front and back side by side with labels, trim line and bleed tint, fonts loaded, guides and handles hidden, capped at 16 MP, named `<design-name>-proof.png`.
+  - Shortcuts dialog (Help); tooltips with shortcuts; empty-canvas card; first-visit tips (3 steps, skippable).
+  - **Continue** → Preview → **Save and return to product** (add to cart is Phase 6).
+- **Files:** new `src/features/studio/export/{render-side,proof}.ts`, `shell/dialogs/{preview,shortcuts}-dialog.tsx`, `shell/{empty-canvas,first-visit-tips}.tsx`.
+- **Dependencies:** M8–M14.
+- **Acceptance:**
+  - Proof dimensions match the formula.
+  - The proof contains no guides or handles.
+  - Every shortcut appears in the dialog; dialogs pass axe.
+- **Unit:** proof size calculation (normal card, 30 MP banner capped), file name.
+- **E2E:**
+  - Download the proof and check PNG width/height from its header.
+  - Preview shows both sides.
+  - Return to the product with `variantId` kept.
+
+#### M16 — Hardening and Phase 3 report
+
+- **Features:**
+  - Performance trace (50 elements, 4× throttle) and fixes; Studio bundle budget check.
+  - Full axe sweep of Studio states; visual baselines; review screenshots at four widths.
+  - README and §17 Phase 3 report; full lint, typecheck, unit, build and E2E.
+- **Acceptance (Phase 3 exit criteria):**
+  - A rectangular visiting card, the round card, the rounded card, an A4 flyer and a polo's flat print area can each be designed front and back.
+  - They survive a reload (including uploads and undo history) and export a proof.
+  - A keyboard-only design task works; axe is clean on desktop, tablet and phone.
+  - The storefront still doesn't load Konva; all Phase 1–2 tests pass.
+
+### 18.17 Decisions needed before starting
+
+| # | Decision | Options | Recommendation |
+|---|----------|---------|----------------|
+| D1 | What does the canvas size mean? | (a) Finished (trim) size; bleed is added outside. (b) As the original Studio drew it: the canvas includes bleed, and trim sits `bleedPx` inside. | **(a).** It matches our product pages, which already show the canvas as the finished size, and standard sizes: 1050×600 px @ 300 DPI is exactly 3.5×2 in. With (b), every business card would be 85.9×47.8 mm. |
+| D2 | Fix products whose canvas doesn't match the size in their name (§18.1)? | (a) Fix through an override file after the business confirms real sizes. (b) Leave as is. | **(a), after confirmation.** It changes the print specs shown on 8 product pages, so it needs your approval as a change to Phase 2 output. |
+| D3 | Fonts for templates | (a) Add Fraunces + Plus Jakarta Sans (2 OFL `@fontsource-variable` packages, loaded only in the Studio). These are the fonts the original templates were designed in. (b) Use only Inter and Manrope until the Phase 4 font library. | **(a).** Two small dependencies, no runtime CDN. |
+| D4 | Apparel and wrap products (178) in Phase 3 | (a) Open in the editor on their flat print area, with the mockup as a reference. (b) Keep the placeholder until Phase 4. | **(a).** Everyone gets a working editor now; Phase 4 adds on-product workspaces. |
+| D5 | Studio graphics | (a) Reuse the original 33 SVGs, subject to the same rights check as the other recovered assets. (b) Commission or license a new set. | **(a)**, refreshed to the new palette later if needed. |
+
+**Dependency note:** apart from D3, Phase 3 needs **no new packages**. Konva, react-konva and Zustand are already installed. §2 proposed Immer, `idb` and `nanoid`; the plan replaces them with immutable history entries, a small IndexedDB wrapper and `crypto` IDs.
+
+### 18.18 Proposed sequence
+
+1. **Foundations without UI:** M1 → M2 → M3 (logic and data, fully unit-tested).
+2. **Visible editor:** M4 → M5 → M6 (route, canvas, manipulation). First usable build: move fixture elements around on every product.
+3. **Editing:** M7 → M8 → M9 → M10 (inspector, text, shapes, graphics, sides). First full design possible.
+4. **Persistence:** M11 → M12 → M13 (drafts, uploads, versions). Designs survive reloads.
+5. **Finishing:** M14 → M15 → M16 (templates, preview and proof, hardening and report).
+
+I'll report after steps 2, 4 and 5 (or after each milestone, if you prefer). Each milestone is committed separately as `Phase 3 / Mn: …`.
