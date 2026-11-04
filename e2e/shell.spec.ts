@@ -33,9 +33,9 @@ test.describe('pre-rendering and routing', () => {
 
   test('the Design Studio route is full-screen with a way back', async ({ page }) => {
     await page.goto('/products/business-card-classic/design');
-    await expect(page.getByRole('heading', { level: 1, name: 'A new studio is on its way' })).toBeVisible();
-    await expect(page.getByRole('link', { name: 'Back to product' })).toHaveAttribute('href', '/products/business-card-classic');
-    await expect(page.getByRole('contentinfo')).toHaveCount(0);
+    await expect(page.getByRole('heading', { level: 1, name: 'Design Studio: Classic Visiting Cards' })).toBeAttached();
+    await expect(page.getByRole('link', { name: 'Back to product' })).toHaveAttribute('href', /^\/products\/business-card-classic\?variantId=/);
+    await expect(page.getByRole('navigation', { name: 'Main' })).toHaveCount(0); // no storefront header
   });
 });
 

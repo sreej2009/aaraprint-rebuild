@@ -13,7 +13,7 @@ const captureScreens = Boolean(process.env.SCREENSHOTS);
  */
 export default defineConfig({
   testDir: './e2e',
-  testIgnore: captureScreens ? [] : ['**/visual-review.spec.ts'],
+  testIgnore: captureScreens ? [] : ['**/visual-review.spec.ts', '**/studio-visual.spec.ts'],
   fullyParallel: true,
   forbidOnly: Boolean(process.env.CI),
   retries: process.env.CI ? 1 : 0,
@@ -26,6 +26,8 @@ export default defineConfig({
   projects: [
     { name: 'desktop', use: { ...devices['Desktop Chrome'], channel: 'chrome', viewport: { width: 1440, height: 900 } } },
     { name: 'mobile', use: { ...devices['Pixel 7'], channel: 'chrome' } },
+    // Studio layouts only: a touch tablet in portrait (rail + floating panels).
+    { name: 'tablet', testMatch: /studio(-visual)?\.spec\.ts/, use: { ...devices['Desktop Chrome'], channel: 'chrome', viewport: { width: 820, height: 1180 }, hasTouch: true } },
   ],
   webServer: {
     command: `node scripts/serve-build.mjs --port ${PORT}`,

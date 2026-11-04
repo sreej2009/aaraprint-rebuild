@@ -4,6 +4,8 @@ import { cn } from '@/lib/cn';
 export interface SegmentedOption {
   value: string;
   label: string;
+  /** Small number after the label, e.g. elements on a Studio side. Read out as "Front, 3 items". */
+  count?: number;
 }
 
 export interface SegmentedControlProps {
@@ -34,6 +36,7 @@ export function SegmentedControl({ label, options, value, onValueChange, size = 
         <ToggleGroup.Item
           key={option.value}
           value={option.value}
+          {...(option.count === undefined ? {} : { 'aria-label': `${option.label}, ${option.count} ${option.count === 1 ? 'item' : 'items'}` })}
           className={cn(
             'inline-flex items-center justify-center rounded-sm px-3 font-medium whitespace-nowrap text-fg-muted transition-colors duration-150 hover:text-fg',
             'data-[state=on]:bg-surface data-[state=on]:text-fg data-[state=on]:shadow-1',
@@ -41,6 +44,11 @@ export function SegmentedControl({ label, options, value, onValueChange, size = 
           )}
         >
           {option.label}
+          {option.count !== undefined && (
+            <span aria-hidden="true" className="ml-1.5 min-w-5 rounded-full bg-surface-sunken px-1.5 text-center text-caption leading-5 tabular-nums text-fg-muted">
+              {option.count}
+            </span>
+          )}
         </ToggleGroup.Item>
       ))}
     </ToggleGroup.Root>

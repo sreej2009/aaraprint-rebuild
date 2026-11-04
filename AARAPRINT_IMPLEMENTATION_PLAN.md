@@ -1180,7 +1180,8 @@ I'll report after steps 2, 4 and 5 (or after each milestone, if you prefer). Eac
 | M1 Studio profiles and print geometry | Done |
 | M2 Design document schema and commands | Done |
 | M3 Studio store, history and selection | Done |
-| M4–M16 | Not started |
+| M4 Studio page and responsive layout | Done |
+| M5–M16 | Not started |
 
 #### M1 findings
 
@@ -1292,3 +1293,53 @@ StudioState
 **Not undoable by design**
 - The product variant comes from the product options, so `setVariant` is applied to every history step rather than recorded.
 - Loading a draft or version (`replaceDocument`) starts a fresh history; M11 restores saved history separately.
+
+#### M4 — Studio page and responsive layout
+
+**Route** `/products/:productSlug/design` (`src/routes/studio.tsx`, replacing the placeholder):
+- Client-only: `clientLoader` loads the product and Studio profile in parallel. Not pre-rendered; served by the SPA fallback. Noindex.
+- Query values: `variantId` (unknown → default variant), `side`, `mode=upload` (opens Uploads), `tool`.
+- `shouldRevalidate` keeps query changes from reloading or resetting the editor.
+- States:
+  - loading skeleton in the editor's outline
+  - 404 "We couldn't find that product"
+  - "This product doesn't need a design" (the card holder)
+  - "The Design Studio didn't load" with Try again
+- The Studio route chunk loads only on the Studio page (tested).
+
+**Shell** (`src/features/studio/shell/`)
+- `StudioApp` creates one Studio store per product (M3) with a blank design (M2), and provides it with the product facts (`StudioSession`) and the chrome state (`StudioUi`: open tool, drawers, sheets).
+- Chrome state is deliberately kept out of the store.
+- `?side=` follows the active side, including after undo and redo.
+
+| Layout | Width | Arrangement |
+|--------|-------|-------------|
+| Desktop | ≥ 1280 px | Top bar 56 px · tool rail 72 px · docked panel 320 px (Templates open) · workspace · docked "Layers and properties" 300 px |
+| Laptop | 1024–1279 px | Rail + docked panel; layers and properties in a right drawer |
+| Tablet | 768–1023 px | Rail; panels float over the canvas (Escape closes, focus returns to the rail); drawer for layers and properties |
+| Phone | < 768 px | Top bar 52 px; side switcher above the canvas; bottom toolbar (Templates, Text, Uploads, Graphics, More); tools in bottom sheets (half height, expandable); More holds Shapes, Background, Product, Help, Layers and properties |
+
+**Top bar**
+- Back to product (same options), design name, "Not saved yet" (autosave is M11).
+- Undo/redo wired to the store, with tooltips naming the step.
+- Zoom placeholder (M5).
+- Side switcher with element counts.
+- Product, options and price on desktop.
+- Preview and Continue: focusable but `aria-disabled`, with "coming soon" descriptions (M15).
+
+**Workspace and panels**
+- The workspace draws the active side's real print area, fitted to the screen (`geometry/fit.ts`, which M5's stage reuses): bleed tint, trim, dashed safe area, round and rounded shapes. The footer shows side, size, DPI and a guide legend.
+- Product panel: options, price, SKU, and the full print size (finished size, with bleed, bleed, safe area, resolution, shape, sides) with "Change options".
+- Help panel: print tips using the product's own values.
+- Design tools (Templates, Text, Uploads, Graphics, Shapes, Background) say "Coming soon" until their milestones.
+- The inspector shows the empty state and a read-only layer list (editing is M7).
+
+**Accessibility**
+- Skip link to the canvas; h1 in the top bar; landmarks: banner, Design tools navigation, tool panel and inspector complementary regions, main.
+- The canvas region is labelled with side and size.
+- Rail buttons use `aria-pressed`; sheets and drawers are Radix dialogs.
+- Visible labels match accessible names (WCAG 2.5.3); measurements never break across lines.
+- axe WCAG 2.2 AA is clean on desktop, tablet and phone, with panels, drawers and sheets open.
+
+**Design-system change:** `SegmentedControl` options take an optional `count`, read out as "Back, 2 items".
+

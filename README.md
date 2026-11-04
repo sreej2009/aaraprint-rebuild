@@ -16,10 +16,11 @@ npm run dev            # http://localhost:5173
 npm run check          # lint + typecheck + unit tests
 npm run build          # production build with pre-rendered pages
 npm run preview        # serve the build with production routing rules (http://localhost:4173)
-npm run test:e2e       # Playwright + axe against the preview server (run `npm run build` first)
+npm run test:e2e       # Playwright + axe against the preview server (run `npm run build` first);
+                       # projects: desktop 1440×900, mobile (Pixel 7), tablet 820×1180 (Studio specs)
 ```
 
-Useful pages: `/`, `/categories/view-all`, any `/categories/<slug>`, `/products/<slug>`, `/search?q=mug`, `/privacy`, and `/design-system` (tokens and components).
+Useful pages: `/`, `/categories/view-all`, any `/categories/<slug>`, `/products/<slug>`, `/products/<slug>/design` (Design Studio, in progress), `/search?q=mug`, `/privacy`, and `/design-system` (tokens and components).
 
 ## Stack
 
@@ -41,10 +42,11 @@ src/
   root.tsx                 document, fonts, providers, error boundary, loading fallback
   routes.ts                route map — mirrors the original site's URLs
   routes/                  route modules: home, category, product, search, content-page, faq, contact, credits,
-                           design-system, planned (Phase 6 placeholders), 404, studio placeholder
+                           design-system, planned (Phase 6 placeholders), 404, studio (Design Studio)
   features/catalogue/      listing logic (filters, facets, sort, pages), search, product card/image, filter panel, listing view
   features/product/        option selection & price display, gallery, purchase panel, details, print specs
-  features/studio/         Design Studio (Phase 3): print geometry, profiles, …
+  features/studio/         Design Studio (Phase 3): print geometry, profiles, design schema & commands,
+                           store & undo history, shell (layouts, panels, sheets)
   components/content/      prose renderer for imported content blocks
   config/business.ts       business details (support email, hours, shipping rules)
   design-system/           tokens.ts + ~30 components (Button, Field, OptionChips, QuantityTiers, Dialog, Sheet, Toast …)

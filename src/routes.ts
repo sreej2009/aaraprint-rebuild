@@ -49,5 +49,5 @@ export default [
   ]),
 
   // Design Studio is full-screen, without storefront chrome — Phases 3–5
-  route('products/:productSlug/design', 'routes/studio-planned.tsx'),
+  route('products/:productSlug/design', 'routes/studio.tsx'),
 ] satisfies RouteConfig;
