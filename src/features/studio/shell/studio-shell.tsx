@@ -34,7 +34,7 @@ export function StudioShell() {
           {/* On phones the side switcher sits above the canvas it controls. */}
           {phone && <PhoneSideBar />}
           <div className="min-h-0 flex-1">
-            <CanvasWorkspace />
+            <CanvasWorkspace zoomPill={phone} />
           </div>
         </main>
         {layout === 'desktop' && <InspectorAside />}

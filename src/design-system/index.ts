@@ -21,6 +21,7 @@ export { Input, NativeSelect, Textarea, controlClasses } from './input';
 export { Kbd } from './kbd';
 export {
   DropdownMenu,
+  DropdownMenuCheckboxItem,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuLabel,

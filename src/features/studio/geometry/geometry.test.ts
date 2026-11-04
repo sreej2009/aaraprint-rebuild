@@ -93,7 +93,7 @@ describe('trim shapes', () => {
     expect(calls).toEqual(['beginPath', 'moveTo', 'arcTo', 'arcTo', 'arcTo', 'arcTo', 'closePath']);
     calls.length = 0;
     tracePath(target, { kind: 'ellipse' }, box);
-    expect(calls).toEqual(['beginPath', 'ellipse', 'closePath']);
+    expect(calls).toEqual(['beginPath', 'moveTo', 'ellipse', 'closePath']);
   });
 });
 

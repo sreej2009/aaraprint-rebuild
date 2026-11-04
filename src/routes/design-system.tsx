@@ -1,5 +1,6 @@
 import { ButtonsDemo, FeedbackDemo, FormsDemo, NavigationDemo, OptionsDemo, OverlaysDemo } from '@/components/docs/component-demos';
 import { ColorFoundations, LayoutFoundations, TypeFoundations } from '@/components/docs/foundations';
+import { StudioCanvasSection } from '@/components/docs/studio-canvas-section';
 import { PageHeader } from '@/design-system';
 import { catalogueApi } from '@/lib/api/catalogue';
 import { seo } from '@/lib/seo';
@@ -24,6 +25,7 @@ const sections = [
   { id: 'feedback', label: 'Status & feedback' },
   { id: 'overlays', label: 'Overlays' },
   { id: 'navigation', label: 'Navigation' },
+  { id: 'canvas-demo', label: 'Studio canvas' },
 ];
 
 export default function DesignSystem({ loaderData }: Route.ComponentProps) {
@@ -59,6 +61,7 @@ export default function DesignSystem({ loaderData }: Route.ComponentProps) {
           <FeedbackDemo />
           <OverlaysDemo />
           <NavigationDemo />
+          <StudioCanvasSection />
         </div>
       </div>
     </div>

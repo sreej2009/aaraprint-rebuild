@@ -116,9 +116,9 @@ describe('fit maths', () => {
   });
 
   it('uses less padding on small screens', () => {
-    expect(workspacePadding(390)).toBe(20);
-    expect(workspacePadding(820)).toBe(40);
-    expect(workspacePadding(1440)).toBe(56);
+    expect(workspacePadding(390)).toBe(36);
+    expect(workspacePadding(820)).toBe(48);
+    expect(workspacePadding(1440)).toBe(64);
   });
 });
 

@@ -27,10 +27,18 @@ export function offsetShape(shape: TrimShape, by: number): TrimShape {
   return { kind: 'rounded-rectangle', radius: Math.max(0, shape.radius - by) };
 }
 
+/** Start a new path containing the shape (for clipping, filling or stroking). */
 export function tracePath(target: PathTarget, shape: TrimShape, rect: Rect): void {
-  const { x, y, width: w, height: h } = rect;
   target.beginPath();
+  appendPath(target, shape, rect);
+}
+
+/** Add the shape as a closed sub-path of the current path (e.g. to cut one shape out of another). */
+export function appendPath(target: PathTarget, shape: TrimShape, rect: Rect): void {
+  const { x, y, width: w, height: h } = rect;
   if (shape.kind === 'ellipse') {
+    // Start on the ellipse so no connecting line is drawn from a previous sub-path.
+    target.moveTo(x + w, y + h / 2);
     target.ellipse(x + w / 2, y + h / 2, w / 2, h / 2, 0, 0, Math.PI * 2);
   } else {
     const r = shape.kind === 'rounded-rectangle' ? clampRadius(shape.radius, rect) : 0;

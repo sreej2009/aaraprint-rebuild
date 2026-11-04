@@ -64,7 +64,8 @@ test.describe('opening the Studio', () => {
       await expect(canvas).toBeVisible();
       if (size) expect(nbsp((await canvas.getAttribute('aria-label')) ?? '')).toContain(size);
     }
-    await expect(page.getByTestId('print-area-preview')).toHaveCSS('border-radius', '50%');
+    // The round card's canvas shows its finished diameter (shape clipping: studio-canvas.spec.ts).
+    await expect(page.getByTestId('measure-width')).toHaveText(/59\.3.mm/);
   });
 });
 

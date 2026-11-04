@@ -124,6 +124,13 @@ describe('Studio shell — desktop (≥ 1280 px)', () => {
     expect(screen.getByRole('complementary', { name: 'Uploads' })).toBeInTheDocument();
   });
 
+  it('puts the zoom control in the top bar', () => {
+    renderStudio();
+    const banner = screen.getByRole('banner');
+    expect(within(banner).getByRole('button', { name: 'Zoom in' })).toBeInTheDocument();
+    expect(within(banner).getByRole('button', { name: /^Zoom .*view options$/ })).toBeInTheDocument();
+  });
+
   it('has history buttons that are disabled with nothing to undo, and inert coming-soon actions', async () => {
     const { user } = renderStudio();
     expect(screen.getByRole('button', { name: 'Undo' })).toBeDisabled();
@@ -176,6 +183,12 @@ describe('Studio shell — phone (< 768 px)', () => {
     await user.click(within(more).getByRole('button', { name: /Layers and properties/ }));
     expect(await screen.findByRole('dialog', { name: 'Layers and properties' })).toBeInTheDocument();
     expect(screen.queryByRole('dialog', { name: 'More tools' })).not.toBeInTheDocument();
+  });
+
+  it('floats the zoom control over the canvas instead of the top bar', () => {
+    renderStudio({ width: 390 });
+    expect(within(screen.getByRole('banner')).queryByRole('button', { name: 'Zoom in' })).not.toBeInTheDocument();
+    expect(within(screen.getByTestId('canvas-area')).getByRole('button', { name: 'Zoom in' })).toBeInTheDocument();
   });
 
   it('puts the side switcher under the top bar', () => {

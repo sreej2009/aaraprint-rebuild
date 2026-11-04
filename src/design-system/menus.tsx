@@ -1,3 +1,4 @@
+import { Check } from 'lucide-react';
 import { DropdownMenu as DropdownPrimitive, Popover as PopoverPrimitive } from 'radix-ui';
 import type { ComponentProps, ReactNode } from 'react';
 import { cn } from '@/lib/cn';
@@ -68,6 +69,32 @@ export function DropdownMenuItem({
       <span className="flex-1">{children}</span>
       {shortcut && <span className="text-caption text-fg-muted">{shortcut}</span>}
     </DropdownPrimitive.Item>
+  );
+}
+
+/** A menu item that toggles a setting, e.g. "Show guides". */
+export function DropdownMenuCheckboxItem({
+  shortcut,
+  className,
+  children,
+  ...props
+}: ComponentProps<typeof DropdownPrimitive.CheckboxItem> & { shortcut?: string }) {
+  return (
+    <DropdownPrimitive.CheckboxItem
+      className={cn(
+        'flex min-h-10 cursor-pointer items-center gap-2.5 rounded-sm px-2.5 text-body-sm text-fg outline-none select-none data-[highlighted]:bg-surface-subtle',
+        className,
+      )}
+      {...props}
+    >
+      <span className="grid size-4 place-items-center">
+        <DropdownPrimitive.ItemIndicator>
+          <Check aria-hidden="true" className="size-4 text-accent-strong" />
+        </DropdownPrimitive.ItemIndicator>
+      </span>
+      <span className="flex-1">{children}</span>
+      {shortcut && <span className="text-caption text-fg-muted">{shortcut}</span>}
+    </DropdownPrimitive.CheckboxItem>
   );
 }
 

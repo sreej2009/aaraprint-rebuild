@@ -1181,7 +1181,8 @@ I'll report after steps 2, 4 and 5 (or after each milestone, if you prefer). Eac
 | M2 Design document schema and commands | Done |
 | M3 Studio store, history and selection | Done |
 | M4 Studio page and responsive layout | Done |
-| M5–M16 | Not started |
+| M5 Canvas stage, zoom/pan and print guides | Done |
+| M6–M16 | Not started |
 
 #### M1 findings
 
@@ -1342,4 +1343,44 @@ StudioState
 - axe WCAG 2.2 AA is clean on desktop, tablet and phone, with panels, drawers and sheets open.
 
 **Design-system change:** `SegmentedControl` options take an optional `count`, read out as "Back, 2 items".
+
+#### M5 — Canvas stage, zoom/pan and print guides
+
+**Canvas** (`src/features/studio/canvas/canvas-stage.tsx`, React Konva, lazily loaded with the M4 HTML drawing as its loading placeholder)
+
+| # | Layer | Interactive | Exported | Contents |
+|---|-------|-------------|----------|----------|
+| 1 | `workspace` | no | never | sheet shadow |
+| 2 | `artwork` | yes | yes | background colour (to the bleed edge) and elements, clipped to the bleed outline |
+| 3 | `guides` | no | never | washed-out bleed band (even-odd fill), red bleed edge, dark trim line, dashed green safe line; 1 screen px at any zoom |
+
+- Guides can be hidden (zoom menu or Ctrl ;); the choice is remembered on the device.
+- Rectangles, rounded rectangles (parallel radii for bleed and safe), ovals and circles all come from the M1 geometry.
+- Elements are drawn from the M2 document. Each sits in a group at its box centre, rotated, with its opacity; hidden layers are not drawn.
+  - text: font, weight, italic, underline, colour, alignment, line height, letter spacing (em → px); re-measured once web fonts load
+  - shapes: rectangle, ellipse, line, triangle, star, arrow
+  - images: a frame until uploads (M12) and graphics (M9) supply a source
+- `exportArtwork()` reads only the artwork layer: bleed box, any resolution, never guides. Proofs (M15) build on it.
+
+**Viewport** (`geometry/viewport.ts`, `canvas/viewport-store.ts`, a separate store from the design)
+- Zoom is a percentage of real size (100 % = 96 CSS px per printed inch). The range is 10–400 %, widened to include fit: a 1.5 m banner fits at about 11 %, a 51 × 17 mm stamp strip at over 100 %.
+- Controls:
+  - − / + step through 10, 25, 50, 75, 100, 150, 200, 300, 400 % and the fit level
+  - the percentage menu: Fit to screen, Actual size, 50 %, 200 %, Show print guides
+  - Ctrl/⌘ + / − / 0, Shift 1, Ctrl/⌘ ;
+- Navigation:
+  - Ctrl/⌘ + wheel or trackpad pinch zooms around the pointer
+  - wheel scrolls pan (Shift for sideways)
+  - drag (left button on empty canvas, middle button or Space) pans
+  - touch: one finger pans, two fingers pinch and pan
+- The sheet can't be panned off-screen.
+- Fit is kept while the window or panels resize; manual views keep their centre. Switching sides keeps the view (same size) and re-fits only if the size differs.
+- Buttons floating over the canvas (the phone zoom pill) never start a pan.
+
+**Labels and layout**
+- Dimension lines show the finished width and height next to the sheet (screen-only).
+- The footer shows side, size, DPI and the guide legend.
+- Zoom sits in the top bar on tablet and larger, and in a floating pill on phones. Preview is hidden on tablets until M15 to give the design name room.
+
+**Reference:** `/design-system#canvas-demo` shows the real canvas with a sample card (every element type on both sides, each trim shape, zoom, and the guide-free export). It's also the fixture for the element-rendering tests, since the Studio itself can't add elements until M6.
 

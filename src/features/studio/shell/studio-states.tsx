@@ -36,10 +36,11 @@ export function StudioLoading() {
         <Skeleton className="ml-auto h-9 w-28 rounded-md" />
       </div>
       <div className="flex min-h-0 flex-1">
-        <div className="hidden w-16 border-r border-border bg-surface md:block" />
-        <div className="grid flex-1 place-items-center bg-surface-sunken">
+        <div className="hidden w-18 border-r border-border bg-surface md:block" />
+        <main id="main-content" className="grid flex-1 place-items-center bg-surface-sunken">
+          <h1 className="sr-only">Opening the Design Studio</h1>
           <Spinner size="lg" label="Opening the Design Studio" className="text-accent" />
-        </div>
+        </main>
       </div>
     </div>
   );

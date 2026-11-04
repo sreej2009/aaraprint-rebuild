@@ -7,6 +7,7 @@ const shots = [
   { name: 'studio-round-back', path: '/products/business-card-circle/design?side=back' },
   { name: 'studio-polo', path: '/products/apparel-polo-classic/design?tool=help' },
   { name: 'studio-unsupported', path: '/products/card-accessory-metal-holder/design' },
+  { name: 'studio-banner', path: '/products/flyer-canopy-tent/design' },
 ];
 
 for (const { name, path } of shots) {
@@ -18,3 +19,12 @@ for (const { name, path } of shots) {
     await page.screenshot({ path: `review-screens/${info.project.name}-${name}.png` });
   });
 }
+
+test('screenshot canvas demo (sample design)', async ({ page, isMobile }, info) => {
+  test.skip(isMobile, 'reference page');
+  await page.goto('/design-system#canvas-demo');
+  await page.waitForFunction(() => Boolean((window as unknown as { Konva?: { stages: unknown[] } }).Konva?.stages.length));
+  await page.waitForTimeout(600);
+  await page.locator('#canvas-demo').screenshot({ path: `review-screens/${info.project.name}-studio-canvas-demo.png` });
+});
+

@@ -5,11 +5,11 @@ export interface Size {
   height: number;
 }
 
-/** Space kept around the sheet so guides and handles never touch the panel edges. */
+/** Space kept around the sheet for the dimension labels, so nothing touches the panel edges. */
 export function workspacePadding(viewportWidth: number): number {
-  if (viewportWidth < 480) return 20;
-  if (viewportWidth < 1024) return 40;
-  return 56;
+  if (viewportWidth < 480) return 36;
+  if (viewportWidth < 1024) return 48;
+  return 64;
 }
 
 /** Scale that fits `content` (design px) inside `available` (screen px) with `padding` on every side. 0 = no room. */

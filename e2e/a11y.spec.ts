@@ -21,8 +21,8 @@ const pages = [
   { name: 'not found', path: '/no-such-page' },
   { name: 'studio', path: '/products/business-card-classic/design', ready: 'Classic Visiting Cards design' },
   { name: 'studio (product panel, round card)', path: '/products/business-card-circle/design?tool=product&side=back', ready: 'Circle Visiting Cards design' },
-  { name: 'studio (product without a design)', path: '/products/card-accessory-metal-holder/design' },
-  { name: 'studio (unknown product)', path: '/products/no-such-product/design' },
+  { name: 'studio (product without a design)', path: '/products/card-accessory-metal-holder/design', ready: 'This product doesn’t need a design' },
+  { name: 'studio (unknown product)', path: '/products/no-such-product/design', ready: 'We couldn’t find that product' },
 ];
 
 for (const { name, path, ready } of pages) {

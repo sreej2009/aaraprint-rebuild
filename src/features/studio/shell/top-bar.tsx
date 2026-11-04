@@ -5,6 +5,7 @@ import { Button, IconButton, SegmentedControl, Separator, Tooltip } from '@/desi
 import { formatINR } from '@/lib/format';
 import { cn } from '@/lib/cn';
 import { selectActiveSurfaceId, selectCanRedo, selectCanUndo, selectRedoLabel, selectUndoLabel, useStudio, useStudioActions } from '../store';
+import { ZoomControl } from '../canvas/zoom-control';
 import { useStudioSession } from './session-context';
 import { useStudioUi } from './ui-context';
 
@@ -24,7 +25,7 @@ export function TopBar({ title }: { title: string }) {
         {!phone && (
           <>
             <Separator orientation="vertical" className="mx-1 h-6" />
-            <ZoomPlaceholder />
+            <ZoomControl />
             <Separator orientation="vertical" className="mx-1 h-6" />
             <SideSwitcher size="sm" />
           </>
@@ -43,7 +44,8 @@ export function TopBar({ title }: { title: string }) {
             onClick={() => setInspectorOpen(true)}
           />
         )}
-        {!phone && (
+        {/* Tablets are tight once zoom is in the bar; Preview returns there with M15. */}
+        {(layout === 'laptop' || layout === 'desktop') && (
           <ComingSoon hint="Preview and proof downloads are coming soon">
             <Eye aria-hidden="true" />
             <span className="max-xl:sr-only">Preview</span>
@@ -110,16 +112,6 @@ function HistoryButtons() {
   );
 }
 
-/** Zoom lands with the canvas stage (M5). Shown now so the bar's layout is final. */
-function ZoomPlaceholder() {
-  return (
-    <ComingSoon hint="Zoom controls arrive with the canvas" ghost>
-      <span className="sr-only">Zoom: </span>
-      <span className="tabular-nums">Fit</span>
-    </ComingSoon>
-  );
-}
-
 export function SideSwitcher({ size = 'md', className }: { size?: 'sm' | 'md'; className?: string }) {
   const actions = useStudioActions();
   const active = useStudio(selectActiveSurfaceId);
@@ -156,12 +148,12 @@ function ProductSummary() {
  * disabled) so keyboard and screen-reader users can find out why it doesn't do anything yet.
  * Its accessible name is its visible text (sr-only where the text is hidden), per WCAG 2.5.3.
  */
-function ComingSoon({ hint, primary, ghost, children }: { hint: string; primary?: boolean; ghost?: boolean; children: ReactNode }) {
+function ComingSoon({ hint, primary, children }: { hint: string; primary?: boolean; children: ReactNode }) {
   const ignore = (event: MouseEvent) => event.preventDefault();
   return (
     <Tooltip content={hint}>
       <Button
-        variant={primary ? 'primary' : ghost ? 'ghost' : 'secondary'}
+        variant={primary ? 'primary' : 'secondary'}
         size="sm"
         aria-disabled="true"
         aria-description={hint}

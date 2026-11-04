@@ -27,7 +27,7 @@ export default defineConfig({
     { name: 'desktop', use: { ...devices['Desktop Chrome'], channel: 'chrome', viewport: { width: 1440, height: 900 } } },
     { name: 'mobile', use: { ...devices['Pixel 7'], channel: 'chrome' } },
     // Studio layouts only: a touch tablet in portrait (rail + floating panels).
-    { name: 'tablet', testMatch: /studio(-visual)?\.spec\.ts/, use: { ...devices['Desktop Chrome'], channel: 'chrome', viewport: { width: 820, height: 1180 }, hasTouch: true } },
+    { name: 'tablet', testMatch: /studio(-[a-z]+)?\.spec\.ts/, use: { ...devices['Desktop Chrome'], channel: 'chrome', viewport: { width: 820, height: 1180 }, hasTouch: true } },
   ],
   webServer: {
     command: `node scripts/serve-build.mjs --port ${PORT}`,

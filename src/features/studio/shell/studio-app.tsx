@@ -4,6 +4,9 @@ import type { Product } from '@/lib/catalogue/types';
 import { describePrint } from '../profile/describe';
 import type { StudioProfile } from '../profile/types';
 import { createBlankDesign } from '../schema/create';
+import { useZoomShortcuts } from '../canvas/use-zoom-shortcuts';
+import { ViewportStoreContext } from '../canvas/viewport-context';
+import { createViewportStore, type ViewportStore } from '../canvas/viewport-store';
 import { createStudioStore, selectActiveSurfaceId, StudioProvider, useStudio } from '../store';
 import { StudioSessionContext, type StudioSession } from './session-context';
 import { StudioShell } from './studio-shell';
@@ -31,6 +34,7 @@ export function StudioApp({ product, profile, variantId, initialSurface, initial
       ...(initialSurface ? { surfaceId: initialSurface } : {}),
     }),
   );
+  const [viewportStore] = useState(() => createViewportStore());
   const session = useMemo<StudioSession>(() => {
     const variant = resolveStudioVariant(product, variantId);
     const params = new URLSearchParams(variant ? { variantId: variant.id } : {});
@@ -47,13 +51,21 @@ export function StudioApp({ product, profile, variantId, initialSurface, initial
   return (
     <StudioProvider store={store}>
       <StudioSessionContext.Provider value={session}>
-        <StudioUiProvider initialTool={initialTool}>
-          <SideInUrl />
-          <StudioShell />
-        </StudioUiProvider>
+        <ViewportStoreContext.Provider value={viewportStore}>
+          <StudioUiProvider initialTool={initialTool}>
+            <SideInUrl />
+            <ZoomShortcuts store={viewportStore} />
+            <StudioShell />
+          </StudioUiProvider>
+        </ViewportStoreContext.Provider>
       </StudioSessionContext.Provider>
     </StudioProvider>
   );
+}
+
+function ZoomShortcuts({ store }: { store: ViewportStore }) {
+  useZoomShortcuts(store);
+  return null;
 }
 
 /** Keeps `?side=` in step with the active side (also after undo/redo), so links and reloads reopen it. */
