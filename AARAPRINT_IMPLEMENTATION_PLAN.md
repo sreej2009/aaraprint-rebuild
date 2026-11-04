@@ -1179,7 +1179,8 @@ I'll report after steps 2, 4 and 5 (or after each milestone, if you prefer). Eac
 |-----------|--------|
 | M1 Studio profiles and print geometry | Done |
 | M2 Design document schema and commands | Done |
-| M3–M16 | Not started |
+| M3 Studio store, history and selection | Done |
+| M4–M16 | Not started |
 
 #### M1 findings
 
@@ -1261,3 +1262,33 @@ DesignDocument
 - Pure functions: never mutate, return the same document for no-ops, share every unchanged surface and element.
 - 100 consecutive edits share all untouched objects (tested).
 - Locking is enforced by the editor (M6), not by commands, so "unlock" and inspector edits stay simple.
+
+#### M3 — Studio store, history and selection
+
+Code: `src/features/studio/store/` (store, history, selection rules, selectors, provider and hooks) and `src/features/studio/naming.ts` (layer names and undo labels).
+
+```
+StudioState
+  document      DesignDocument                 the only saved data (M2)
+  editor        { activeSurfaceId, selectedIds[], hoveredId, editingTextId }   session only, never saved
+  history       { past[], future[] }           ≤ 100 entries: { label, coalesceKey, at, before, after }
+                                               before/after = { document, surfaceId, selection }
+  changeCount   number                         + 1 on every document change (edit, undo, redo, load); autosave watches it
+  actions       stable functions               execute(label, command, options) + actions built on M2 commands
+```
+
+**History and changes**
+- One Zustand vanilla store per editing session (`createStudioStore`), provided through React context (`StudioProvider`, `useStudio(selector)`, `useStudioActions()`).
+- Every document change goes through `execute()`: it runs a pure M2 command and records one undo step. A command that changes nothing returns `false` and records nothing.
+- Undo/redo restores the document and where the customer was (side, selection). A new edit clears redo. The oldest step is dropped after 100.
+- Edits with the same key within 600 ms merge into one step (typing, nudging, sliders). Changing the selection or side ends the merge. Merged edits that cancel out leave no step.
+- Memory: steps share every unchanged surface and element. After 100 edits to one element, the other elements and surfaces are still single shared objects (tested).
+
+**Selection and locking**
+- Selection supports replace / add / toggle, select all (visible, unlocked elements), clear, and multi-element move, nudge, delete, duplicate, hide and lock.
+- Selection is always pruned to elements that exist on the active side. Switching side clears it. Hiding an element deselects it.
+- Locked elements can't be moved, edited, reordered or deleted (multi-element actions skip them). They can still be selected from layers, renamed, shown/hidden, duplicated (the copy is unlocked) and unlocked.
+
+**Not undoable by design**
+- The product variant comes from the product options, so `setVariant` is applied to every history step rather than recorded.
+- Loading a draft or version (`replaceDocument`) starts a fresh history; M11 restores saved history separately.
