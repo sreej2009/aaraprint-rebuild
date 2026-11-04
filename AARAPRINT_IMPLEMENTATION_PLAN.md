@@ -1178,7 +1178,8 @@ I'll report after steps 2, 4 and 5 (or after each milestone, if you prefer). Eac
 | Milestone | Status |
 |-----------|--------|
 | M1 Studio profiles and print geometry | Done |
-| M2–M16 | Not started |
+| M2 Design document schema and commands | Done |
+| M3–M16 | Not started |
 
 #### M1 findings
 
@@ -1217,3 +1218,46 @@ The other named-size products match: 3 A4 brochures, A4 flyer, DL flyer and DL e
 | Fraunces, Plus Jakarta Sans | To be verified in M8 (SIL OFL expected) | — |
 
 Note: the Phase 2 product pages already show mockups as gallery images on 234 products (approved in Phase 2). They are unchanged; the business may want to confirm those rights too.
+
+#### M2 — design document (schema version 2)
+
+Code: `src/features/studio/schema/` (types, factories, parser/validator, asset and profile checks) and `src/features/studio/commands/`.
+
+```
+DesignDocument
+  format: "aaraprint.design", schemaVersion: 2
+  id, name
+  product   { slug, productId, variantId | null }
+  surfaces  [ SurfaceDesign ]           ordered; "front", "back" now; any slug later ("flap", "cover-front"…)
+    id, label
+    print   { widthPx, heightPx, dpi, bleedPx, safeZonePx, trim { shape, cornerRadiusPx } }   explicit per surface
+    background { color | null }
+    elements [ text | shape | image ]   bottom → top
+      common: id, name | null, x, y, width, height (print px, origin = trim top-left),
+              rotation (° around centre), opacity, locked, hidden
+      text:   text, fontFamily, fontSize (px; shown in pt), fontWeight, italic, underline, color,
+              align, lineHeight, letterSpacing (em), placeholder
+      shape:  shape (rect | ellipse | line | triangle | star | arrow), fill, stroke, strokeWidth,
+              cornerRadius, points
+      image:  source { kind: "asset", assetId } | { kind: "graphic", graphicId }
+  assets    { [assetId]: { id, kind: "upload", name, mime, bytes, naturalWidth, naturalHeight,
+                           storage { kind: "local", blobId } | { kind: "remote", path } } }
+  meta      { createdAt, updatedAt, revision }   set by saving, never by edits
+```
+
+**Refinements of §18.4**
+- `surfaces` is an ordered list, not a front/back record, so multi-surface products need no format change.
+- Each surface stores its own print geometry. A size correction (D2) or a size-changing option (Phase 4) is detected with `compareWithProfile()` and applied with `resizeSurface(…, 'fit' | 'keep-size')`, so it's never silent.
+- Uploads are referenced by asset id. The parser refuses `data:` URLs and long base64 strings anywhere in the document, plus documents over 1 MB.
+- The active side is editor state (M3), not part of the document.
+
+**Parsing**
+- `parseDesign()` checks every field and rebuilds the document from known fields only; unknown keys such as stray Konva attributes are dropped.
+- Errors carry a JSON path: `invalid-json`, `not-a-design`, `unsupported-version` (v1 = original site format, Phase 6; newer than 2 = "reload to update"), `too-large`, `invalid-field`, `duplicate-id`, `missing-asset`, `embedded-data`.
+- Older versions are upgraded through a migration registry (`MIGRATIONS`, empty for now).
+- `missingLocalAssets()` finds uploads whose stored file is gone from the device.
+
+**Commands**
+- Pure functions: never mutate, return the same document for no-ops, share every unchanged surface and element.
+- 100 consecutive edits share all untouched objects (tested).
+- Locking is enforced by the editor (M6), not by commands, so "unlock" and inspector edits stay simple.
