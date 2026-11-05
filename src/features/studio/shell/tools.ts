@@ -17,7 +17,7 @@ export interface ToolDefinition {
 
 export const TOOLS: readonly ToolDefinition[] = [
   { id: 'templates', label: 'Templates', title: 'Templates', icon: LayoutTemplate, intro: 'Start from a layout made to fit this product.', comingSoon: true },
-  { id: 'text', label: 'Text', title: 'Text', icon: Type, intro: 'Add headings, names, contact details and more.', comingSoon: true },
+  { id: 'text', label: 'Text', title: 'Text', icon: Type, intro: 'Add headings, names, contact details and more.', comingSoon: false },
   { id: 'uploads', label: 'Uploads', title: 'Uploads', icon: ImageUp, intro: 'Add your logo or photos. PNG, JPG, WEBP, GIF or SVG up to 20 MB.', comingSoon: true },
   { id: 'graphics', label: 'Graphics', title: 'Graphics', icon: Sparkles, intro: 'Icons, badges and illustrations for your design.', comingSoon: true },
   { id: 'shapes', label: 'Shapes', title: 'Shapes', icon: Shapes, intro: 'Rectangles, circles, lines, stars and arrows.', comingSoon: true },

@@ -1,4 +1,5 @@
 import { Breadcrumbs, PageHeader } from '@/design-system';
+import { STUDIO_FONTS } from '@/features/studio/assets/fonts';
 import { getCredits } from '@/lib/content/content.server';
 import { seo } from '@/lib/seo';
 import type { Route } from './+types/credits';
@@ -27,6 +28,25 @@ export default function Credits({ loaderData }: Route.ComponentProps) {
           </a>
           .
         </p>
+      </section>
+      <section aria-labelledby="fonts-heading" className="flex max-w-reading flex-col gap-2">
+        <h2 id="fonts-heading" className="text-h3 font-semibold text-fg">
+          Fonts
+        </h2>
+        <p className="text-body-sm text-fg-muted">
+          The site and the Design Studio use these typefaces, served from our own servers under the{' '}
+          <a href="https://openfontlicense.org" className={linkClasses} target="_blank" rel="noreferrer">
+            SIL Open Font License 1.1
+          </a>
+          :
+        </p>
+        <ul className="flex flex-col gap-1 text-body-sm text-fg-muted">
+          {STUDIO_FONTS.map((font) => (
+            <li key={font.family}>
+              <span className="font-medium text-fg">{font.family}</span> — © {font.copyright}
+            </li>
+          ))}
+        </ul>
       </section>
       <section aria-labelledby="photos-heading" className="flex flex-col gap-4">
         <h2 id="photos-heading" className="text-h3 font-semibold text-fg">

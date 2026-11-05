@@ -20,7 +20,7 @@ npm run test:e2e       # Playwright + axe against the preview server (run `npm r
                        # projects: desktop 1440×900, mobile (Pixel 7), tablet 820×1180 (Studio specs)
 ```
 
-Useful pages: `/`, `/categories/view-all`, any `/categories/<slug>`, `/products/<slug>`, `/products/<slug>/design` (Design Studio, in progress; add `?sample=1` to start from a sample card), `/search?q=mug`, `/privacy`, and `/design-system` (tokens, components and the Studio canvas demo).
+Useful pages: `/`, `/categories/view-all`, any `/categories/<slug>`, `/products/<slug>`, `/products/<slug>/design` (Design Studio, in progress: canvas, selection, inspector, layers and the Text tool; add `?sample=1` to start from a sample card), `/search?q=mug`, `/privacy`, and `/design-system` (tokens, components and the Studio canvas demo).
 
 ## Stack
 

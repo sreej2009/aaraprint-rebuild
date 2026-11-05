@@ -1,6 +1,6 @@
 import { X } from 'lucide-react';
 import { Dialog as DialogPrimitive } from 'radix-ui';
-import type { ReactNode } from 'react';
+import type { CSSProperties, ReactNode } from 'react';
 import { cn } from '@/lib/cn';
 import { IconButton } from './button';
 
@@ -24,17 +24,28 @@ export interface SheetContentProps {
   description?: ReactNode;
   footer?: ReactNode;
   className?: string;
+  style?: CSSProperties;
+  /** Where focus goes when the sheet opens; call `preventDefault()` to place it yourself. */
+  onOpenAutoFocus?: (event: Event) => void;
+  /** Where focus goes when the sheet has closed; call `preventDefault()` to leave it where it is. */
+  onCloseAutoFocus?: (event: Event) => void;
+  /** Escape; call `preventDefault()` to keep the sheet open (or close it your own way). */
+  onEscapeKeyDown?: (event: KeyboardEvent) => void;
   children?: ReactNode;
 }
 
 /** Drawer for the cart, mobile navigation, filters and Studio tool panels on phones. */
-export function SheetContent({ side = 'right', title, hideTitle, description, footer, className, children }: SheetContentProps) {
+export function SheetContent({ side = 'right', title, hideTitle, description, footer, className, style, onOpenAutoFocus, onCloseAutoFocus, onEscapeKeyDown, children }: SheetContentProps) {
   return (
     <DialogPrimitive.Portal>
       <DialogPrimitive.Overlay className="fixed inset-0 z-50 bg-scrim data-[state=open]:animate-fade-in data-[state=closed]:animate-fade-out" />
       <DialogPrimitive.Content
         {...(description ? {} : { 'aria-describedby': undefined })}
         className={cn('fixed z-50 flex flex-col border-border bg-surface shadow-3 outline-none', sides[side], className)}
+        style={style}
+        onOpenAutoFocus={onOpenAutoFocus}
+        onCloseAutoFocus={onCloseAutoFocus}
+        onEscapeKeyDown={onEscapeKeyDown}
       >
         {side === 'bottom' && <div aria-hidden="true" className="mx-auto mt-2.5 h-1 w-10 shrink-0 rounded-full bg-border-strong/50" />}
         <div className={cn('flex items-center gap-3 px-5 py-3', !hideTitle && 'border-b border-border')}>

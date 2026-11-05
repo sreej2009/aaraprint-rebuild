@@ -1184,7 +1184,8 @@ I'll report after steps 2, 4 and 5 (or after each milestone, if you prefer). Eac
 | M5 Canvas stage, zoom/pan and print guides | Done |
 | M6 Selecting, moving, resizing and rotating | Done |
 | M7 Inspector and layers panel | Done |
-| M8–M16 | Not started |
+| M8 Text tool | Done |
+| M9–M16 | Not started |
 
 #### M1 findings
 
@@ -1220,7 +1221,7 @@ The other named-size products match: 3 A4 brochures, A4 flyer, DL flyer and DL e
 | `models/polo-shirt.glb` | Attribution required — CC BY 4.0 (credit on `/credits`) | Allowed (3D is Phase 5). |
 | `shirt_baked.glb` | Unconfirmed | Not used. |
 | 33 Studio graphics | To be checked in M9 | — |
-| Fraunces, Plus Jakarta Sans | To be verified in M8 (SIL OFL expected) | — |
+| Fraunces, Plus Jakarta Sans | **Verified in M8: SIL Open Font License 1.1** (`@fontsource-variable` 5.3.0; © The Fraunces Project Authors, © The Plus Jakarta Sans Project Authors). Licence files ship in the packages. | Allowed. Self-hosted, loaded only in the Studio; credited on `/credits` with Inter and Manrope. |
 
 Note: the Phase 2 product pages already show mockups as gallery images on 234 products (approved in Phase 2). They are unchanged; the business may want to confirm those rights too.
 
@@ -1448,4 +1449,51 @@ StudioState
 - No style controls yet (font, colour, fill, stroke): text tool M8, shapes and graphics M9.
 - Layers are reordered with buttons and Alt + arrows, not by dragging (drag-and-drop is Phase 4).
 - Fit inside safe area / Fill to bleed (Plan §18.6) are not in M7; they arrive with images (M12), where they matter most.
+
+#### M8 — Text tool
+
+**Text tool** (`src/features/studio/tools/`): the Text panel offers four presets: Heading, Subheading, Body text, and Name and title (two layers). They're set in Fraunces and Plus Jakarta Sans and sized from the product's safe area, in half points (13 pt on a business card, over 200 pt on a banner). New text lands centred in the safe area as sample text (`placeholder`), selected and open for typing, in one undo step. On tablets and phones the panel closes first so the canvas shows.
+
+**Editing:**
+- **In place** (desktop, laptop, tablet; `canvas/text-edit-overlay.tsx`): a native textarea over the text, matched to its font, size at the zoom, weight, italic, spacing, alignment, colour and rotation. The canvas hides its own drawing meanwhile.
+- **Phones:** a bottom sheet (`shell/text-edit-sheet.tsx`) that moves above the on-screen keyboard (`visualViewport`); the canvas above updates live.
+- **Opening the editor:** double-click or double-tap. Like the browser's own dblclick it needs two complete clicks, so pressing again to drag right after selecting still drags. Enter on the canvas and the selection toolbar's Edit text button also open it.
+- **Keys:** Enter adds a line; Ctrl/⌘ + Enter, clicking away or Done keeps the text; Escape or Cancel restores it. While typing, arrows, Delete, Backspace, Home/End, Ctrl A and Ctrl Z are the textarea's own; no canvas shortcut fires.
+- **Undo:** each keystroke updates the design (layer name, inspector, canvas), and a whole edit is one undo step however long it takes (`canvas/text-edit-session.ts`, same mechanism as a drag). Escape leaves no step.
+- **Empty text:** committing it deletes the text box in that same step, so one undo brings the original back.
+- **Names and sample text:** a name the customer chose is kept; automatic names follow the text. Changed sample text stops being a placeholder.
+- **Content field:** the inspector's Content field edits the same way (one step per focus; Escape restores).
+
+**Inspector:**
+- New Content and Text style sections: font family (options previewed in their font), weight (Regular to Extra bold), italic and underline, size in pt, line height (×), letter spacing (em), alignment (left, centre, right, justify) and colour.
+- **Fonts:** only weights and italics the font really has are offered. Switching to Manrope turns italic off rather than letting the canvas fake it. Fonts the Studio doesn't offer show as "(not available)".
+- **Undo:** each change is one undo step; − / + steps merge within 600 ms, and a drag in the colour picker is one step.
+- **Colour vs opacity:** text colour is stored on the text, separate from the layer's opacity.
+- **No vertical alignment:** text boxes are auto-height, so it isn't offered.
+- **Design system:** new `ColorField` (system picker, hex field with validation, named presets). `SegmentedControl` gains icon-only options and `disabled`, `Select` gains per-option style, `SheetContent` gains focus/Escape hooks, and `parseNumber` accepts ×, em and the minus sign.
+
+**Automatic height (fixes the M6/M7 limitation):**
+- **When it's re-measured:** a text box's height follows its text, font, size, weight, italic, line height, letter spacing and width.
+- **How:** it's measured with Konva's own layout (`canvas/konva-text-measure.ts`, registered when the canvas code loads; `canvas/text-layout.ts` has no Konva import).
+- **Same undo step:** the store re-measures every text element a command adds or re-flows before recording the step. So a width drag, a new font or typing changes width/size and height together, and undo restores both.
+- **Top edge stays put:** it doesn't move when the height changes, also for rotated text.
+- **Inspector:** H shows the measured height, read-only ("follows the text").
+- **Resize handles:** side handles change the width only; corner handles scale the font (M6), and the height is then measured.
+
+**Fonts** (`assets/fonts.ts`, `assets/studio-fonts.css`):
+- **Registry:** Plus Jakarta Sans and Fraunces (loaded only in the Studio), plus Inter and Manrope (the site's own; Inter italic added).
+- **Loading:** faces load through `document.fonts.load()` with the characters the design uses, so unicode-range subsets come too.
+- **After a font loads:** the canvas redraws and the store re-measures every text (`relayoutText`). The re-measurement isn't an undo step, isn't announced, and is applied to every history step too. So wrapping measured with a fallback font never lingers.
+
+**Accessibility:**
+- Every control is labelled ("Font family", "Font size", "Text colour, hex code", "Horizontal alignment", "Line height", "Letter spacing", "Text content").
+- Typing is never announced key by key; the end of an edit is: "Text changed to “…”", "Text edit cancelled", "Deleted the empty text box. Press Ctrl Z to undo".
+
+**Also:** the layers list only scrolls its row into view when the selection changes and the list is on screen, so the inspector no longer jumps while text is edited.
+
+**Known limits**
+- Rich per-character formatting, vertical alignment and fixed-height text boxes are not in Phase 3.
+- While typing in place, the browser lays the textarea out and may wrap a line slightly differently from the canvas; the canvas (and the stored height) take over as soon as the edit ends.
+- Proofs that wait for fonts are M15; the canvas already redraws when fonts arrive.
+- Font choice is the four bundled families; a larger font library is Phase 4.
 

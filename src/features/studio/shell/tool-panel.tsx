@@ -76,7 +76,16 @@ export function ToolSheet() {
       }}
     >
       {tool && (
-        <SheetContent side="bottom" title={tool.title} description={tool.intro} className={cn('transition-[height] duration-200', expanded ? 'h-[90dvh]' : 'h-[48dvh]')}>
+        <SheetContent
+          side="bottom"
+          title={tool.title}
+          description={tool.intro}
+          className={cn('transition-[height] duration-200', expanded ? 'h-[90dvh]' : 'h-[48dvh]')}
+          // A tool can hand over to another sheet (adding text opens the text editor): leave focus there.
+          onCloseAutoFocus={(event) => {
+            if (document.activeElement?.closest('[role="dialog"]')) event.preventDefault();
+          }}
+        >
           <div className="flex justify-center pt-1">
             <IconButton
               label={expanded ? 'Show less' : 'Show more'}

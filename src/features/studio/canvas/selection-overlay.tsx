@@ -26,13 +26,16 @@ export function SelectionOverlay() {
   const hoveredId = useStudio((s) => s.editor.hoveredId);
   const surface = useStudio(selectActiveSurface);
   const gesture = useInteraction((s) => s.gesture);
+  const editing = useStudio((s) => s.editor.editingTextId !== null && s.editor.editingTextId === selectedId);
   const selected = selectedId ? (surface?.elements.find((e) => e.id === selectedId) ?? null) : null;
   const hovered = hoveredId && hoveredId !== selectedId && !gesture ? (surface?.elements.find((e) => e.id === hoveredId && !e.hidden) ?? null) : null;
   if (!surface) return null;
   return (
     <div aria-hidden="true" className="pointer-events-none absolute inset-0 overflow-hidden" data-testid="selection-overlay">
       {hovered && <Frame element={hovered} viewport={viewport} className="border border-accent/70" testId="hover-outline" />}
-      {selected && <Selection element={selected} viewport={viewport} dpi={surface.print.dpi} placement={placementFor(selected, surface.print)} gesture={gesture} />}
+      {/* While text is edited only its outline shows: the editor has the box. */}
+      {selected && editing && <Frame element={selected} viewport={viewport} className="border border-accent/50" testId="editing-frame" />}
+      {selected && !editing && <Selection element={selected} viewport={viewport} dpi={surface.print.dpi} placement={placementFor(selected, surface.print)} gesture={gesture} />}
     </div>
   );
 }

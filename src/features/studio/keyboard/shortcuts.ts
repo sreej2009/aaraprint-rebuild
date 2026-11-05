@@ -7,7 +7,8 @@ import type { ArrangeAction } from '../commands';
  *
  * "Selection" shortcuts act on what's selected and only apply while the canvas (or the layers
  * list) has focus, so arrow keys and Delete keep their usual meaning in menus, radio groups and
- * panels. "Global" shortcuts work anywhere except while typing.
+ * panels. "Canvas" shortcuts need the canvas itself (Enter on a layer row selects it instead).
+ * "Global" shortcuts work anywhere except while typing.
  */
 export type StudioCommand =
   | { kind: 'nudge'; dxMm: number; dyMm: number }
@@ -15,10 +16,11 @@ export type StudioCommand =
   | { kind: 'deselect' }
   | { kind: 'duplicate'; offsetMm: number }
   | { kind: 'arrange'; action: ArrangeAction }
+  | { kind: 'edit-text' }
   | { kind: 'undo' }
   | { kind: 'redo' };
 
-export type ShortcutScope = 'selection' | 'global';
+export type ShortcutScope = 'selection' | 'canvas' | 'global';
 
 export interface KeyLike {
   key: string;
@@ -44,6 +46,7 @@ export function commandForKey(event: KeyLike): { command: StudioCommand; scope: 
     if (event.shiftKey) return null;
     if (event.key === 'Delete' || event.key === 'Backspace') return { scope: 'selection', command: { kind: 'delete' } };
     if (event.key === 'Escape') return { scope: 'selection', command: { kind: 'deselect' } };
+    if (event.key === 'Enter') return { scope: 'canvas', command: { kind: 'edit-text' } };
     return null;
   }
 
@@ -64,6 +67,7 @@ export const SHORTCUT_LIST: { keys: string; action: string }[] = [
   { keys: 'Shift + arrow keys', action: `Move ${NUDGE_LARGE_MM} mm` },
   { keys: 'Delete / Backspace', action: 'Delete' },
   { keys: 'Esc', action: 'Deselect' },
+  { keys: 'Enter', action: 'Edit the selected text' },
   { keys: 'Ctrl D', action: 'Duplicate' },
   { keys: 'Ctrl ] / Ctrl [', action: 'Bring forward / Send backward' },
   { keys: 'Ctrl Shift ] / Ctrl Shift [', action: 'Bring to front / Send to back' },

@@ -77,7 +77,8 @@ describe('Studio shell — desktop (≥ 1280 px)', () => {
     await user.click(text);
     expect(text).toHaveAttribute('aria-pressed', 'true');
     expect(screen.getByRole('heading', { level: 2, name: 'Text' })).toBeInTheDocument();
-    expect(screen.getByText('Coming soon')).toBeInTheDocument();
+    // The Text tool works since M8; tools still to come say so.
+    expect(screen.getByRole('button', { name: 'Add heading' })).toBeInTheDocument();
     await user.click(text);
     expect(text).toHaveAttribute('aria-pressed', 'false');
     expect(screen.queryByRole('complementary', { name: 'Text' })).not.toBeInTheDocument();

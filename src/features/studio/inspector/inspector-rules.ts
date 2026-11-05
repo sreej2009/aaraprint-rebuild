@@ -1,7 +1,7 @@
 import { MIN_SIZE_MM } from '../canvas/transform-rules';
-import { mmToPx, pxToMm } from '../geometry/units';
+import { mmToPx, ptToPx, pxToMm, pxToPt } from '../geometry/units';
 import { elementDisplayName } from '../naming';
-import type { DesignDocument, DesignElement, ElementPatch, ShapeKind, SurfaceDesign, SurfacePrint } from '../schema/types';
+import type { DesignDocument, DesignElement, ElementPatch, ShapeKind, SurfaceDesign, SurfacePrint, TextAlign } from '../schema/types';
 
 /**
  * Inspector rules, kept pure: unit conversion between the fields (mm, °, %) and the document
@@ -37,6 +37,41 @@ export function toMm(px: number, print: Pick<SurfacePrint, 'dpi'>): number {
 export function toPx(mm: number, print: Pick<SurfacePrint, 'dpi'>): number {
   return round2(mmToPx(mm, print.dpi));
 }
+
+/** Text sizes are stored in print px and shown in points (one decimal), like a word processor. */
+export function toPt(px: number, print: Pick<SurfacePrint, 'dpi'>): number {
+  return Math.round(pxToPt(px, print.dpi) * 10) / 10;
+}
+
+export function fromPt(pt: number, print: Pick<SurfacePrint, 'dpi'>): number {
+  return round2(ptToPx(pt, print.dpi));
+}
+
+/** The largest text the schema accepts on this surface (4 × its height), in pt. */
+export function maxFontPt(print: Pick<SurfacePrint, 'dpi' | 'heightPx'>): number {
+  return Math.floor(pxToPt(print.heightPx * 4, print.dpi));
+}
+
+/** Smallest size offered; below this print is unreadable. */
+export const MIN_FONT_PT = 1;
+
+/** Line height is a multiple of the font size; letter spacing is in em (also a multiple of it). */
+export const LINE_HEIGHT_RANGE = { min: 0.5, max: 3 } as const;
+export const LETTER_SPACING_RANGE = { min: -0.5, max: 2 } as const;
+
+export const ALIGN_LABELS: Record<TextAlign, string> = { left: 'Align left', center: 'Centre', right: 'Align right', justify: 'Justify' };
+
+/** Quick colour picks for text: print-friendly darks, white for dark backgrounds and a few accents. */
+export const TEXT_COLOUR_PRESETS = [
+  { hex: '#1b1f27', label: 'Ink' },
+  { hex: '#4b5563', label: 'Slate grey' },
+  { hex: '#ffffff', label: 'White' },
+  { hex: '#2f2a7a', label: 'Deep indigo' },
+  { hex: '#1d4ed8', label: 'Royal blue' },
+  { hex: '#b91c1c', label: 'Red' },
+  { hex: '#15803d', label: 'Green' },
+  { hex: '#e8930c', label: 'Marigold' },
+] as const;
 
 /** Opacity is stored 0–1 and edited as a whole percentage. */
 export function opacityPercent(element: DesignElement): number {

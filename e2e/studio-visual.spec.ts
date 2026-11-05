@@ -93,3 +93,28 @@ test('screenshot inspector and layers', async ({ page, hasTouch, isMobile }, inf
     await page.screenshot({ path: `review-screens/${info.project.name}-studio-layers.png` });
   }
 });
+
+/** M8: adding a heading and typing into it, then its text properties. */
+test('screenshot text editing and text properties', async ({ page, hasTouch, isMobile }, info) => {
+  await page.goto('/products/business-card-classic/design?sample=1');
+  await samplePoint(page, 0, 0);
+  const tools = page.getByRole('navigation', { name: 'Design tools' });
+  await (hasTouch ? tools.getByRole('button', { name: 'Text', exact: true }).tap() : tools.getByRole('button', { name: 'Text', exact: true }).click());
+  if (!hasTouch && !isMobile) await page.screenshot({ path: `review-screens/${info.project.name}-studio-text-tool.png` });
+  await page.getByRole('button', { name: 'Add subheading' }).click();
+  await page.keyboard.type('Design & Print Studio');
+  await page.evaluate(() => document.fonts.ready);
+  await page.waitForTimeout(400);
+  await page.screenshot({ path: `review-screens/${info.project.name}-studio-text-editing.png` });
+  if (isMobile) await page.getByRole('dialog', { name: 'Edit text' }).getByRole('button', { name: 'Done' }).click();
+  else await page.keyboard.press('Control+Enter');
+  if (hasTouch) await page.getByRole('toolbar', { name: /^Selected:/ }).getByRole('button', { name: 'Properties' }).click();
+  const scope = hasTouch ? page.getByRole('dialog', { name: 'Layers and properties' }) : page.getByRole('complementary', { name: 'Layers and properties' });
+  await scope.getByRole('button', { name: 'Marigold' }).click();
+  await scope.getByRole('textbox', { name: 'Text content' }).scrollIntoViewIfNeeded();
+  await page.waitForTimeout(300);
+  await page.screenshot({ path: `review-screens/${info.project.name}-studio-text-properties.png` });
+  await scope.getByRole('textbox', { name: 'Letter spacing' }).scrollIntoViewIfNeeded();
+  await page.waitForTimeout(300);
+  await page.screenshot({ path: `review-screens/${info.project.name}-studio-text-style.png` });
+});

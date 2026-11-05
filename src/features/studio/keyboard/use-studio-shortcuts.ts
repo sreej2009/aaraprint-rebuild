@@ -7,14 +7,18 @@ import { commandForKey, type StudioCommand } from './shortcuts';
 
 /** Marks the parts of the page where selection shortcuts (arrows, Delete, Esc) apply. */
 export const STUDIO_KEYS_ATTRIBUTE = 'data-studio-keys';
+/** The canvas region itself (canvas-only shortcuts such as Enter to edit text). */
+const CANVAS_ATTRIBUTE = 'data-studio-canvas';
 
 function isTyping(target: EventTarget | null): boolean {
   return target instanceof HTMLElement && (target.isContentEditable || /^(INPUT|TEXTAREA|SELECT)$/.test(target.tagName));
 }
 
-function inSelectionScope(target: EventTarget | null, allowBody: boolean): boolean {
+function inScope(target: EventTarget | null, attribute: string, allowBody: boolean): boolean {
   if (!(target instanceof Element)) return allowBody;
-  if (target.closest(`[${STUDIO_KEYS_ATTRIBUTE}]`)) return true;
+  // Buttons and links keep Enter for themselves, wherever they are.
+  if (attribute === CANVAS_ATTRIBUTE && target.closest('button, a, [role="button"]')) return false;
+  if (target.closest(`[${attribute}]`)) return true;
   return allowBody && (target === document.body || target === document.documentElement);
 }
 
@@ -44,7 +48,8 @@ export function useStudioShortcuts(studio: StudioStore, interaction: Interaction
       }
       const match = commandForKey(event);
       if (!match) return;
-      if (match.scope === 'selection' && !inSelectionScope(event.target, allowBody)) return;
+      if (match.scope === 'selection' && !inScope(event.target, STUDIO_KEYS_ATTRIBUTE, allowBody)) return;
+      if (match.scope === 'canvas' && !inScope(event.target, CANVAS_ATTRIBUTE, allowBody)) return;
       if (run(studio, interaction, match.command)) event.preventDefault();
     };
     window.addEventListener('keydown', onKeyDown);
@@ -84,6 +89,16 @@ export function run(studio: StudioStore, interaction: InteractionStore, command:
       const [only] = selected;
       if (!only || selected.length !== 1) return false;
       if (!actions.arrangeElement(only.id, command.action)) lockedNotice();
+      return true;
+    }
+    case 'edit-text': {
+      const [only] = selected;
+      if (!only || selected.length !== 1 || only.type !== 'text') return false;
+      if (only.locked) {
+        lockedNotice();
+        return true;
+      }
+      actions.setEditingText(only.id);
       return true;
     }
     case 'undo':

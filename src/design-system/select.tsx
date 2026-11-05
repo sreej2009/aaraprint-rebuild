@@ -1,5 +1,6 @@
 import { Check, ChevronDown } from 'lucide-react';
 import { Select as SelectPrimitive } from 'radix-ui';
+import type { CSSProperties } from 'react';
 import { cn } from '@/lib/cn';
 import { useFieldControl } from './field-control';
 import { controlClasses } from './input';
@@ -10,6 +11,8 @@ export interface SelectOption {
   /** Secondary text inside the list, e.g. a price difference. */
   detail?: string;
   disabled?: boolean;
+  /** Style for the option's text (in the list and the closed select), e.g. a font preview. */
+  style?: CSSProperties;
 }
 
 export interface SelectProps {
@@ -79,7 +82,7 @@ export function Select({ options, placeholder = 'Select…', className, value, d
                 <SelectPrimitive.ItemIndicator className="absolute left-3 inline-flex">
                   <Check aria-hidden="true" className="size-4 text-accent-strong" />
                 </SelectPrimitive.ItemIndicator>
-                <SelectPrimitive.ItemText>{option.label}</SelectPrimitive.ItemText>
+                <SelectPrimitive.ItemText>{option.style ? <span style={option.style}>{option.label}</span> : option.label}</SelectPrimitive.ItemText>
                 {option.detail && <span className="ml-auto text-caption text-fg-muted tabular-nums">{option.detail}</span>}
               </SelectPrimitive.Item>
             ))}

@@ -1,0 +1,10 @@
+/*
+ * Fonts loaded only in the Design Studio (decision D3). Self-hosted, SIL Open Font License 1.1.
+ * The site's own Inter and Manrope (upright) come from styles/app.css; Inter italic is added here.
+ * @font-face rules cost nothing until a design uses the face; assets/fonts.ts loads them on demand.
+ */
+@import '@fontsource-variable/plus-jakarta-sans/wght.css';
+@import '@fontsource-variable/plus-jakarta-sans/wght-italic.css';
+@import '@fontsource-variable/fraunces/wght.css';
+@import '@fontsource-variable/fraunces/wght-italic.css';
+@import '@fontsource-variable/inter/wght-italic.css';

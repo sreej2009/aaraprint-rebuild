@@ -1,6 +1,7 @@
 import { Link } from 'react-router';
 import { Button } from '@/design-system';
 import { formatINR } from '@/lib/format';
+import { TextTool } from '../tools/text-tool';
 import { useStudioSession } from './session-context';
 import type { ToolDefinition } from './tools';
 
@@ -8,6 +9,7 @@ import type { ToolDefinition } from './tools';
 export function ToolContent({ tool }: { tool: ToolDefinition }) {
   if (tool.id === 'product') return <ProductDetails />;
   if (tool.id === 'help') return <PrintTips />;
+  if (tool.id === 'text') return <TextTool />;
   return <ComingSoonTool tool={tool} />;
 }
 

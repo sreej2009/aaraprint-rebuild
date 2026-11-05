@@ -3,6 +3,8 @@ import userEvent from '@testing-library/user-event';
 import { useState } from 'react';
 import { describe, expect, it, vi } from 'vitest';
 import { Button } from './button';
+import { ColorField } from './color-field';
+import { normaliseHex } from './color-format';
 import { Dialog, DialogClose, DialogContent, DialogTrigger } from './dialog';
 import { Field } from './field';
 import { IconToggle } from './icon-toggle';
@@ -12,6 +14,7 @@ import { formatNumber, parseNumber } from './number-format';
 import { OptionChips } from './option-chips';
 import { QuantityStepper } from './quantity-stepper';
 import { QuantityTiers } from './quantity-tiers';
+import { SegmentedControl } from './segmented-control';
 import { Slider } from './slider';
 
 describe('Button', () => {
@@ -251,6 +254,10 @@ describe('NumberField', () => {
     expect(parseNumber('45°')).toBe(45);
     expect(parseNumber('1.2.3')).toBeNull();
     expect(parseNumber('')).toBeNull();
+    expect(parseNumber('1.2×')).toBe(1.2); // line height
+    expect(parseNumber('0.05 em')).toBe(0.05); // letter spacing
+    expect(parseNumber('−0.1')).toBe(-0.1); // typographic minus
+    expect(parseNumber('12 pt')).toBe(12);
     expect(formatNumber(-0.04)).toBe('0');
     expect(formatNumber(12.349)).toBe('12.3');
     expect(formatNumber(7, 0)).toBe('7');
@@ -298,5 +305,84 @@ describe('Slider and IconToggle', () => {
     await user.click(toggle);
     expect(toggle).toHaveAttribute('aria-pressed', 'true');
     expect(toggle).toHaveTextContent('on');
+  });
+});
+
+describe('ColorField', () => {
+  function Harness({ onChange }: { onChange: (value: string, info: { live: boolean }) => void }) {
+    const [value, setValue] = useState('#1b1f27');
+    return (
+      <ColorField
+        label="Text colour"
+        value={value}
+        presets={[
+          { hex: '#ffffff', label: 'White' },
+          { hex: '#b91c1c', label: 'Red' },
+        ]}
+        onChange={(v, info) => {
+          setValue(v);
+          onChange(v, info);
+        }}
+      />
+    );
+  }
+
+  it('normalises hex codes', () => {
+    expect(normaliseHex('#ABC')).toBe('#aabbcc');
+    expect(normaliseHex(' b91C1c ')).toBe('#b91c1c');
+    expect(normaliseHex('#12345')).toBeNull();
+    expect(normaliseHex('red')).toBeNull();
+  });
+
+  it('commits a typed hex on Enter, flags invalid text and restores it', async () => {
+    const onChange = vi.fn<(value: string, info: { live: boolean }) => void>();
+    const user = userEvent.setup();
+    render(<Harness onChange={onChange} />);
+    const hex = screen.getByRole('textbox', { name: 'Text colour, hex code' });
+    expect(hex).toHaveValue('#1B1F27');
+    await user.clear(hex);
+    await user.type(hex, 'b91c1c{Enter}');
+    expect(onChange).toHaveBeenLastCalledWith('#b91c1c', { live: false });
+    await user.clear(hex);
+    await user.type(hex, 'nope');
+    expect(hex).toHaveAttribute('aria-invalid', 'true');
+    expect(screen.getByText(/Use a hex code/)).toBeInTheDocument();
+    await user.tab();
+    expect(hex).toHaveValue('#B91C1C');
+    expect(onChange).toHaveBeenCalledTimes(1);
+  });
+
+  it('offers named presets (pressed when chosen) and a labelled system picker', async () => {
+    const onChange = vi.fn<(value: string, info: { live: boolean }) => void>();
+    const user = userEvent.setup();
+    render(<Harness onChange={onChange} />);
+    await user.click(screen.getByRole('button', { name: 'Red' }));
+    expect(onChange).toHaveBeenLastCalledWith('#b91c1c', { live: false });
+    expect(screen.getByRole('button', { name: 'Red' })).toHaveAttribute('aria-pressed', 'true');
+    const picker = screen.getByLabelText('Text colour, colour picker');
+    expect(picker).toHaveAttribute('type', 'color');
+  });
+});
+
+describe('SegmentedControl with icons', () => {
+  it('names icon-only options and keeps one selected', async () => {
+    const onChange = vi.fn<(value: string) => void>();
+    const user = userEvent.setup();
+    render(
+      <SegmentedControl
+        label="Horizontal alignment"
+        value="left"
+        onValueChange={onChange}
+        options={[
+          { value: 'left', label: 'Align left', icon: <svg /> },
+          { value: 'center', label: 'Centre', icon: <svg /> },
+        ]}
+      />,
+    );
+    expect(screen.getByRole('radiogroup', { name: 'Horizontal alignment' })).toBeInTheDocument();
+    await user.click(screen.getByRole('radio', { name: 'Centre' }));
+    expect(onChange).toHaveBeenCalledWith('center');
+    await user.click(screen.getByRole('radio', { name: 'Align left' }));
+    expect(onChange).toHaveBeenCalledTimes(1); // already selected
   });
 });

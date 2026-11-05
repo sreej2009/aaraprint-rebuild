@@ -11,6 +11,19 @@ import { arrangeOptions, layerAccessibleName } from './inspector-rules';
 /** Matches the `data-layer-row` attribute on each row's main button. */
 const ROW = '[data-layer-row]';
 
+/** Whether part of the list shows inside its scrolling panel. */
+function listVisible(list: HTMLElement | null): boolean {
+  if (!list) return false;
+  let parent = list.parentElement;
+  while (parent && !/(auto|scroll)/.test(getComputedStyle(parent).overflowY)) parent = parent.parentElement;
+  if (!parent) return true;
+  const a = list.getBoundingClientRect();
+  const b = parent.getBoundingClientRect();
+  // No layout (tests): treat as visible.
+  if (a.height === 0 && b.height === 0) return true;
+  return a.bottom > b.top && a.top < b.bottom;
+}
+
 /**
  * The layers of the active side, top layer first (Plan §18.7).
  * - Click or tap a row to select it on the canvas; hover highlights it there.
@@ -45,10 +58,13 @@ export function LayersPanel({ surface }: { surface: SurfaceDesign }) {
     pendingFocus.current = null;
   });
 
-  // Canvas selection scrolls its row into view.
+  // A new canvas selection scrolls its row into view — only while the list is on screen, so the
+  // inspector never jumps away from the properties being edited.
+  const selectedId = selected?.id ?? null;
   useEffect(() => {
-    if (selected) rowButton(selected.id)?.scrollIntoView?.({ block: 'nearest' });
-  }, [selected]);
+    if (!selectedId || !listVisible(listRef.current)) return;
+    rowButton(selectedId)?.scrollIntoView?.({ block: 'nearest' });
+  }, [selectedId]);
 
   const move = (id: string, action: 'forward' | 'backward') => {
     if (actions.arrangeElement(id, action)) focusAfterRender(id);

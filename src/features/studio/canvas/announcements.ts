@@ -3,6 +3,7 @@ import { elementDisplayName } from '../naming';
 import { formatLength, formatSize } from '../profile/describe';
 import type { DesignElement, SurfacePrint } from '../schema/types';
 import { selectActiveSurface, type StudioState } from '../store';
+import { TEXT_EDIT_KEY } from './text-edit-session';
 import { PLACEMENT_MESSAGES, placementFor } from './transform-rules';
 
 /**
@@ -45,6 +46,7 @@ const PAST_TENSE: Record<string, string> = {
   Copy: 'Copied',
   Clear: 'Cleared',
   Centre: 'Centred',
+  Align: 'Aligned',
 };
 
 /** "Move “Logo”" → "Moved “Logo”". */
@@ -64,6 +66,11 @@ export function announcementFor(prev: StudioState, next: StudioState): string | 
   const surface = selectActiveSurface(next);
   const selected = onlySelected(next);
   const where = selected && surface ? ` ${describeSelection(selected, surface.print)}` : '';
+  // Re-measured text after a font loaded: a correction, not something the customer did.
+  if (next.relayoutCount !== prev.relayoutCount) return null;
+  // Typing is never read out key by key; the editor says when the text is done.
+  // (While a text edit runs its undo step is still open: its merge key is set until it ends.)
+  if (next.history.past.at(-1)?.coalesceKey?.startsWith(TEXT_EDIT_KEY)) return null;
 
   if (next.history !== prev.history) {
     const { past, future } = next.history;

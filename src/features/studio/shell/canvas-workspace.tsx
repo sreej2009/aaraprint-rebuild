@@ -1,5 +1,5 @@
 import type Konva from 'konva';
-import { lazy, Suspense, useEffect, useMemo, useRef, type PointerEvent as ReactPointerEvent } from 'react';
+import { lazy, Suspense, useContext, useEffect, useMemo, useRef, type PointerEvent as ReactPointerEvent } from 'react';
 import { cn } from '@/lib/cn';
 import { CanvasAnnouncer } from '../canvas/canvas-announcer';
 import { createElementPointer } from '../canvas/element-pointer';
@@ -7,6 +7,8 @@ import { useInteraction, useInteractionStoreApi } from '../canvas/interaction-st
 import { MeasurementLabels } from '../canvas/measurement-labels';
 import { SelectionOverlay } from '../canvas/selection-overlay';
 import { SelectionToolbar } from '../canvas/selection-toolbar';
+import { TextEditHelp, TextEditOverlay } from '../canvas/text-edit-overlay';
+import { useEditingText } from '../canvas/text-editing';
 import { useCanvasGestures } from '../canvas/use-canvas-gestures';
 import { useViewport, useViewportStoreApi } from '../canvas/viewport-context';
 import { ZoomAnnouncer, ZoomControl } from '../canvas/zoom-control';
@@ -16,6 +18,8 @@ import { formatSize } from '../profile/describe';
 import type { SurfaceDesign } from '../schema/types';
 import { selectActiveSurface, useStudio, useStudioStoreApi } from '../store';
 import { CANVAS_HELP_ID, CANVAS_REGION_ID } from './dom-ids';
+import { TextEditSheet } from './text-edit-sheet';
+import { StudioUiContext } from './ui-context';
 import { useElementSize } from './use-element-size';
 
 // Konva is only downloaded with the canvas; the print-area preview shows while it loads.
@@ -29,7 +33,7 @@ export interface CanvasWorkspaceProps {
 
 /** Controls floating over the canvas keep their own pointer presses (and focus). */
 function isControl(target: EventTarget | null): boolean {
-  return target instanceof Element && target.closest('button, a, input, [role="toolbar"], [data-no-pan]') !== null;
+  return target instanceof Element && target.closest('button, a, input, textarea, [role="toolbar"], [data-no-pan]') !== null;
 }
 
 /**
@@ -58,6 +62,9 @@ export function CanvasWorkspace({ zoomPill = false, onStage }: CanvasWorkspacePr
   const moving = useInteraction((s) => s.gesture?.kind === 'move');
   const cursor = moving || (hovering && panCursor === null) ? 'move' : panCursor;
   const print = surface?.print;
+  // Phones edit text in a bottom sheet (room for the keyboard); larger screens edit in place.
+  const sheetEditing = useContext(StudioUiContext)?.layout === 'phone';
+  const editing = useEditingText();
 
   // Clicking the canvas gives it keyboard focus (pointer presses don't move focus by themselves
   // here), so the arrow keys move the selection instead of whatever control had focus before.
@@ -99,11 +106,13 @@ export function CanvasWorkspace({ zoomPill = false, onStage }: CanvasWorkspacePr
       // oxlint-disable-next-line jsx-a11y/no-noninteractive-tabindex -- the canvas is a focusable region (Plan §18.7): arrow keys and Delete act on the selection
       tabIndex={0}
       data-studio-keys=""
+      data-studio-canvas=""
       className="relative flex h-full min-h-0 flex-col bg-surface-sunken focus-visible:-outline-offset-2 data-pointer-focus:outline-none"
     >
       <p id={CANVAS_HELP_ID} className="sr-only">
-        Select an item by clicking it or from the layers list. Arrow keys move it, Shift with an arrow moves it further, Delete removes it and Escape deselects.
+        Select an item by clicking it or from the layers list. Arrow keys move it, Shift with an arrow moves it further, Delete removes it and Escape deselects. Enter or a double-click edits text.
       </p>
+      <TextEditHelp />
       <div
         ref={areaRef}
         data-testid="canvas-area"
@@ -118,12 +127,21 @@ export function CanvasWorkspace({ zoomPill = false, onStage }: CanvasWorkspacePr
         {ready && (
           <Suspense fallback={<PrintAreaPreview surface={surface} available={size} />}>
             <div aria-hidden="true" className="absolute inset-0">
-              <CanvasStage surface={surface} width={size.width} height={size.height} viewport={viewport} showGuides={showGuides} onStage={onStage} />
+              <CanvasStage
+                surface={surface}
+                width={size.width}
+                height={size.height}
+                viewport={viewport}
+                showGuides={showGuides}
+                editingId={editing && !sheetEditing ? editing.id : null}
+                onStage={onStage}
+              />
             </div>
           </Suspense>
         )}
         {ready && showGuides && <MeasurementLabels print={surface.print} viewport={viewport} />}
         {ready && <SelectionOverlay />}
+        {ready && !sheetEditing && <TextEditOverlay />}
         <SelectionToolbar />
         {zoomPill && (
           <div className="absolute right-3 bottom-3 rounded-full border border-border bg-surface/95 px-1 shadow-2 backdrop-blur">
@@ -133,6 +151,7 @@ export function CanvasWorkspace({ zoomPill = false, onStage }: CanvasWorkspacePr
         <ZoomAnnouncer />
         <CanvasAnnouncer />
       </div>
+      {sheetEditing && <TextEditSheet />}
       <footer className="flex flex-wrap items-center justify-between gap-x-4 gap-y-1 border-t border-border bg-surface px-3 py-2 text-caption text-fg-muted md:px-4">
         <p>
           <span className="font-semibold text-fg">{surface.label}</span> · {sizeText} · {surface.print.dpi} DPI

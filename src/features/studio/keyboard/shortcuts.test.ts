@@ -13,6 +13,7 @@ describe('editing shortcuts', () => {
     expect(press('Delete')?.command).toEqual({ kind: 'delete' });
     expect(press('Backspace')?.command).toEqual({ kind: 'delete' });
     expect(press('Escape')?.command).toEqual({ kind: 'deselect' });
+    expect(press('Enter')).toEqual({ scope: 'canvas', command: { kind: 'edit-text' } }); // M8: edit the selected text
     expect(press('d', { ctrlKey: true })).toEqual({ scope: 'global', command: { kind: 'duplicate', offsetMm: 3 } });
     expect(press(']', { code: 'BracketRight', ctrlKey: true })?.command).toEqual({ kind: 'arrange', action: 'forward' });
     expect(press('{', { code: 'BracketLeft', metaKey: true, shiftKey: true })?.command).toEqual({ kind: 'arrange', action: 'back' });

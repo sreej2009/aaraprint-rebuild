@@ -11,14 +11,17 @@ import { selectDocument, useStudio, useStudioActions } from '../store';
 import { ElementIcon } from './element-icon';
 import { arrangeOptions, elementTypeLabel, opacityFromPercent, opacityPercent } from './inspector-rules';
 import { PositionSize } from './position-size';
+import { TextContentField } from './text-content-field';
+import { TextStyleSection } from './text-style-section';
 
 /** Bigger hit areas on touch screens (44 px). */
 const touch = 'pointer-coarse:size-11';
 
 /**
  * Everything about the selected element: name and type, lock / hidden / print warnings, quick
- * actions, position & size, opacity and layer order. Every change goes through the Studio store
- * (M2 commands, M3 history); locked elements only offer unlock, show/hide and duplicate.
+ * actions, text content and style (text), position & size, opacity and layer order. Every change
+ * goes through the Studio store (M2 commands, M3 history); locked elements only offer unlock,
+ * show/hide and duplicate.
  */
 export function PropertiesPanel({ element, surface }: { element: DesignElement; surface: SurfaceDesign }) {
   const document = useStudio(selectDocument);
@@ -62,6 +65,12 @@ export function PropertiesPanel({ element, surface }: { element: DesignElement; 
         </Callout>
       )}
 
+      {element.type === 'text' && (
+        <>
+          <TextContentField element={element} />
+          <TextStyleSection element={element} print={surface.print} />
+        </>
+      )}
       <PositionSize element={element} print={surface.print} />
       <Appearance element={element} />
       <Arrange element={element} surface={surface} />

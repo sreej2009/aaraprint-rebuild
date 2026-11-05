@@ -1,4 +1,5 @@
 import { printBoxes, type Rect } from '../geometry/boxes';
+import { fontCss } from '../assets/fonts';
 import { offsetShape, type TrimShape } from '../geometry/shapes';
 import type { DesignElement, FontWeight, ShapeElement, SurfacePrint, TextElement } from '../schema/types';
 
@@ -50,15 +51,8 @@ export type Drawing =
   | { kind: 'arrow'; points: number[]; pointerLength: number; pointerWidth: number; fill: string | null; stroke: string | null; strokeWidth: number }
   | { kind: 'image-placeholder'; width: number; height: number };
 
-/** Families available to the canvas, mapped to the self-hosted web fonts. Extended in M8. */
-const FONT_STACKS: Record<string, string> = {
-  Inter: "'Inter Variable', Inter, sans-serif",
-  Manrope: "'Manrope Variable', Manrope, sans-serif",
-};
-
-export function fontCss(family: string): string {
-  return FONT_STACKS[family] ?? `'${family.replace(/'/g, '')}', sans-serif`;
-}
+/** Families map to the self-hosted web fonts in assets/fonts.ts. */
+export { fontCss };
 
 /** Konva's fontStyle goes into the CSS `font` shorthand: "italic 700". */
 export function fontStyleFor(weight: FontWeight, italic: boolean): string {

@@ -4,8 +4,8 @@ import { demoDesign } from './demo-design';
 
 /**
  * The demo card's artwork fitted onto a product's own sides, for `/products/:slug/design?sample=1`.
- * A preview aid until the text and shape tools (M8, M9) and templates (M14) can add content: it
- * lets every product's canvas be tried with real elements. The product, print geometry, name and
+ * A preview aid until the shape and graphics tools (M9) and templates (M14) can add content (text
+ * can be added since M8): it lets every product's canvas be tried with real elements. The product, print geometry, name and
  * ids of the blank design are kept; only the first two sides receive artwork.
  */
 export function sampleDesignFor(blank: DesignDocument): DesignDocument {

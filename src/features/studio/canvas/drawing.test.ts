@@ -21,7 +21,7 @@ describe('element drawings', () => {
       kind: 'text',
       text: 'Hello',
       width: 200,
-      fontFamily: "'Manrope Variable', Manrope, sans-serif",
+      fontFamily: "'Manrope Variable', 'Manrope', sans-serif",
       fontSize: 60,
       fontStyle: 'italic 700',
       textDecoration: 'underline',

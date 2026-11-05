@@ -110,10 +110,15 @@ export function rebaseHistory(history: HistoryState, change: (document: DesignDo
     }
     return next;
   };
-  const rebase = (e: HistoryEntry): HistoryEntry => ({
-    ...e,
-    before: { ...e.before, document: map(e.before.document) },
-    after: { ...e.after, document: map(e.after.document) },
-  });
-  return { past: history.past.map(rebase), future: history.future.map(rebase) };
+  const rebase = (e: HistoryEntry): HistoryEntry => {
+    const before = map(e.before.document);
+    const after = map(e.after.document);
+    if (before === e.before.document && after === e.after.document) return e;
+    return { ...e, before: { ...e.before, document: before }, after: { ...e.after, document: after } };
+  };
+  const past = history.past.map(rebase);
+  const future = history.future.map(rebase);
+  // Unchanged history keeps its identity (cheap to compare, no needless re-renders).
+  const same = (a: readonly HistoryEntry[], b: readonly HistoryEntry[]) => a.every((e, i) => e === b[i]);
+  return same(past, history.past) && same(future, history.future) ? history : { past, future };
 }

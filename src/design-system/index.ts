@@ -12,6 +12,8 @@ export { buttonClasses, type ButtonSize, type ButtonVariant } from './button-cla
 export { Card } from './card';
 export { Checkbox } from './checkbox';
 export { type ChoiceOption } from './choice-group';
+export { ColorField, type ColorChangeInfo, type ColorFieldProps, type ColorPreset } from './color-field';
+export { normaliseHex } from './color-format';
 export { ColorSwatches, type ColorOption } from './color-swatches';
 export { ConfirmDialog, Dialog, DialogClose, DialogContent, DialogTrigger } from './dialog';
 export { Callout, EmptyState, ProgressBar, Skeleton, type CalloutTone } from './feedback';

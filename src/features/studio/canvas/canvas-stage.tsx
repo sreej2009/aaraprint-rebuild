@@ -1,15 +1,20 @@
 import Konva from 'konva';
-import { memo, useEffect, useMemo, useRef, useState } from 'react';
+import { memo, useEffect, useMemo, useRef } from 'react';
 import { Arrow, Ellipse, Group, Layer, Line, Rect, Shape, Stage, Text } from 'react-konva';
 import { colorTokens } from '@/design-system/tokens';
+import { ensureFonts, facesFor, useFontsVersion } from '../assets/fonts';
 import { appendPath, tracePath } from '../geometry/shapes';
 import type { Viewport } from '../geometry/viewport';
-import type { DesignElement, SurfaceDesign } from '../schema/types';
+import type { DesignElement, SurfaceDesign, TextElement } from '../schema/types';
 import { drawingFor, elementFrame, guideGeometry, type Drawing, type GuideGeometry } from './drawing';
 import { ARTWORK_LAYER, GUIDES_LAYER, WORKSPACE_LAYER } from './export';
+import { measureTextHeight } from './konva-text-measure';
+import { registerTextMeasurer } from './text-layout';
 
 // Sharp on high-density screens without the memory cost of 3× canvases on phones.
 if (typeof window !== 'undefined') Konva.pixelRatio = Math.min(window.devicePixelRatio || 1, 2);
+// Text heights in the design are measured the way this canvas lays text out.
+registerTextMeasurer(measureTextHeight);
 
 export interface CanvasStageProps {
   surface: SurfaceDesign;
@@ -17,6 +22,8 @@ export interface CanvasStageProps {
   height: number;
   viewport: Viewport;
   showGuides: boolean;
+  /** Text being edited in place: the HTML editor shows it instead (canvas/text-edit-overlay.tsx). */
+  editingId?: string | null;
   /** Called with the Konva stage once mounted (exports, tests); null on unmount. */
   onStage?: (stage: Konva.Stage | null) => void;
 }
@@ -28,10 +35,10 @@ export interface CanvasStageProps {
  * 3. guides    — bleed band, trim line and safe-zone line; never exported, never interactive.
  * Design units are print px; the stage transform (viewport) maps them to the screen.
  */
-export default function CanvasStage({ surface, width, height, viewport, showGuides, onStage }: CanvasStageProps) {
+export default function CanvasStage({ surface, width, height, viewport, showGuides, editingId = null, onStage }: CanvasStageProps) {
   const stageRef = useRef<Konva.Stage>(null);
   const guides = useMemo(() => guideGeometry(surface.print), [surface.print]);
-  const fontsVersion = useFontsVersion(surface.elements);
+  const fontsVersion = useFontsVersionFor(surface.elements);
   const s = viewport.scale;
 
   useEffect(() => {
@@ -62,7 +69,7 @@ export default function CanvasStage({ surface, width, height, viewport, showGuid
         <Group name="artwork-clip" clipFunc={(ctx) => tracePath(ctx, guides.bleedShape, guides.bleed)}>
           <Rect name="background" {...guides.bleed} fill={surface.background.color ?? colorTokens.surface} listening={false} perfectDrawEnabled={false} />
           {surface.elements
-            .filter((element) => !element.hidden)
+            .filter((element) => !element.hidden && element.id !== editingId)
             .map((element) => (
               <ElementNode key={`${element.id}:${fontsVersion}`} element={element} />
             ))}
@@ -158,22 +165,15 @@ function DrawingNode({ drawing }: { drawing: Drawing }) {
 }
 
 /**
- * Text is measured when drawn; if a web font arrives later the measurement is stale. Re-key text
- * nodes once the fonts used on this side have loaded.
+ * Text is measured when drawn; if a web font arrives later the measurement is stale. Load the
+ * faces this side uses, and re-key text nodes whenever a font finishes loading.
  */
-function useFontsVersion(elements: readonly DesignElement[]): number {
-  const [version, setVersion] = useState(0);
-  const families = [...new Set(elements.flatMap((e) => (e.type === 'text' ? [e.fontFamily] : [])))].sort().join('|');
+function useFontsVersionFor(elements: readonly DesignElement[]): number {
+  const version = useFontsVersion();
+  // A string key, so typing that doesn't add new characters doesn't re-check the fonts.
+  const key = useMemo(() => JSON.stringify(facesFor(elements.filter((e): e is TextElement => e.type === 'text'))), [elements]);
   useEffect(() => {
-    if (!families || typeof document === 'undefined' || !document.fonts) return;
-    let cancelled = false;
-    const specs = families.split('|').flatMap((family) => [`400 16px '${family} Variable'`, `400 16px '${family}'`]);
-    void Promise.all(specs.map((spec) => document.fonts.load(spec).catch(() => []))).then(() => {
-      if (!cancelled) setVersion((v) => v + 1);
-    });
-    return () => {
-      cancelled = true;
-    };
-  }, [families]);
+    void ensureFonts(JSON.parse(key) as ReturnType<typeof facesFor>);
+  }, [key]);
   return version;
 }

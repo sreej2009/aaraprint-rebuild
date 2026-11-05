@@ -21,6 +21,7 @@ import { useMemo, useState } from 'react';
 import { Link } from 'react-router';
 import {
   Accordion,
+  ColorField,
   AccordionItem,
   Badge,
   Breadcrumbs,
@@ -218,12 +219,13 @@ export function FormsDemo() {
   );
 }
 
-/** Design Studio inspector controls: numbers with units, a proportion lock and opacity. */
+/** Design Studio inspector controls: numbers with units, a proportion lock, opacity and colour. */
 function EditorControlsExample() {
   const [width, setWidth] = useState(88.9);
   const [height, setHeight] = useState(50.8);
   const [locked, setLocked] = useState(true);
   const [opacity, setOpacity] = useState(80);
+  const [colour, setColour] = useState('#2f2a7a');
   const resize = (side: 'width' | 'height', value: number) => {
     const ratio = width / height;
     if (side === 'width') {
@@ -246,6 +248,17 @@ function EditorControlsExample() {
           <Slider label="Opacity" value={opacity} valueText={(v) => `${v} percent`} onValueChange={setOpacity} />
           <NumberField label="Opacity, %" unit="%" decimals={0} step={1} min={0} max={100} value={opacity} onCommit={setOpacity} />
         </div>
+        <ColorField
+          label="Text colour"
+          value={colour}
+          presets={[
+            { hex: '#1b1f27', label: 'Ink' },
+            { hex: '#ffffff', label: 'White' },
+            { hex: '#2f2a7a', label: 'Deep indigo' },
+            { hex: '#e8930c', label: 'Marigold' },
+          ]}
+          onChange={(value) => setColour(value)}
+        />
       </div>
     </Example>
   );

@@ -6,6 +6,7 @@ import type { StudioProfile } from '../profile/types';
 import { sampleDesignFor } from '../demo/sample-design';
 import { createBlankDesign } from '../schema/create';
 import { createInteractionStore, InteractionStoreContext, type InteractionStore } from '../canvas/interaction-store';
+import { useTextLayout } from '../canvas/use-text-layout';
 import { useZoomShortcuts } from '../canvas/use-zoom-shortcuts';
 import { useStudioShortcuts } from '../keyboard/use-studio-shortcuts';
 import { ViewportStoreContext } from '../canvas/viewport-context';
@@ -16,6 +17,8 @@ import { StudioShell } from './studio-shell';
 import type { ToolId } from './tools';
 import { StudioUiProvider } from './ui-provider';
 import { resolveStudioVariant, variantSummary } from './variant';
+// The Studio's own typefaces (decision D3), loaded only here.
+import '../assets/studio-fonts.css';
 
 export interface StudioAppProps {
   product: Product;
@@ -69,9 +72,12 @@ export function StudioApp({ product, profile, variantId, initialSurface, initial
   );
 }
 
+/** Session-wide behaviour: keyboard shortcuts, and text heights kept true as fonts load. */
 function Shortcuts({ viewport, interaction }: { viewport: ViewportStore; interaction: InteractionStore }) {
+  const studio = useStudioStoreApi();
   useZoomShortcuts(viewport);
-  useStudioShortcuts(useStudioStoreApi(), interaction);
+  useStudioShortcuts(studio, interaction);
+  useTextLayout(studio);
   return null;
 }
 

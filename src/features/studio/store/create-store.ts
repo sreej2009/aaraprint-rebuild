@@ -1,4 +1,5 @@
 import { createStore, type StoreApi } from 'zustand/vanilla';
+import { layoutChanges, relayoutDocument, textMeasurer, type TextMeasurer } from '../canvas/text-layout';
 import * as cmd from '../commands';
 import { createId, type IdFactory } from '../ids';
 import { describeElements } from '../naming';
@@ -15,6 +16,8 @@ import { isAllowedOnLocked, isPickable, nextSelection, pruneSelection, type Sele
  *   saved and never part of the document; undo restores it alongside the document.
  * - `history` holds up to 100 undo steps.
  * - `changeCount` goes up on every document change (edit, undo, redo, load); autosave watches it.
+ * - Text heights follow the text: every text element a command adds or re-flows is re-measured
+ *   (canvas/text-layout.ts) before the step is recorded, so the height change is part of it.
  *
  * Locked elements can't be moved, resized, edited, reordered or deleted through the store; they can
  * still be selected from the layers list, renamed, shown/hidden and unlocked.
@@ -87,6 +90,11 @@ export interface StudioActions {
   setVariant(variantId: string | null): void;
   /** Load a different document (restored draft, version). Clears history and selection. */
   replaceDocument(document: DesignDocument, surfaceId?: string): void;
+  /**
+   * Re-measure every text element (a web font finished loading, or the measurer just arrived).
+   * Not undoable: it corrects stored heights, so it's applied to every history step too.
+   */
+  relayoutText(): boolean;
 
   select(ids: readonly string[], mode?: SelectMode): void;
   selectAll(): void;
@@ -107,6 +115,8 @@ export interface StudioState {
   editor: EditorState;
   history: HistoryState;
   changeCount: number;
+  /** Goes up when `relayoutText` corrects heights — a correction, not an edit (nothing to announce). */
+  relayoutCount: number;
   actions: StudioActions;
 }
 
@@ -119,12 +129,19 @@ export interface CreateStudioStoreOptions {
   clock?: () => number;
   newId?: IdFactory;
   historyLimit?: number;
+  /**
+   * Text measurement for automatic text heights. Defaults to the canvas's Konva measurer once it
+   * has loaded (until then heights are left as they are and corrected by `relayoutText`); null
+   * turns it off.
+   */
+  measureText?: TextMeasurer | null;
 }
 
 export function createStudioStore(options: CreateStudioStoreOptions): StudioStore {
   const clock = options.clock ?? (() => Date.now());
   const newId = options.newId ?? createId;
   const historyLimit = options.historyLimit ?? HISTORY_LIMIT;
+  const measurer = (): TextMeasurer | null => (options.measureText === undefined ? textMeasurer() : options.measureText);
 
   return createStore<StudioState>()((set, get) => {
     const surface = (state: StudioState, surfaceId = state.editor.activeSurfaceId): SurfaceDesign | undefined =>
@@ -151,8 +168,10 @@ export function createStudioStore(options: CreateStudioStoreOptions): StudioStor
     const actions: StudioActions = {
       execute(label, command, opts = {}) {
         const state = get();
-        const next = command(state.document);
-        if (next === state.document) return false;
+        const changed = command(state.document);
+        if (changed === state.document) return false;
+        const measure = measurer();
+        const next = measure ? layoutChanges(state.document, changed, measure) : changed;
         const surfaceId = opts.surfaceId ?? state.editor.activeSurfaceId;
         const carried = surfaceId === state.editor.activeSurfaceId ? state.editor.selectedIds : [];
         const selection = pruneSelection(opts.select ?? carried, next, surfaceId);
@@ -330,6 +349,17 @@ export function createStudioStore(options: CreateStudioStoreOptions): StudioStor
         }));
       },
 
+      relayoutText() {
+        const measure = measurer();
+        if (!measure) return false;
+        const state = get();
+        const document = relayoutDocument(state.document, measure);
+        const history = rebaseHistory(state.history, (d) => relayoutDocument(d, measure));
+        if (document === state.document && history === state.history) return false;
+        set({ document, history, relayoutCount: state.relayoutCount + 1, ...(document === state.document ? {} : { changeCount: state.changeCount + 1 }) });
+        return document !== state.document;
+      },
+
       select(ids, mode = 'replace') {
         set((state) => {
           const onSurface = pruneSelection(ids, state.document, state.editor.activeSurfaceId);
@@ -402,6 +432,7 @@ export function createStudioStore(options: CreateStudioStoreOptions): StudioStor
       editor: { activeSurfaceId: initialSurface, selectedIds: [], hoveredId: null, editingTextId: null },
       history: emptyHistory,
       changeCount: 0,
+      relayoutCount: 0,
       actions,
     };
   });
