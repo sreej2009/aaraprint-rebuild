@@ -1,7 +1,12 @@
 import type Konva from 'konva';
-import { lazy, Suspense, useEffect, useRef } from 'react';
+import { lazy, Suspense, useEffect, useMemo, useRef, type PointerEvent as ReactPointerEvent } from 'react';
 import { cn } from '@/lib/cn';
+import { CanvasAnnouncer } from '../canvas/canvas-announcer';
+import { createElementPointer } from '../canvas/element-pointer';
+import { useInteraction, useInteractionStoreApi } from '../canvas/interaction-store';
 import { MeasurementLabels } from '../canvas/measurement-labels';
+import { SelectionOverlay } from '../canvas/selection-overlay';
+import { SelectionToolbar } from '../canvas/selection-toolbar';
 import { useCanvasGestures } from '../canvas/use-canvas-gestures';
 import { useViewport, useViewportStoreApi } from '../canvas/viewport-context';
 import { ZoomAnnouncer, ZoomControl } from '../canvas/zoom-control';
@@ -9,8 +14,8 @@ import { finishedSizeMm, printBoxes } from '../geometry/boxes';
 import { fitScale, workspacePadding } from '../geometry/fit';
 import { formatSize } from '../profile/describe';
 import type { SurfaceDesign } from '../schema/types';
-import { selectActiveSurface, useStudio } from '../store';
-import { CANVAS_REGION_ID } from './dom-ids';
+import { selectActiveSurface, useStudio, useStudioStoreApi } from '../store';
+import { CANVAS_HELP_ID, CANVAS_REGION_ID } from './dom-ids';
 import { useElementSize } from './use-element-size';
 
 // Konva is only downloaded with the canvas; the print-area preview shows while it loads.
@@ -22,20 +27,55 @@ export interface CanvasWorkspaceProps {
   onStage?: (stage: Konva.Stage | null) => void;
 }
 
+/** Controls floating over the canvas keep their own pointer presses (and focus). */
+function isControl(target: EventTarget | null): boolean {
+  return target instanceof Element && target.closest('button, a, input, [role="toolbar"], [data-no-pan]') !== null;
+}
+
 /**
  * The central workspace: the Konva canvas for the active side, fitted to the available space, with
- * wheel / drag / pinch navigation, dimension labels and a footer with size, DPI and guide legend.
+ * wheel / drag / pinch navigation, element selection and transforms (HTML overlay), dimension
+ * labels and a footer with size, DPI and guide legend. The region is focusable: arrow keys,
+ * Delete and Esc act on the selection while it (or the layers list) has focus.
  */
 export function CanvasWorkspace({ zoomPill = false, onStage }: CanvasWorkspaceProps) {
   const surface = useStudio(selectActiveSurface);
+  const regionRef = useRef<HTMLElement>(null);
   const areaRef = useRef<HTMLDivElement>(null);
   const size = useElementSize(areaRef);
+  const studioStore = useStudioStoreApi();
   const viewportStore = useViewportStoreApi();
+  const interactionStore = useInteractionStoreApi();
   const viewport = useViewport((s) => s.viewport);
   const showGuides = useViewport((s) => s.showGuides);
   const ready = useViewport((s) => s.content !== null && s.area.width > 0 && s.area.height > 0);
-  const cursor = useCanvasGestures(areaRef, viewportStore);
+  const delegate = useMemo(
+    () => createElementPointer({ studio: studioStore, viewport: viewportStore, interaction: interactionStore }),
+    [studioStore, viewportStore, interactionStore],
+  );
+  const panCursor = useCanvasGestures(areaRef, viewportStore, delegate);
+  const hovering = useStudio((s) => s.editor.hoveredId !== null);
+  const moving = useInteraction((s) => s.gesture?.kind === 'move');
+  const cursor = moving || (hovering && panCursor === null) ? 'move' : panCursor;
   const print = surface?.print;
+
+  // Clicking the canvas gives it keyboard focus (pointer presses don't move focus by themselves
+  // here), so the arrow keys move the selection instead of whatever control had focus before.
+  useEffect(() => {
+    const region = regionRef.current;
+    if (!region) return;
+    const onBlur = () => delete region.dataset.pointerFocus;
+    region.addEventListener('blur', onBlur);
+    return () => region.removeEventListener('blur', onBlur);
+  }, []);
+
+  // The focus ring is for keyboard users: a click marks the focus as pointer focus, which hides it.
+  const focusCanvas = (event: ReactPointerEvent) => {
+    const region = regionRef.current;
+    if (!region || isControl(event.target) || document.activeElement === region) return;
+    region.dataset.pointerFocus = '';
+    region.focus({ preventScroll: true, focusVisible: false } as FocusOptions);
+  };
 
   useEffect(() => {
     viewportStore.getState().actions.setArea(size);
@@ -51,15 +91,29 @@ export function CanvasWorkspace({ zoomPill = false, onStage }: CanvasWorkspacePr
   const sizeText = formatSize(finished.width, finished.height);
   return (
     <section
+      ref={regionRef}
       id={CANVAS_REGION_ID}
       aria-label={`Design canvas: ${surface.label}, ${sizeText}`}
       aria-roledescription="design canvas"
-      className="relative flex h-full min-h-0 flex-col bg-surface-sunken"
+      aria-describedby={CANVAS_HELP_ID}
+      // oxlint-disable-next-line jsx-a11y/no-noninteractive-tabindex -- the canvas is a focusable region (Plan §18.7): arrow keys and Delete act on the selection
+      tabIndex={0}
+      data-studio-keys=""
+      className="relative flex h-full min-h-0 flex-col bg-surface-sunken focus-visible:-outline-offset-2 data-pointer-focus:outline-none"
     >
+      <p id={CANVAS_HELP_ID} className="sr-only">
+        Select an item by clicking it or from the layers list. Arrow keys move it, Shift with an arrow moves it further, Delete removes it and Escape deselects.
+      </p>
       <div
         ref={areaRef}
         data-testid="canvas-area"
-        className={cn('relative min-h-0 flex-1 touch-none overflow-hidden select-none', cursor === 'grab' && 'cursor-grab', cursor === 'grabbing' && 'cursor-grabbing')}
+        onPointerDownCapture={focusCanvas}
+        className={cn(
+          'relative min-h-0 flex-1 touch-none overflow-hidden select-none',
+          cursor === 'grab' && 'cursor-grab',
+          cursor === 'grabbing' && 'cursor-grabbing',
+          cursor === 'move' && 'cursor-move',
+        )}
       >
         {ready && (
           <Suspense fallback={<PrintAreaPreview surface={surface} available={size} />}>
@@ -69,12 +123,15 @@ export function CanvasWorkspace({ zoomPill = false, onStage }: CanvasWorkspacePr
           </Suspense>
         )}
         {ready && showGuides && <MeasurementLabels print={surface.print} viewport={viewport} />}
+        {ready && <SelectionOverlay />}
+        <SelectionToolbar />
         {zoomPill && (
           <div className="absolute right-3 bottom-3 rounded-full border border-border bg-surface/95 px-1 shadow-2 backdrop-blur">
             <ZoomControl />
           </div>
         )}
         <ZoomAnnouncer />
+        <CanvasAnnouncer />
       </div>
       <footer className="flex flex-wrap items-center justify-between gap-x-4 gap-y-1 border-t border-border bg-surface px-3 py-2 text-caption text-fg-muted md:px-4">
         <p>

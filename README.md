@@ -20,7 +20,7 @@ npm run test:e2e       # Playwright + axe against the preview server (run `npm r
                        # projects: desktop 1440×900, mobile (Pixel 7), tablet 820×1180 (Studio specs)
 ```
 
-Useful pages: `/`, `/categories/view-all`, any `/categories/<slug>`, `/products/<slug>`, `/products/<slug>/design` (Design Studio, in progress), `/search?q=mug`, `/privacy`, and `/design-system` (tokens, components and the Studio canvas demo).
+Useful pages: `/`, `/categories/view-all`, any `/categories/<slug>`, `/products/<slug>`, `/products/<slug>/design` (Design Studio, in progress; add `?sample=1` to start from a sample card), `/search?q=mug`, `/privacy`, and `/design-system` (tokens, components and the Studio canvas demo).
 
 ## Stack
 
@@ -46,7 +46,8 @@ src/
   features/catalogue/      listing logic (filters, facets, sort, pages), search, product card/image, filter panel, listing view
   features/product/        option selection & price display, gallery, purchase panel, details, print specs
   features/studio/         Design Studio (Phase 3): print geometry, profiles, design schema & commands,
-                           store & undo history, shell (layouts, panels, sheets), Konva canvas, zoom/pan, guides
+                           store & undo history, shell (layouts, panels, sheets), Konva canvas, zoom/pan, guides,
+                           selection, move/resize/rotate, editing shortcuts, position & size fields
   components/content/      prose renderer for imported content blocks
   config/business.ts       business details (support email, hours, shipping rules)
   design-system/           tokens.ts + ~30 components (Button, Field, OptionChips, QuantityTiers, Dialog, Sheet, Toast …)

@@ -90,9 +90,10 @@ test.describe('canvas stage', () => {
     await page.goto(STUDIO);
     const s = await stageInfo(page);
     const layers = await page.evaluate(() => window.Konva.stages[0]!.getLayers().map((l) => ({ name: l.name(), listening: l.listening() })));
+    // No layer listens: picking and transforms use the document geometry and the HTML overlay (M6).
     expect(layers).toEqual([
       { name: 'workspace', listening: false },
-      { name: 'artwork', listening: true },
+      { name: 'artwork', listening: false },
       { name: 'guides', listening: false },
     ]);
     const midY = s.y + 300 * s.scale;
@@ -278,7 +279,7 @@ test.describe('rendering a design (sample card on /design-system)', () => {
     await page.goto(DEMO);
     const demo = page.locator('#canvas-demo');
     await waitForStage(page, '#canvas-demo');
-    expect(await elementIds(page)).toEqual(['el_band', 'el_name', 'el_title', 'el_contact', 'el_logo', 'el_star']); // el_hidden is hidden
+    expect(await elementIds(page)).toEqual(['el_band', 'el_name', 'el_title', 'el_contact', 'el_logo', 'el_star', 'el_badge']); // el_hidden is hidden
     const name = await page.evaluate(() => {
       const stage = window.Konva.stages.find((st) => st.container().closest('#canvas-demo'))!;
       const group = stage.findOne<KonvaNamespace.Group>('#el_name')!;
@@ -289,8 +290,8 @@ test.describe('rendering a design (sample card on /design-system)', () => {
 
     await demo.getByRole('radio', { name: 'Back, 5 items' }).click();
     await expect.poll(() => elementIds(page)).toEqual(['el_ring', 'el_triangle', 'el_rule', 'el_arrow', 'el_thanks']);
-    await demo.getByRole('radio', { name: 'Front, 7 items' }).click();
-    await expect.poll(() => elementIds(page)).toEqual(['el_band', 'el_name', 'el_title', 'el_contact', 'el_logo', 'el_star']);
+    await demo.getByRole('radio', { name: 'Front, 8 items' }).click();
+    await expect.poll(() => elementIds(page)).toEqual(['el_band', 'el_name', 'el_title', 'el_contact', 'el_logo', 'el_star', 'el_badge']);
   });
 
   test('clips artwork to every trim shape', async ({ page }) => {

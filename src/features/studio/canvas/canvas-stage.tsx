@@ -1,5 +1,5 @@
 import Konva from 'konva';
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { memo, useEffect, useMemo, useRef, useState } from 'react';
 import { Arrow, Ellipse, Group, Layer, Line, Rect, Shape, Stage, Text } from 'react-konva';
 import { colorTokens } from '@/design-system/tokens';
 import { appendPath, tracePath } from '../geometry/shapes';
@@ -40,7 +40,9 @@ export default function CanvasStage({ surface, width, height, viewport, showGuid
   }, [onStage]);
 
   return (
-    <Stage ref={stageRef} width={width} height={height} scaleX={s} scaleY={s} x={viewport.x} y={viewport.y} className="studio-stage">
+    // Not listening: picking and transforms use the document geometry (canvas/transform-rules.ts)
+    // and the HTML selection overlay, so Konva keeps no hit graph.
+    <Stage ref={stageRef} width={width} height={height} scaleX={s} scaleY={s} x={viewport.x} y={viewport.y} listening={false} className="studio-stage">
       <Layer name={WORKSPACE_LAYER} listening={false}>
         <Shape
           sceneFunc={(ctx, shape) => {
@@ -56,7 +58,7 @@ export default function CanvasStage({ surface, width, height, viewport, showGuid
         />
       </Layer>
 
-      <Layer name={ARTWORK_LAYER}>
+      <Layer name={ARTWORK_LAYER} listening={false}>
         <Group name="artwork-clip" clipFunc={(ctx) => tracePath(ctx, guides.bleedShape, guides.bleed)}>
           <Rect name="background" {...guides.bleed} fill={surface.background.color ?? colorTokens.surface} listening={false} perfectDrawEnabled={false} />
           {surface.elements
@@ -114,13 +116,14 @@ function outline(shapeDef: GuideGeometry['trimShape'], rect: GuideGeometry['trim
 
 // ----------------------------------------------------------------- Elements
 
-function ElementNode({ element }: { element: DesignElement }) {
+/** Re-renders only when its own element changes (commands keep unchanged elements identical). */
+const ElementNode = memo(function ElementNode({ element }: { element: DesignElement }) {
   return (
     <Group id={element.id} name={`element element-${element.type}`} {...elementFrame(element)}>
       <DrawingNode drawing={drawingFor(element)} />
     </Group>
   );
-}
+});
 
 function DrawingNode({ drawing }: { drawing: Drawing }) {
   const paint = (d: { fill: string | null; stroke: string | null; strokeWidth: number }) => ({

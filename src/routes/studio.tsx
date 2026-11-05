@@ -31,9 +31,9 @@ export function HydrateFallback() {
 
 export default function StudioRoute({ loaderData }: Route.ComponentProps) {
   if (loaderData.status === 'unsupported') return <StudioUnsupported productName={loaderData.productName} productHref={loaderData.productHref} />;
-  const { product, profile, variantId, initialSurface, initialTool } = loaderData;
+  const { product, profile, variantId, initialSurface, initialTool, sample } = loaderData;
   // A new product gets a fresh editing session.
-  return <StudioApp key={product.slug} product={product} profile={profile} variantId={variantId} initialSurface={initialSurface} initialTool={initialTool} />;
+  return <StudioApp key={product.slug} product={product} profile={profile} variantId={variantId} initialSurface={initialSurface} initialTool={initialTool} sample={sample} />;
 }
 
 export function ErrorBoundary({ error }: Route.ErrorBoundaryProps) {

@@ -2,12 +2,14 @@ import type Konva from 'konva';
 import { useCallback, useRef, useState } from 'react';
 import { Button, SegmentedControl } from '@/design-system';
 import { exportArtwork } from '../canvas/export';
+import { createInteractionStore, InteractionStoreContext, useInteractionStoreApi } from '../canvas/interaction-store';
 import { useViewportStoreApi, ViewportStoreContext } from '../canvas/viewport-context';
 import { createViewportStore } from '../canvas/viewport-store';
 import { ZoomControl } from '../canvas/zoom-control';
 import { resizeSurface } from '../commands';
 import { CanvasWorkspace } from '../shell/canvas-workspace';
-import { createStudioStore, selectActiveSurface, selectActiveSurfaceId, StudioProvider, useStudio, useStudioActions } from '../store';
+import { useStudioShortcuts } from '../keyboard/use-studio-shortcuts';
+import { createStudioStore, selectActiveSurface, selectActiveSurfaceId, StudioProvider, useStudio, useStudioActions, useStudioStoreApi } from '../store';
 import { DEMO_SHAPES, demoDesign } from './demo-design';
 
 /**
@@ -17,10 +19,13 @@ import { DEMO_SHAPES, demoDesign } from './demo-design';
 export default function CanvasDemo() {
   const [store] = useState(() => createStudioStore({ document: demoDesign() }));
   const [viewportStore] = useState(() => createViewportStore({ showGuides: true }));
+  const [interactionStore] = useState(() => createInteractionStore());
   return (
     <StudioProvider store={store}>
       <ViewportStoreContext.Provider value={viewportStore}>
-        <DemoBody />
+        <InteractionStoreContext.Provider value={interactionStore}>
+          <DemoBody />
+        </InteractionStoreContext.Provider>
       </ViewportStoreContext.Provider>
     </StudioProvider>
   );
@@ -32,6 +37,8 @@ function DemoBody() {
   const surfaces = useStudio((s) => s.document.surfaces);
   const print = useStudio((s) => selectActiveSurface(s)?.print);
   const viewportStore = useViewportStoreApi();
+  // Editing keys only while the demo canvas has focus: the page itself keeps scrolling with arrows.
+  useStudioShortcuts(useStudioStoreApi(), useInteractionStoreApi(), { allowBody: false });
   const stageRef = useRef<Konva.Stage | null>(null);
   const onStage = useCallback((stage: Konva.Stage | null) => {
     stageRef.current = stage;

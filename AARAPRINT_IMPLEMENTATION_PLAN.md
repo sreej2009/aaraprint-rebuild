@@ -1182,7 +1182,8 @@ I'll report after steps 2, 4 and 5 (or after each milestone, if you prefer). Eac
 | M3 Studio store, history and selection | Done |
 | M4 Studio page and responsive layout | Done |
 | M5 Canvas stage, zoom/pan and print guides | Done |
-| M6–M16 | Not started |
+| M6 Selecting, moving, resizing and rotating | Done |
+| M7–M16 | Not started |
 
 #### M1 findings
 
@@ -1383,4 +1384,42 @@ StudioState
 - Zoom sits in the top bar on tablet and larger, and in a floating pill on phones. Preview is hidden on tablets until M15 to give the design name room.
 
 **Reference:** `/design-system#canvas-demo` shows the real canvas with a sample card (every element type on both sides, each trim shape, zoom, and the guide-free export). It's also the fixture for the element-rendering tests, since the Studio itself can't add elements until M6.
+
+#### M6 — Selecting, moving, resizing and rotating
+
+**How it's built**
+- Selection outline, handles and rotation handle are **HTML over the Konva stage** (`canvas/selection-overlay.tsx`), not canvas nodes, so they can never reach the printable artwork or an export. The Konva stage no longer listens to pointer events.
+- Picking and transforms use the document geometry (`geometry/transform.ts`, `canvas/transform-rules.ts`): pure, unit-tested functions. This replaces the Konva Transformer named in §18.3: it keeps the text rules (corner = font scale, side = rewrap) exact and keeps every value in print px.
+- Every pointer move updates the design through the Studio store (M2 `updateElement`). All updates of one gesture share a coalesce key and merge into **one undo step, however long the pointer rests** (new `gesture` merge option); the step is sealed when the pointer lifts. Escape or a second finger cancels the gesture and leaves no step. Nudges and inspector arrow steps use the existing 600 ms grouping.
+- The M5 gesture hook takes an element "delegate": presses on elements, taps and hover go to the element layer; empty canvas still pans, Space/middle button always pan, two fingers always pinch.
+
+**Pointer rules**
+
+| Input | On an element | On empty canvas |
+|-------|---------------|-----------------|
+| Mouse | press selects and drags (3 px threshold) | click deselects, drag pans |
+| Touch | tap selects; one finger drags only the *selected* element, otherwise pans | tap deselects, drag pans |
+
+- Locked and hidden layers are never picked on the canvas; Layers selects them. Locked selections show a dashed outline with a lock badge and no handles.
+- Handles: text gets corners (font scales) and left/right (rewrap); images get corners (proportions kept, Shift frees them); lines get left/right; other shapes get all eight (Shift keeps proportions). Alt resizes from the centre. Minimum size 2 mm (never enlarges an element that is already smaller). Rotation snaps to 0/45/90… within 5°, Shift gives 15° steps.
+- Handles have 24 px hit areas with a mouse and about 40 px on touch screens, and sit on a frame of at least 24 / 56 px so they stand clear of small elements.
+- A live badge shows X/Y, W × H or the angle while dragging. The outline turns amber outside the safe area and red past the trim (rotated corners, trim shape), with a chip under the selection and the same sentence in the inspector.
+
+**Keyboard** (selection keys apply while the canvas region or the layers list has focus, or nothing in particular; never while typing)
+- Arrows 0.5 mm, Shift + arrows 5 mm; Delete / Backspace; Esc deselects (or cancels a drag); Ctrl D duplicates 3 mm down-right; Ctrl ] / [ and Ctrl Shift ] / [ change layer order; Ctrl Z, Ctrl Shift Z, Ctrl Y.
+- Locked layers ignore these and the live region says why.
+
+**Inspector and canvas UI**
+- Properties shows the selected layer's name and type, the lock/hidden state (with Unlock), the print warning, and **Position & size**: X and Y from the trim's top-left corner, W and H in mm (one decimal), rotation in degrees. Enter or blur commits one undo step; ↑/↓ step 0.1 (Shift 1). Images keep their proportions; text height follows the text (read-only). M7 adds the proportion lock, centre/fit actions and opacity.
+- Layer rows are buttons that select (the rest of the layer actions is M7).
+- A floating selection toolbar offers Duplicate, Bring forward, Send backward and Delete (Unlock for locked layers) — the touch equivalents of the shortcuts.
+- The canvas region is focusable (focus ring only for keyboard focus) and has a polite live region: "“Riya Sharma” selected. 5.9 mm from left, 5.9 mm from top, 52.5 × 7.6 mm.", "Moved …", "Deleted “Star”. Press Ctrl Z to undo.", "Undone: …", plus print warnings.
+- Front and back keep separate elements; switching sides clears the selection (M3), and undo returns to the side it changes.
+
+**Sample design (`?sample=1`)**: until the text and shape tools (M8, M9) and templates (M14) can add content, `/products/<slug>/design?sample=1` starts from the demo card fitted to the product's own sides, so element editing can be tried on every product. The demo now includes a locked layer ("Since 2026") as well as a hidden one.
+
+**Known limits**
+- Text box height isn't re-measured when the width changes (text tool, M8).
+- No snapping or centre guides while dragging (Phase 4), no multi-select or marquee (Phase 4).
+- Touch was tested with Chrome's touch emulation, not on physical devices.
 

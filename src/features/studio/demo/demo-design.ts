@@ -2,8 +2,9 @@ import { createImageElement, createShapeElement, createTextElement } from '../sc
 import { CURRENT_SCHEMA_VERSION, DESIGN_FORMAT, type DesignDocument, type SurfacePrint } from '../schema/types';
 
 /**
- * A visiting card with every element type the canvas draws, on both sides. Used by the canvas
- * demo on /design-system and by the canvas tests; not shown to customers.
+ * A visiting card with every element type the canvas draws, on both sides, including a locked
+ * and a hidden layer. Used by the canvas demo on /design-system, the canvas tests and the
+ * Studio's `?sample=1` preview (see sample-design.ts); not offered to customers.
  */
 const CARD: SurfacePrint = { widthPx: 1050, heightPx: 600, dpi: 300, bleedPx: 18, safeZonePx: 24, trim: { shape: 'rectangle', cornerRadiusPx: 0 } };
 
@@ -44,6 +45,8 @@ export function demoDesign(): DesignDocument {
           createTextElement({ x: 70, y: 500, width: 700, height: 50 }, { id: 'el_contact', text: '+91 98765 43210 · riya@example.com', fontSize: 34, color: '#ffffff' }),
           createImageElement({ kind: 'asset', assetId: 'asset_logo' }, { x: 820, y: 70, width: 160, height: 160 }, { id: 'el_logo' }),
           createShapeElement('star', { x: 860, y: 280, width: 90, height: 90 }, { id: 'el_star', fill: '#e8930c', rotation: 12 }),
+          // Locked: can't be picked, moved or deleted on the canvas until it's unlocked.
+          createTextElement({ x: 70, y: 380, width: 330, height: 44 }, { id: 'el_badge', text: 'Since 2026', fontSize: 30, fontWeight: 600, color: '#4b43d6', locked: true }),
           createTextElement({ x: 70, y: 300, width: 300, height: 50 }, { id: 'el_hidden', text: 'Hidden layer', hidden: true }),
         ],
       },

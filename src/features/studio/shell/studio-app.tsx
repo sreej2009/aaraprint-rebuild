@@ -3,11 +3,14 @@ import { useSearchParams } from 'react-router';
 import type { Product } from '@/lib/catalogue/types';
 import { describePrint } from '../profile/describe';
 import type { StudioProfile } from '../profile/types';
+import { sampleDesignFor } from '../demo/sample-design';
 import { createBlankDesign } from '../schema/create';
+import { createInteractionStore, InteractionStoreContext, type InteractionStore } from '../canvas/interaction-store';
 import { useZoomShortcuts } from '../canvas/use-zoom-shortcuts';
+import { useStudioShortcuts } from '../keyboard/use-studio-shortcuts';
 import { ViewportStoreContext } from '../canvas/viewport-context';
 import { createViewportStore, type ViewportStore } from '../canvas/viewport-store';
-import { createStudioStore, selectActiveSurfaceId, StudioProvider, useStudio } from '../store';
+import { createStudioStore, selectActiveSurfaceId, StudioProvider, useStudio, useStudioStoreApi } from '../store';
 import { StudioSessionContext, type StudioSession } from './session-context';
 import { StudioShell } from './studio-shell';
 import type { ToolId } from './tools';
@@ -20,6 +23,8 @@ export interface StudioAppProps {
   variantId: string | null;
   initialSurface: string | null;
   initialTool: ToolId | null;
+  /** Start from the sample card (`?sample=1`) instead of a blank design. */
+  sample?: boolean;
 }
 
 /**
@@ -27,14 +32,13 @@ export interface StudioAppProps {
  * product facts and editor chrome state, to the shell. Remount (key by product) to start over.
  * Until local drafts arrive (M11) every visit starts from a blank design.
  */
-export function StudioApp({ product, profile, variantId, initialSurface, initialTool }: StudioAppProps) {
-  const [store] = useState(() =>
-    createStudioStore({
-      document: createBlankDesign(profile, { variantId: resolveStudioVariant(product, variantId)?.id ?? null }),
-      ...(initialSurface ? { surfaceId: initialSurface } : {}),
-    }),
-  );
+export function StudioApp({ product, profile, variantId, initialSurface, initialTool, sample = false }: StudioAppProps) {
+  const [store] = useState(() => {
+    const blank = createBlankDesign(profile, { variantId: resolveStudioVariant(product, variantId)?.id ?? null });
+    return createStudioStore({ document: sample ? sampleDesignFor(blank) : blank, ...(initialSurface ? { surfaceId: initialSurface } : {}) });
+  });
   const [viewportStore] = useState(() => createViewportStore());
+  const [interactionStore] = useState(() => createInteractionStore());
   const session = useMemo<StudioSession>(() => {
     const variant = resolveStudioVariant(product, variantId);
     const params = new URLSearchParams(variant ? { variantId: variant.id } : {});
@@ -52,19 +56,22 @@ export function StudioApp({ product, profile, variantId, initialSurface, initial
     <StudioProvider store={store}>
       <StudioSessionContext.Provider value={session}>
         <ViewportStoreContext.Provider value={viewportStore}>
-          <StudioUiProvider initialTool={initialTool}>
-            <SideInUrl />
-            <ZoomShortcuts store={viewportStore} />
-            <StudioShell />
-          </StudioUiProvider>
+          <InteractionStoreContext.Provider value={interactionStore}>
+            <StudioUiProvider initialTool={initialTool}>
+              <SideInUrl />
+              <Shortcuts viewport={viewportStore} interaction={interactionStore} />
+              <StudioShell />
+            </StudioUiProvider>
+          </InteractionStoreContext.Provider>
         </ViewportStoreContext.Provider>
       </StudioSessionContext.Provider>
     </StudioProvider>
   );
 }
 
-function ZoomShortcuts({ store }: { store: ViewportStore }) {
-  useZoomShortcuts(store);
+function Shortcuts({ viewport, interaction }: { viewport: ViewportStore; interaction: InteractionStore }) {
+  useZoomShortcuts(viewport);
+  useStudioShortcuts(useStudioStoreApi(), interaction);
   return null;
 }
 

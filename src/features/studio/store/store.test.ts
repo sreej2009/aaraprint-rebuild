@@ -225,6 +225,35 @@ describe('history limits and repeated edits', () => {
     expect(get().history.past).toHaveLength(2);
   });
 
+  it('merges a whole pointer gesture into one step however long it pauses, until sealed', () => {
+    const { get, actions, clock } = setup();
+    for (const x of [70, 80, 90]) {
+      actions.updateElement('el_name', { x }, { coalesceKey: 'move:1', gesture: true, label: 'Move' });
+      clock.advance(COALESCE_WINDOW_MS * 3); // the pointer rests mid-drag
+    }
+    expect(get().history.past).toHaveLength(1);
+    actions.sealHistory(); // pointer lifted
+    actions.updateElement('el_name', { x: 100 }, { coalesceKey: 'move:1', gesture: true, label: 'Move' });
+    expect(get().history.past).toHaveLength(2);
+    actions.undo();
+    actions.undo();
+    expect(selectElement('el_name')(get())?.x).toBe(60);
+  });
+
+  it('drops a gesture that ends where it began (cancelled drags leave no step)', () => {
+    const { get, actions } = setup();
+    actions.updateElement('el_name', { x: 90 }, { coalesceKey: 'move:2', gesture: true });
+    actions.updateElement('el_name', { x: 60 }, { coalesceKey: 'move:2', gesture: true });
+    expect(get().history.past).toHaveLength(0);
+  });
+
+  it('rounds nudged positions to 0.01 px', () => {
+    const { actions, store } = setup();
+    actions.select(['el_name']);
+    actions.nudgeSelection(5.905511811, -0.0001);
+    expect(element(store, 'el_name')).toMatchObject({ x: 65.91, y: 60 });
+  });
+
   it('drops a merged step whose edits cancel out', () => {
     const { get, actions } = setup();
     actions.setBackground('#000000', { coalesceKey: 'background' });

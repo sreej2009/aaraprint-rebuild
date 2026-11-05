@@ -35,10 +35,25 @@ export interface ExecuteOptions {
   select?: readonly string[];
   /** Consecutive edits with the same key within 600 ms merge into one undo step. */
   coalesceKey?: string;
+  /**
+   * Part of a pointer gesture (drag, resize, rotate): merges with the previous edit with the same
+   * `coalesceKey` however long the pointer rests, so one gesture is one undo step. Call
+   * `sealHistory()` when the gesture ends.
+   */
+  gesture?: boolean;
 }
 
 interface EditOptions {
   coalesceKey?: string;
+  gesture?: boolean;
+}
+
+/** Positions are stored to 0.01 print px (far finer than any printer). */
+const round2 = (value: number) => Math.round(value * 100) / 100 || 0;
+
+/** Only the merge options that are set (keeps `exactOptionalPropertyTypes` happy). */
+function mergeOptions(opts: EditOptions): Pick<ExecuteOptions, 'coalesceKey' | 'gesture'> {
+  return { ...(opts.coalesceKey ? { coalesceKey: opts.coalesceKey } : {}), ...(opts.gesture ? { gesture: true } : {}) };
 }
 
 export interface StudioActions {
@@ -150,7 +165,7 @@ export function createStudioStore(options: CreateStudioStoreOptions): StudioStor
         const stillThere = (id: string | null) => (id && pruneSelection([id], next, surfaceId).length ? id : null);
         set({
           document: next,
-          history: recordEntry(state.history, entry, { limit: historyLimit }),
+          history: recordEntry(state.history, entry, { limit: historyLimit, ...(opts.gesture && opts.coalesceKey ? { windowMs: Number.POSITIVE_INFINITY } : {}) }),
           changeCount: state.changeCount + 1,
           editor: { activeSurfaceId: surfaceId, selectedIds: selection, hoveredId: stillThere(state.editor.hoveredId), editingTextId: stillThere(state.editor.editingTextId) },
         });
@@ -177,9 +192,7 @@ export function createStudioStore(options: CreateStudioStoreOptions): StudioStor
         const [element] = elementsOf(get(), [id]);
         if (!element || (element.locked && !isAllowedOnLocked(patch))) return false;
         const surfaceId = get().editor.activeSurfaceId;
-        return actions.execute(opts.label ?? `Edit ${describeElements([element], get().document)}`, (d) => cmd.updateElement(d, surfaceId, id, patch), {
-          ...(opts.coalesceKey ? { coalesceKey: opts.coalesceKey } : {}),
-        });
+        return actions.execute(opts.label ?? `Edit ${describeElements([element], get().document)}`, (d) => cmd.updateElement(d, surfaceId, id, patch), mergeOptions(opts));
       },
 
       updateElements(ids, patch, opts = {}) {
@@ -189,7 +202,7 @@ export function createStudioStore(options: CreateStudioStoreOptions): StudioStor
         return actions.execute(
           opts.label ?? `Edit ${describeElements(targets, get().document)}`,
           (d) => targets.reduce((doc, e) => cmd.updateElement(doc, surfaceId, e.id, patch), d),
-          opts.coalesceKey ? { coalesceKey: opts.coalesceKey } : {},
+          mergeOptions(opts),
         );
       },
 
@@ -199,8 +212,8 @@ export function createStudioStore(options: CreateStudioStoreOptions): StudioStor
         const surfaceId = get().editor.activeSurfaceId;
         return actions.execute(
           `Move ${describeElements(targets, get().document)}`,
-          (d) => targets.reduce((doc, e) => cmd.updateElement(doc, surfaceId, e.id, { x: e.x + dx, y: e.y + dy }), d),
-          opts.coalesceKey ? { coalesceKey: opts.coalesceKey } : {},
+          (d) => targets.reduce((doc, e) => cmd.updateElement(doc, surfaceId, e.id, { x: round2(e.x + dx), y: round2(e.y + dy) }), d),
+          mergeOptions(opts),
         );
       },
 

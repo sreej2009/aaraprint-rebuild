@@ -8,10 +8,19 @@ import { resolveStudioVariant } from './variant';
 export type StudioLoad =
   | { status: 'not-found' }
   | { status: 'unsupported'; productName: string; productHref: string }
-  | { status: 'ready'; product: Product; profile: StudioProfile; variantId: string | null; initialSurface: string | null; initialTool: ToolId | null };
+  | {
+      status: 'ready';
+      product: Product;
+      profile: StudioProfile;
+      variantId: string | null;
+      initialSurface: string | null;
+      initialTool: ToolId | null;
+      /** `?sample=1`: start from the sample card instead of a blank design (preview aid, M6). */
+      sample: boolean;
+    };
 
 /**
- * Everything the Studio route needs, from `/products/:slug/design?variantId=&side=&mode=&tool=`.
+ * Everything the Studio route needs, from `/products/:slug/design?variantId=&side=&mode=&tool=&sample=`.
  * - Unknown products → not-found (404).
  * - Products without a Studio profile (printed as shown) → unsupported.
  * - Unknown variant / side / tool values fall back to defaults instead of failing.
@@ -35,5 +44,6 @@ export async function loadStudio(slug: string, url: URL, apis: { catalogue: Cata
     initialSurface: profile.sides.some((s) => s.id === side) ? side : null,
     // The product page's "Upload your design" button links here with ?mode=upload.
     initialTool: params.get('mode') === 'upload' ? 'uploads' : isToolId(tool) ? tool : null,
+    sample: params.get('sample') === '1',
   };
 }
