@@ -131,11 +131,11 @@ test.describe('canvas stage', () => {
     await page.goto('/products/flyer-canopy-tent/design'); // 152 × 57 cm at 150 DPI
     const large = await stageInfo(page);
     expect(9000 * large.scale).toBeLessThan(large.width);
-    expect(Number.parseFloat(await zoomLabel(page))).toBeLessThan(30);
+    await expect.poll(async () => Number.parseFloat(await zoomLabel(page))).toBeLessThan(30);
     await page.goto('/products/stamp-date/design'); // 51 × 17 mm
     const small = await stageInfo(page);
     expect(600 * small.scale).toBeLessThan(small.width);
-    expect(Number.parseFloat(await zoomLabel(page))).toBeGreaterThan(100);
+    await expect.poll(async () => Number.parseFloat(await zoomLabel(page))).toBeGreaterThan(100);
   });
 });
 
@@ -267,6 +267,8 @@ test.describe('front and back', () => {
 
 test.describe('rendering a design (sample card on /design-system)', () => {
   test.skip(({ isMobile }) => isMobile, 'reference page demo');
+  // /design-system is the heaviest page: under a full parallel run it can take a while to hydrate.
+  test.slow();
 
   async function elementIds(page: Page) {
     return page.evaluate(() => {

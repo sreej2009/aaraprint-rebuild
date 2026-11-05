@@ -44,6 +44,7 @@ const PAST_TENSE: Record<string, string> = {
   Rename: 'Renamed',
   Copy: 'Copied',
   Clear: 'Cleared',
+  Centre: 'Centred',
 };
 
 /** "Move “Logo”" → "Moved “Logo”". */

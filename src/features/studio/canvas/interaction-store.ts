@@ -19,9 +19,12 @@ export interface InteractionState {
   gesture: Gesture | null;
   /** A one-off message for screen readers ("This layer is locked"); `id` repeats identical ones. */
   notice: { text: string; id: number } | null;
+  /** Inspector proportion lock per element, where someone changed it (see `ratioLocked`). */
+  ratioLocks: Readonly<Record<string, boolean>>;
   actions: {
     setGesture(gesture: Gesture | null): void;
     notify(text: string): void;
+    setRatioLock(elementId: string, locked: boolean): void;
   };
 }
 
@@ -31,12 +34,16 @@ export function createInteractionStore(): InteractionStore {
   return createStore<InteractionState>()((set) => ({
     gesture: null,
     notice: null,
+    ratioLocks: {},
     actions: {
       setGesture(gesture) {
         set({ gesture });
       },
       notify(text) {
         set((state) => ({ notice: { text, id: (state.notice?.id ?? 0) + 1 } }));
+      },
+      setRatioLock(elementId, locked) {
+        set((state) => ({ ratioLocks: { ...state.ratioLocks, [elementId]: locked } }));
       },
     },
   }));

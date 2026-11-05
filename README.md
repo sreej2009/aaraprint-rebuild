@@ -47,7 +47,7 @@ src/
   features/product/        option selection & price display, gallery, purchase panel, details, print specs
   features/studio/         Design Studio (Phase 3): print geometry, profiles, design schema & commands,
                            store & undo history, shell (layouts, panels, sheets), Konva canvas, zoom/pan, guides,
-                           selection, move/resize/rotate, editing shortcuts, position & size fields
+                           selection, move/resize/rotate, editing shortcuts, inspector and layers panel
   components/content/      prose renderer for imported content blocks
   config/business.ts       business details (support email, hours, shipping rules)
   design-system/           tokens.ts + ~30 components (Button, Field, OptionChips, QuantityTiers, Dialog, Sheet, Toast …)

@@ -1183,7 +1183,8 @@ I'll report after steps 2, 4 and 5 (or after each milestone, if you prefer). Eac
 | M4 Studio page and responsive layout | Done |
 | M5 Canvas stage, zoom/pan and print guides | Done |
 | M6 Selecting, moving, resizing and rotating | Done |
-| M7–M16 | Not started |
+| M7 Inspector and layers panel | Done |
+| M8–M16 | Not started |
 
 #### M1 findings
 
@@ -1422,4 +1423,29 @@ StudioState
 - Text box height isn't re-measured when the width changes (text tool, M8).
 - No snapping or centre guides while dragging (Phase 4), no multi-select or marquee (Phase 4).
 - Touch was tested with Chrome's touch emulation, not on physical devices.
+
+#### M7 — Inspector and layers panel
+
+**Inspector** (`src/features/studio/inspector/`): the same content docked on desktop, in the right drawer on laptops and tablets, and in the bottom sheet on phones (also opened from a new Properties button in the selection toolbar).
+- Header with the layer's type icon, name and type; notices for locked (with Unlock), hidden and outside-safe-area / past-trim layers.
+- Quick actions: Hide/Show and Lock/Unlock toggles (aria-pressed), Duplicate, Delete.
+- **Position & size:** X, Y (from the trim's top-left corner), W, H in mm with one decimal; rotation in degrees (wraps 0–360). Proportion lock where it makes sense (shapes start free, images start locked; none for text, whose height follows the text, or lines). Centre horizontally / vertically on the piece.
+- **Appearance:** opacity slider and percentage field.
+- **Layer order:** Forward, Backward, To front, To back (disabled when they'd do nothing, or for locked layers).
+- Fields commit on Enter or leaving the field (one undo step); ↑/↓ and the − / + buttons step by 0.1 mm (Shift ×10) and merge within 600 ms; a slider drag is one step however slow. Unchanged values and invalid text record nothing. Locked layers keep everything except unlock, show/hide, rename and duplicate disabled.
+- Hiding from the inspector or the layers list keeps the selection (`setHidden(…, { keepSelection })`), so the same toggle can show it again; elsewhere M3's rule (hidden layers leave the selection) still applies.
+
+**Layers panel**: every layer of the side, top first, with a type icon, name, and the hidden (struck-through, eye-off) and locked (lock) states — also in each row's accessible name ("Since 2026, text, locked").
+- Click or tap selects (and highlights it on the canvas on hover); the selected row is highlighted and scrolled into view when the canvas selects.
+- Each row has Lock/Unlock and Show/Hide buttons; Move layer up / down and Rename above the list.
+- Keyboard: the list is one tab stop (roving focus); ↑/↓, Home/End move between layers and select them; Alt + ↑/↓ reorder; F2 (or a double-click, or the pencil) renames — Enter saves, Escape cancels, an empty name restores the automatic one; Delete and Ctrl shortcuts act on the selection.
+
+**Design system:** new `NumberField` (units, Enter/blur commit, arrow steps, − / + on touch screens, wrap), `Slider` and `IconToggle`, shown under Form controls → Editor controls on `/design-system`. (`ColorField` moves to M8/M9, where colours become editable.)
+
+**Accessibility:** every field and button is labelled ("X, from the left trim edge", "Increase W, width"); changes are announced through the canvas live region, and a second live region inside the drawer/sheet keeps them audible while that modal is open; controls are at least 40 px tall on touch screens.
+
+**Known limits**
+- No style controls yet (font, colour, fill, stroke): text tool M8, shapes and graphics M9.
+- Layers are reordered with buttons and Alt + arrows, not by dragging (drag-and-drop is Phase 4).
+- Fit inside safe area / Fill to bleed (Plan §18.6) are not in M7; they arrive with images (M12), where they matter most.
 

@@ -4,6 +4,7 @@ import {
   Download,
   Ellipsis,
   Heart,
+  Link2,
   Inbox,
   Info,
   Pencil,
@@ -12,6 +13,7 @@ import {
   SlidersHorizontal,
   Trash,
   Undo2,
+  Unlink2,
   ZoomIn,
   ZoomOut,
 } from 'lucide-react';
@@ -40,8 +42,10 @@ import {
   EmptyState,
   Field,
   IconButton,
+  IconToggle,
   Input,
   NativeSelect,
+  NumberField,
   OptionChips,
   OptionTiles,
   Popover,
@@ -58,6 +62,7 @@ import {
   SheetContent,
   SheetTrigger,
   Skeleton,
+  Slider,
   Spinner,
   StatusPill,
   Switch,
@@ -190,6 +195,7 @@ export function FormsDemo() {
               </Field>
             </div>
           </Example>
+          <EditorControlsExample />
           <Example title="Choices and toggles">
             <div className="flex flex-col gap-5">
               <Checkbox label="Same design on both sides" description="Copies the front to the back. You can still edit each side." defaultChecked />
@@ -209,6 +215,39 @@ export function FormsDemo() {
         </div>
       </div>
     </DocsSection>
+  );
+}
+
+/** Design Studio inspector controls: numbers with units, a proportion lock and opacity. */
+function EditorControlsExample() {
+  const [width, setWidth] = useState(88.9);
+  const [height, setHeight] = useState(50.8);
+  const [locked, setLocked] = useState(true);
+  const [opacity, setOpacity] = useState(80);
+  const resize = (side: 'width' | 'height', value: number) => {
+    const ratio = width / height;
+    if (side === 'width') {
+      setWidth(value);
+      if (locked) setHeight(Math.round((value / ratio) * 10) / 10);
+    } else {
+      setHeight(value);
+      if (locked) setWidth(Math.round(value * ratio * 10) / 10);
+    }
+  };
+  return (
+    <Example title="Editor controls" note="Enter or leaving a field commits; ↑/↓ step 0.1 (Shift ×10); − / + appear on touch screens">
+      <div className="flex flex-col gap-4">
+        <div className="grid grid-cols-[1fr_auto_1fr] items-end gap-2">
+          <NumberField label="Width" unit="mm" min={1} value={width} onCommit={(v) => resize('width', v)} />
+          <IconToggle label="Keep proportions" icon={<Unlink2 />} pressedIcon={<Link2 />} pressed={locked} onPressedChange={setLocked} />
+          <NumberField label="Height" unit="mm" min={1} value={height} onCommit={(v) => resize('height', v)} />
+        </div>
+        <div className="grid grid-cols-[1fr_6.5rem] items-end gap-3">
+          <Slider label="Opacity" value={opacity} valueText={(v) => `${v} percent`} onValueChange={setOpacity} />
+          <NumberField label="Opacity, %" unit="%" decimals={0} step={1} min={0} max={100} value={opacity} onCommit={setOpacity} />
+        </div>
+      </div>
+    </Example>
   );
 }
 

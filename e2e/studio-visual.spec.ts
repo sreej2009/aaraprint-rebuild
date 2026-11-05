@@ -71,3 +71,25 @@ test('screenshot safe-area warning and live rotation', async ({ page, hasTouch }
   await page.screenshot({ path: `review-screens/${info.project.name}-studio-rotating.png` });
   await page.mouse.up();
 });
+
+/** M7: the inspector with a selection — docked on desktop, the drawer on tablets, the sheet on phones. */
+test('screenshot inspector and layers', async ({ page, hasTouch, isMobile }, info) => {
+  await page.goto('/products/business-card-classic/design?sample=1');
+  const star = await samplePoint(page, 905, 325);
+  if (hasTouch) await page.touchscreen.tap(star.x, star.y);
+  else await page.mouse.click(star.x, star.y);
+  if (hasTouch) await page.getByRole('toolbar', { name: 'Selected: Star' }).getByRole('button', { name: 'Properties' }).click();
+  const scope = hasTouch ? page.getByRole('dialog', { name: 'Layers and properties' }) : page.getByRole('complementary', { name: 'Layers and properties' });
+  await scope.getByRole('button', { name: 'Keep proportions' }).click();
+  await scope.getByRole('textbox', { name: 'Opacity' }).fill('80');
+  await scope.getByRole('textbox', { name: 'Opacity' }).press('Enter');
+  await page.evaluate(() => document.fonts.ready);
+  await page.waitForTimeout(500);
+  await page.screenshot({ path: `review-screens/${info.project.name}-studio-inspector.png` });
+  if (isMobile || hasTouch) {
+    // The layers further down the sheet / drawer.
+    await scope.getByRole('list', { name: 'Layers' }).scrollIntoViewIfNeeded();
+    await page.waitForTimeout(300);
+    await page.screenshot({ path: `review-screens/${info.project.name}-studio-layers.png` });
+  }
+});

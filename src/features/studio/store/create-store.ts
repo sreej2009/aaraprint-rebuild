@@ -75,7 +75,8 @@ export interface StudioActions {
   arrangeElement(id: string, action: cmd.ArrangeAction): boolean;
   moveElementTo(id: string, index: number): boolean;
   setLocked(ids: readonly string[], locked: boolean): boolean;
-  setHidden(ids: readonly string[], hidden: boolean): boolean;
+  /** Hidden elements leave the selection, unless `keepSelection` (the inspector's own toggle). */
+  setHidden(ids: readonly string[], hidden: boolean, options?: { keepSelection?: boolean }): boolean;
   renameElement(id: string, name: string | null): boolean;
 
   setBackground(color: string | null, options?: EditOptions & { surfaceId?: string }): boolean;
@@ -273,7 +274,7 @@ export function createStudioStore(options: CreateStudioStoreOptions): StudioStor
         );
       },
 
-      setHidden(ids, hidden) {
+      setHidden(ids, hidden, opts = {}) {
         const targets = elementsOf(get(), ids);
         if (targets.length === 0) return false;
         const hiddenIds = new Set(targets.map((e) => e.id));
@@ -282,7 +283,7 @@ export function createStudioStore(options: CreateStudioStoreOptions): StudioStor
           `${hidden ? 'Hide' : 'Show'} ${describeElements(targets, get().document)}`,
           (d) => targets.reduce((doc, e) => cmd.updateElement(doc, surfaceId, e.id, { hidden }), d),
           // Hidden elements leave the selection.
-          hidden ? { select: get().editor.selectedIds.filter((id) => !hiddenIds.has(id)) } : {},
+          hidden && !opts.keepSelection ? { select: get().editor.selectedIds.filter((id) => !hiddenIds.has(id)) } : {},
         );
       },
 

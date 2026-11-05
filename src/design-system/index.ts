@@ -18,6 +18,7 @@ export { Callout, EmptyState, ProgressBar, Skeleton, type CalloutTone } from './
 export { Field } from './field';
 export { useFieldControl } from './field-control';
 export { Input, NativeSelect, Textarea, controlClasses } from './input';
+export { IconToggle, type IconToggleProps } from './icon-toggle';
 export { Kbd } from './kbd';
 export {
   DropdownMenu,
@@ -32,6 +33,8 @@ export {
   PopoverContent,
   PopoverTrigger,
 } from './menus';
+export { NumberField, type NumberCommitInfo, type NumberFieldProps } from './number-field';
+export { formatNumber, parseNumber } from './number-format';
 export { OptionChips } from './option-chips';
 export { OptionTiles, type TileOption } from './option-tiles';
 export { PageHeader } from './page-header';
@@ -43,6 +46,7 @@ export { SegmentedControl, type SegmentedOption } from './segmented-control';
 export { Select, type SelectOption } from './select';
 export { Separator } from './separator';
 export { Sheet, SheetClose, SheetContent, SheetTrigger } from './sheet';
+export { Slider, type SliderProps } from './slider';
 export { Spinner } from './spinner';
 export { Switch } from './switch';
 export { Tabs, TabsContent, TabsList, TabsTrigger } from './tabs';

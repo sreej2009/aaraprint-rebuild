@@ -5,10 +5,14 @@ import { describe, expect, it, vi } from 'vitest';
 import { Button } from './button';
 import { Dialog, DialogClose, DialogContent, DialogTrigger } from './dialog';
 import { Field } from './field';
+import { IconToggle } from './icon-toggle';
 import { Input } from './input';
+import { NumberField } from './number-field';
+import { formatNumber, parseNumber } from './number-format';
 import { OptionChips } from './option-chips';
 import { QuantityStepper } from './quantity-stepper';
 import { QuantityTiers } from './quantity-tiers';
+import { Slider } from './slider';
 
 describe('Button', () => {
   it('defaults to type="button" so it never submits forms by accident', () => {
@@ -173,5 +177,126 @@ describe('Dialog', () => {
     await user.keyboard('{Escape}');
     expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
     expect(trigger).toHaveFocus();
+  });
+});
+
+describe('NumberField', () => {
+  function Harness({ onCommit, ...props }: { onCommit: (value: number, info: { step: boolean }) => void; min?: number; max?: number; wrap?: boolean; decimals?: number; step?: number }) {
+    const [value, setValue] = useState(10);
+    return (
+      <NumberField
+        label="W"
+        accessibleLabel="W, width"
+        unit="mm"
+        value={value}
+        {...props}
+        onCommit={(next, info) => {
+          setValue(next);
+          onCommit(next, info);
+        }}
+      />
+    );
+  }
+
+  it('commits typed values on Enter or blur, once, and ignores text that isn’t a number', async () => {
+    const onCommit = vi.fn<(value: number, info: { step: boolean }) => void>();
+    const user = userEvent.setup();
+    render(<Harness onCommit={onCommit} />);
+    const input = screen.getByRole('textbox', { name: 'W, width' });
+    await user.clear(input);
+    await user.type(input, '12,46{Enter}');
+    expect(onCommit).toHaveBeenLastCalledWith(12.5, { step: false });
+    expect(input).toHaveValue('12.5');
+    await user.clear(input);
+    await user.type(input, '12.5 mm');
+    await user.tab();
+    expect(onCommit).toHaveBeenCalledTimes(1); // same value: nothing to commit
+    await user.clear(input);
+    await user.type(input, 'twelve{Enter}');
+    expect(input).toHaveValue('12.5');
+    expect(onCommit).toHaveBeenCalledTimes(1);
+  });
+
+  it('steps with the arrow keys (Shift ×10) and clamps; Escape restores', async () => {
+    const onCommit = vi.fn<(value: number, info: { step: boolean }) => void>();
+    const user = userEvent.setup();
+    render(<Harness onCommit={onCommit} min={0} max={11} />);
+    const input = screen.getByRole('textbox', { name: 'W, width' });
+    await user.click(input);
+    await user.keyboard('{ArrowUp}');
+    expect(onCommit).toHaveBeenLastCalledWith(10.1, { step: true });
+    await user.keyboard('{Shift>}{ArrowUp}{/Shift}');
+    expect(input).toHaveValue('11');
+    await user.keyboard('{Shift>}{ArrowUp}{/Shift}'); // already at the maximum
+    expect(onCommit).toHaveBeenCalledTimes(2);
+    await user.clear(input);
+    await user.type(input, '3{Escape}');
+    expect(input).toHaveValue('11');
+  });
+
+  it('wraps angles and offers − / + buttons with names', async () => {
+    const onCommit = vi.fn<(value: number, info: { step: boolean }) => void>();
+    const user = userEvent.setup();
+    render(<Harness onCommit={onCommit} min={0} max={360} wrap decimals={0} step={1} />);
+    await user.clear(screen.getByRole('textbox', { name: 'W, width' }));
+    await user.type(screen.getByRole('textbox', { name: 'W, width' }), '-30{Enter}');
+    expect(onCommit).toHaveBeenLastCalledWith(330, { step: false });
+    await user.click(screen.getByRole('button', { name: 'Increase W, width' }));
+    expect(onCommit).toHaveBeenLastCalledWith(331, { step: true });
+  });
+
+  it('parses and formats numbers without noise', () => {
+    expect(parseNumber(' 12,5 mm')).toBe(12.5);
+    expect(parseNumber('-.5')).toBe(-0.5);
+    expect(parseNumber('45°')).toBe(45);
+    expect(parseNumber('1.2.3')).toBeNull();
+    expect(parseNumber('')).toBeNull();
+    expect(formatNumber(-0.04)).toBe('0');
+    expect(formatNumber(12.349)).toBe('12.3');
+    expect(formatNumber(7, 0)).toBe('7');
+  });
+});
+
+describe('Slider and IconToggle', () => {
+  it('slider: keyboard steps, a spoken value and a label', async () => {
+    const onChange = vi.fn<(value: number) => void>();
+    const onCommit = vi.fn<(value: number, info: { pointer: boolean }) => void>();
+    function Harness() {
+      const [value, setValue] = useState(50);
+      return (
+        <Slider
+          label="Opacity"
+          value={value}
+          valueText={(v) => `${v} percent`}
+          onValueChange={(v) => {
+            setValue(v);
+            onChange(v);
+          }}
+          onValueCommit={onCommit}
+        />
+      );
+    }
+    const user = userEvent.setup();
+    render(<Harness />);
+    const slider = screen.getByRole('slider', { name: 'Opacity' });
+    slider.focus();
+    await user.keyboard('{ArrowRight}');
+    expect(onChange).toHaveBeenLastCalledWith(51);
+    expect(onCommit).toHaveBeenLastCalledWith(51, { pointer: false });
+    expect(slider).toHaveAttribute('aria-valuetext', '51 percent');
+  });
+
+  it('icon toggle: a stable name with aria-pressed', async () => {
+    function Harness() {
+      const [pressed, setPressed] = useState(false);
+      return <IconToggle label="Keep proportions" icon={<span>off</span>} pressedIcon={<span>on</span>} pressed={pressed} onPressedChange={setPressed} tooltip={false} />;
+    }
+    const user = userEvent.setup();
+    render(<Harness />);
+    const toggle = screen.getByRole('button', { name: 'Keep proportions' });
+    expect(toggle).toHaveAttribute('aria-pressed', 'false');
+    await user.click(toggle);
+    expect(toggle).toHaveAttribute('aria-pressed', 'true');
+    expect(toggle).toHaveTextContent('on');
   });
 });

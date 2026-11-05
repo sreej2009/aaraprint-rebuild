@@ -1,10 +1,12 @@
-import { BringToFront, Copy, LockOpen, SendToBack, Trash2 } from 'lucide-react';
+import { BringToFront, Copy, LockOpen, SendToBack, SlidersHorizontal, Trash2 } from 'lucide-react';
+import { useContext } from 'react';
 import { IconButton } from '@/design-system';
 import { cn } from '@/lib/cn';
 import { mmToPx } from '../geometry/units';
 import { elementDisplayName } from '../naming';
 import { selectActiveSurface, useStudio, useStudioActions } from '../store';
 import { useInteraction } from './interaction-store';
+import { StudioUiContext } from '../shell/ui-context';
 import { DUPLICATE_OFFSET_MM } from './transform-rules';
 
 /**
@@ -18,6 +20,9 @@ export function SelectionToolbar({ className }: { className?: string }) {
   const selectedId = useStudio((s) => (s.editor.selectedIds.length === 1 ? s.editor.selectedIds[0]! : null));
   const document = useStudio((s) => s.document);
   const gesture = useInteraction((s) => s.gesture);
+  // In the Studio (not the /design-system demo), where the inspector isn't docked, open it from here.
+  const ui = useContext(StudioUiContext);
+  const openProperties = ui && ui.layout !== 'desktop' ? () => ui.setInspectorOpen(true) : null;
   const index = surface?.elements.findIndex((e) => e.id === selectedId) ?? -1;
   const element = index >= 0 ? surface!.elements[index]! : null;
   if (!element || !surface || gesture) return null;
@@ -31,6 +36,12 @@ export function SelectionToolbar({ className }: { className?: string }) {
       className={cn('absolute top-3 left-1/2 flex -translate-x-1/2 items-center gap-0.5 rounded-full border border-border bg-surface/95 px-1 py-0.5 shadow-2 backdrop-blur', className)}
       data-testid="selection-toolbar"
     >
+      {openProperties && (
+        <>
+          <IconButton label="Properties" icon={<SlidersHorizontal />} size="sm" aria-haspopup="dialog" onClick={openProperties} />
+          <span aria-hidden="true" className="mx-0.5 h-5 w-px bg-border" />
+        </>
+      )}
       {element.locked ? (
         <IconButton label="Unlock" icon={<LockOpen />} size="sm" onClick={() => actions.setLocked([element.id], false)} />
       ) : (

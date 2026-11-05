@@ -53,7 +53,7 @@ async function boxOf(page: Page, id: string): Promise<Box | null> {
 }
 
 async function announced(page: Page) {
-  return nbsp(await page.getByTestId('canvas-announcer').textContent());
+  return nbsp(await page.getByTestId('canvas-area').getByTestId('canvas-announcer').textContent());
 }
 
 async function touch(page: Page) {
@@ -150,7 +150,7 @@ test.describe('mouse: select, move, resize, rotate', () => {
     expect(await boxOf(page, 'el_badge')).toMatchObject({ x: 70, y: 380 });
     await expect(page.getByTestId('selection-frame')).toHaveCount(0);
 
-    await page.getByRole('button', { name: 'Since 2026, locked' }).click();
+    await page.getByRole('button', { name: 'Since 2026, text, locked' }).click();
     await expect(page.getByTestId('locked-badge')).toBeVisible();
     await expect(page.locator('[data-handle]')).toHaveCount(0);
     await expect(page.getByText('This layer is locked')).toBeVisible();
@@ -218,7 +218,7 @@ test.describe('keyboard', () => {
     } else {
       // Keyboard-only route on tablets: the layers list lives in the drawer.
       await page.getByRole('button', { name: 'Layers and properties' }).click();
-      await page.getByRole('dialog', { name: 'Layers and properties' }).getByRole('button', { name: 'Star' }).click();
+      await page.getByRole('dialog', { name: 'Layers and properties' }).getByRole('button', { name: 'Star, star' }).click();
       await page.keyboard.press('Escape');
       await page.locator('#studio-canvas').focus();
     }
@@ -246,8 +246,8 @@ test.describe('keyboard', () => {
   test('typing in a field never nudges or deletes the selection', async ({ page }, info) => {
     test.skip(layoutOf(info) !== 'desktop', 'docked inspector');
     await open(page);
-    await page.getByRole('button', { name: 'Star' }).click();
-    const x = page.getByRole('textbox', { name: 'X, From the left trim edge' });
+    await page.getByRole('button', { name: 'Star, star' }).click();
+    const x = page.getByRole('textbox', { name: 'X, from the left trim edge' });
     await x.fill('25');
     await page.keyboard.press('ArrowLeft');
     await page.keyboard.press('Backspace');
@@ -376,6 +376,7 @@ test.describe('regressions', () => {
 
   test('exports the same artwork with or without a selection (handles never print)', async ({ page }, info) => {
     test.skip(layoutOf(info) === 'mobile', 'reference page');
+    test.slow(); // the heaviest page; slow to hydrate under a full parallel run
     await page.goto('/design-system#canvas-demo');
     const demo = page.locator('#canvas-demo');
     await page.waitForFunction(() => Boolean(window.Konva?.stages.some((st) => st.container().closest('#canvas-demo'))));
