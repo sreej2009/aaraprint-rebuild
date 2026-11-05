@@ -1,7 +1,7 @@
 import { render, screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { createMemoryRouter, RouterProvider } from 'react-router';
-import { afterEach, describe, expect, it } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vitest';
 import { TooltipProvider } from '@/design-system';
 import { StudioApp } from '../shell/studio-app';
 import { readProduct, readProfile } from '../testing/catalogue-fixtures';
@@ -10,6 +10,9 @@ import { readProduct, readProfile } from '../testing/catalogue-fixtures';
  * The inspector and layers panel (M7) on the sample card (`?sample=1`). Front layers, top first:
  * Hidden layer (hidden), Since 2026 (locked), Star, logo.png, contact, Brand designer, Riya Sharma, Rectangle.
  */
+
+// The whole Studio renders per test: give it room under a busy machine.
+vi.setConfig({ testTimeout: 20_000 });
 
 const product = readProduct('business-card-classic');
 const profile = readProfile('business-card-classic');
@@ -217,18 +220,21 @@ describe('properties', () => {
     expect(rotation).toHaveValue('10');
   });
 
-  it('keeps proportions when locked: images start locked, shapes start free', async () => {
+  it('keeps proportions when locked: images and stars start locked, rectangles start free', async () => {
     const user = renderStudio();
     await selectLayer(user, 'Star');
     const lock = screen.getByRole('button', { name: 'Keep proportions' });
-    expect(lock).toHaveAttribute('aria-pressed', 'false');
+    expect(lock).toHaveAttribute('aria-pressed', 'true'); // M9: stars, triangles and polygons start locked
     await user.clear(field('W, width'));
     await user.type(field('W, width'), '10{Enter}');
-    expect(field('H, height')).toHaveValue('7.6');
+    expect(field('H, height')).toHaveValue('10');
     await user.click(lock);
     await user.clear(field('W, width'));
     await user.type(field('W, width'), '20{Enter}');
-    expect(field('H, height')).toHaveValue('15.2');
+    expect(field('H, height')).toHaveValue('10');
+
+    await selectLayer(user, 'Rectangle');
+    expect(screen.getByRole('button', { name: 'Keep proportions' })).toHaveAttribute('aria-pressed', 'false');
 
     await selectLayer(user, 'logo.png');
     expect(screen.getByRole('button', { name: 'Keep proportions' })).toHaveAttribute('aria-pressed', 'true');

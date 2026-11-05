@@ -248,13 +248,17 @@ describe('resize and rotate handles', () => {
     expect(view.getByTestId('locked-badge')).toBeInTheDocument();
   });
 
-  it('a shape corner resizes freely; Shift keeps proportions', () => {
+  it('an unlocked shape corner resizes freely; Shift keeps proportions', () => {
     const { view } = setup();
     act(() => {
       studio.getState().actions.updateElement('el_star', { rotation: 0 });
       studio.getState().actions.clearHistory();
       studio.getState().actions.select(['el_star']);
     });
+    // Stars start with proportions locked (M9): corners only. Unlocked, all eight handles show.
+    expect([...view.container.querySelectorAll('[data-handle]')].map((h) => h.getAttribute('data-handle'))).toEqual(['nw', 'ne', 'se', 'sw', 'rotate']);
+    act(() => interaction.getState().actions.setRatioLock('el_star', false));
+    expect(view.container.querySelectorAll('[data-handle]')).toHaveLength(9);
     const s = scale();
     const se = screen(950, 370);
     drag(handle(view, 'se'), se, { clientX: se.clientX + 60 * s, clientY: se.clientY + 20 * s });

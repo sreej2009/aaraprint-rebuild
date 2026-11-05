@@ -1,7 +1,7 @@
 import { printBoxes, type Rect } from '../geometry/boxes';
 import { fontCss } from '../assets/fonts';
 import { offsetShape, type TrimShape } from '../geometry/shapes';
-import type { DesignElement, FontWeight, ShapeElement, SurfacePrint, TextElement } from '../schema/types';
+import type { DesignElement, FontWeight, LineCap, LineDash, ShapeElement, SurfacePrint, TextElement } from '../schema/types';
 
 /**
  * Pure mapping from the design document to what the canvas draws. Kept free of Konva so it can be
@@ -45,11 +45,12 @@ export type Drawing =
       lineHeight: number;
       letterSpacing: number;
     }
-  | { kind: 'rect'; width: number; height: number; cornerRadius: number; fill: string | null; stroke: string | null; strokeWidth: number }
+  | { kind: 'rect'; x: number; y: number; width: number; height: number; cornerRadius: number; fill: string | null; stroke: string | null; strokeWidth: number }
   | { kind: 'ellipse'; x: number; y: number; radiusX: number; radiusY: number; fill: string | null; stroke: string | null; strokeWidth: number }
-  | { kind: 'polyline'; points: number[]; closed: boolean; fill: string | null; stroke: string | null; strokeWidth: number }
-  | { kind: 'arrow'; points: number[]; pointerLength: number; pointerWidth: number; fill: string | null; stroke: string | null; strokeWidth: number }
-  | { kind: 'image-placeholder'; width: number; height: number };
+  | { kind: 'polyline'; points: number[]; closed: boolean; fill: string | null; stroke: string | null; strokeWidth: number; lineCap?: LineCap; dash?: number[] }
+  | { kind: 'arrow'; points: number[]; pointerLength: number; pointerWidth: number; fill: string | null; stroke: string | null; strokeWidth: number; lineCap: LineCap }
+  | { kind: 'image-placeholder'; width: number; height: number }
+  | { kind: 'graphic'; graphicId: string; width: number; height: number };
 
 /** Families map to the self-hosted web fonts in assets/fonts.ts. */
 export { fontCss };
@@ -60,16 +61,35 @@ export function fontStyleFor(weight: FontWeight, italic: boolean): string {
 }
 
 /** Star outline inside a w × h box: alternating outer and inner points, first point at the top. */
-export function starPoints(points: number, width: number, height: number, innerRatio = 0.5): number[] {
+export function starPoints(points: number, width: number, height: number, innerRatio = 0.5, inset = 0): number[] {
   const out: number[] = [];
-  const rx = width / 2;
-  const ry = height / 2;
+  const rx = Math.max(0, width / 2 - inset);
+  const ry = Math.max(0, height / 2 - inset);
   for (let i = 0; i < points * 2; i += 1) {
     const r = i % 2 === 0 ? 1 : innerRatio;
     const angle = -Math.PI / 2 + (i * Math.PI) / points;
-    out.push(rx + Math.cos(angle) * rx * r, ry + Math.sin(angle) * ry * r);
+    out.push(width / 2 + Math.cos(angle) * rx * r, height / 2 + Math.sin(angle) * ry * r);
   }
   return out;
+}
+
+/** Regular polygon with `sides` corners inside a w × h box (stretched with it), first corner at the top. */
+export function polygonPoints(sides: number, width: number, height: number, inset = 0): number[] {
+  const out: number[] = [];
+  const rx = Math.max(0, width / 2 - inset);
+  const ry = Math.max(0, height / 2 - inset);
+  for (let i = 0; i < sides; i += 1) {
+    const angle = -Math.PI / 2 + (i * 2 * Math.PI) / sides;
+    out.push(width / 2 + Math.cos(angle) * rx, height / 2 + Math.sin(angle) * ry);
+  }
+  return out;
+}
+
+/** Konva dash pattern for a line style, scaled to the line's thickness. Dots need round ends. */
+export function dashPattern(dash: LineDash, width: number): number[] | undefined {
+  if (dash === 'dashed') return [width * 3, width * 2];
+  if (dash === 'dotted') return [0.001, width * 2];
+  return undefined;
 }
 
 export function drawingFor(element: DesignElement): Drawing {
@@ -90,29 +110,77 @@ export function drawingFor(element: DesignElement): Drawing {
       letterSpacing: element.letterSpacing * element.fontSize,
     };
   }
-  if (element.type === 'image') return { kind: 'image-placeholder', width: w, height: h };
+  if (element.type === 'image') {
+    return element.source.kind === 'graphic'
+      ? { kind: 'graphic', graphicId: element.source.graphicId, width: w, height: h }
+      : { kind: 'image-placeholder', width: w, height: h };
+  }
   return shapeDrawing(element);
 }
 
+/**
+ * Closed shapes draw their border inside the box (a stroke sits half on each side of its path, so
+ * the path is inset by half the border): what's selected is exactly what prints. Borders scale
+ * with the zoom like everything else, so they keep their physical width at every zoom level.
+ */
 function shapeDrawing(shape: ShapeElement): Drawing {
-  const { width: w, height: h, fill, stroke, strokeWidth } = shape;
+  const { width: w, height: h, fill, stroke } = shape;
+  const strokeWidth = stroke ? Math.min(shape.strokeWidth, w / 2, h / 2) : 0;
+  const inset = strokeWidth / 2;
   const paint = { fill, stroke, strokeWidth };
   switch (shape.shape) {
     case 'rect':
-      return { kind: 'rect', width: w, height: h, cornerRadius: Math.min(shape.cornerRadius, w / 2, h / 2), ...paint };
+      return {
+        kind: 'rect',
+        x: inset,
+        y: inset,
+        width: Math.max(0, w - strokeWidth),
+        height: Math.max(0, h - strokeWidth),
+        cornerRadius: Math.max(0, Math.min(shape.cornerRadius, w / 2, h / 2) - inset),
+        ...paint,
+      };
+    case 'circle': {
+      const r = Math.max(0, Math.min(w, h) / 2 - inset);
+      return { kind: 'ellipse', x: w / 2, y: h / 2, radiusX: r, radiusY: r, ...paint };
+    }
     case 'ellipse':
-      return { kind: 'ellipse', x: w / 2, y: h / 2, radiusX: w / 2, radiusY: h / 2, ...paint };
-    case 'line':
-      return { kind: 'polyline', points: [0, h / 2, w, h / 2], closed: false, fill: null, stroke: stroke ?? fill, strokeWidth: strokeWidth || h };
+      return { kind: 'ellipse', x: w / 2, y: h / 2, radiusX: Math.max(0, w / 2 - inset), radiusY: Math.max(0, h / 2 - inset), ...paint };
+    case 'line': {
+      const width = shape.strokeWidth || h;
+      // Dots are drawn as round dabs; other styles use the chosen ends.
+      const lineCap: LineCap = shape.dash === 'dotted' ? 'round' : shape.lineCap;
+      const dash = dashPattern(shape.dash, width);
+      return { kind: 'polyline', points: [0, h / 2, w, h / 2], closed: false, fill: null, stroke: shape.stroke ?? fill, strokeWidth: width, lineCap, ...(dash ? { dash } : {}) };
+    }
     case 'triangle':
-      return { kind: 'polyline', points: [w / 2, 0, w, h, 0, h], closed: true, ...paint };
+      return { kind: 'polyline', points: insetPoints([w / 2, 0, w, h, 0, h], w, h, inset), closed: true, ...paint };
     case 'star':
-      return { kind: 'polyline', points: starPoints(shape.points, w, h), closed: true, ...paint };
+      return { kind: 'polyline', points: starPoints(shape.points, w, h, shape.innerRadius, inset), closed: true, ...paint };
+    case 'polygon':
+      return { kind: 'polyline', points: polygonPoints(shape.points, w, h, inset), closed: true, ...paint };
     case 'arrow': {
       const pointerWidth = Math.min(h, w);
-      return { kind: 'arrow', points: [0, h / 2, w, h / 2], pointerLength: Math.min(w * 0.35, pointerWidth), pointerWidth, fill: stroke ?? fill, stroke: stroke ?? fill, strokeWidth: strokeWidth || Math.max(1, h / 6) };
+      const colour = shape.stroke ?? fill;
+      return {
+        kind: 'arrow',
+        points: [0, h / 2, w, h / 2],
+        pointerLength: Math.min(w * 0.35, pointerWidth),
+        pointerWidth,
+        fill: colour,
+        stroke: colour,
+        strokeWidth: shape.strokeWidth || Math.max(1, h / 6),
+        lineCap: shape.lineCap,
+      };
     }
   }
+}
+
+/** Pull points towards the box centre so a border of 2 × `inset` stays inside the box. */
+function insetPoints(points: number[], w: number, h: number, inset: number): number[] {
+  if (inset <= 0) return points;
+  const sx = Math.max(0, w - 2 * inset) / w;
+  const sy = Math.max(0, h - 2 * inset) / h;
+  return points.map((v, i) => (i % 2 === 0 ? w / 2 + (v - w / 2) * sx : h / 2 + (v - h / 2) * sy));
 }
 
 // -------------------------------------------------------------------- Guides

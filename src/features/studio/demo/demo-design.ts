@@ -56,9 +56,9 @@ export function demoDesign(): DesignDocument {
         print: CARD,
         background: { color: '#2f2a7a' },
         elements: [
-          createShapeElement('ellipse', { x: 380, y: 90, width: 290, height: 290 }, { id: 'el_ring', fill: null, stroke: '#ffffff', strokeWidth: 10 }),
+          createShapeElement('circle', { x: 380, y: 90, width: 290, height: 290 }, { id: 'el_ring', fill: null, stroke: '#ffffff', strokeWidth: 10 }),
           createShapeElement('triangle', { x: 470, y: 170, width: 110, height: 100 }, { id: 'el_triangle', fill: '#e8930c' }),
-          createShapeElement('line', { x: 300, y: 430, width: 450, height: 6 }, { id: 'el_rule', stroke: '#ffffff', strokeWidth: 4 }),
+          createShapeElement('line', { x: 300, y: 431, width: 450, height: 4 }, { id: 'el_rule', stroke: '#ffffff', strokeWidth: 4 }),
           createShapeElement('arrow', { x: 820, y: 440, width: 160, height: 60 }, { id: 'el_arrow', stroke: '#ffffff', strokeWidth: 8 }),
           createTextElement(
             { x: 175, y: 460, width: 700, height: 70 },

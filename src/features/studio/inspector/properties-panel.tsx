@@ -10,7 +10,9 @@ import type { DesignElement, SurfaceDesign } from '../schema/types';
 import { selectDocument, useStudio, useStudioActions } from '../store';
 import { ElementIcon } from './element-icon';
 import { arrangeOptions, elementTypeLabel, opacityFromPercent, opacityPercent } from './inspector-rules';
+import { GraphicNotice } from './graphic-notice';
 import { PositionSize } from './position-size';
+import { ShapeStyleSection } from './shape-style-section';
 import { TextContentField } from './text-content-field';
 import { TextStyleSection } from './text-style-section';
 
@@ -19,7 +21,8 @@ const touch = 'pointer-coarse:size-11';
 
 /**
  * Everything about the selected element: name and type, lock / hidden / print warnings, quick
- * actions, text content and style (text), position & size, opacity and layer order. Every change
+ * actions, text content and style (text), fill and border (shapes), position & size, opacity and
+ * layer order. Every change
  * goes through the Studio store (M2 commands, M3 history); locked elements only offer unlock,
  * show/hide and duplicate.
  */
@@ -65,12 +68,14 @@ export function PropertiesPanel({ element, surface }: { element: DesignElement; 
         </Callout>
       )}
 
+      {element.type === 'image' && <GraphicNotice element={element} />}
       {element.type === 'text' && (
         <>
           <TextContentField element={element} />
           <TextStyleSection element={element} print={surface.print} />
         </>
       )}
+      {element.type === 'shape' && <ShapeStyleSection element={element} print={surface.print} />}
       <PositionSize element={element} print={surface.print} />
       <Appearance element={element} />
       <Arrange element={element} surface={surface} />

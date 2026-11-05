@@ -1,20 +1,19 @@
-import { MIN_SIZE_MM } from '../canvas/transform-rules';
+import { alwaysKeepsRatio, canLockRatio, MIN_SIZE_MM } from '../canvas/transform-rules';
 import { mmToPx, ptToPx, pxToMm, pxToPt } from '../geometry/units';
-import { elementDisplayName } from '../naming';
-import type { DesignDocument, DesignElement, ElementPatch, ShapeKind, SurfaceDesign, SurfacePrint, TextAlign } from '../schema/types';
+import { elementDisplayName, SHAPE_NAMES } from '../naming';
+import type { DesignDocument, DesignElement, ElementPatch, ShapeElement, SurfaceDesign, SurfacePrint, TextAlign } from '../schema/types';
 
 /**
  * Inspector rules, kept pure: unit conversion between the fields (mm, °, %) and the document
  * (print px, degrees, 0–1), proportion locking, centring and layer-order availability.
  */
 
-const SHAPE_LABELS: Record<ShapeKind, string> = { rect: 'Rectangle', ellipse: 'Ellipse', line: 'Line', triangle: 'Triangle', star: 'Star', arrow: 'Arrow' };
 
 /** "Text", "Image", "Graphic", or the shape's name. */
 export function elementTypeLabel(element: DesignElement): string {
   if (element.type === 'text') return 'Text';
   if (element.type === 'image') return element.source.kind === 'graphic' ? 'Graphic' : 'Image';
-  return SHAPE_LABELS[element.shape];
+  return SHAPE_NAMES[element.shape];
 }
 
 /** Screen-reader name for a layer row: "Riya Sharma, text, hidden, locked". */
@@ -61,8 +60,8 @@ export const LETTER_SPACING_RANGE = { min: -0.5, max: 2 } as const;
 
 export const ALIGN_LABELS: Record<TextAlign, string> = { left: 'Align left', center: 'Centre', right: 'Align right', justify: 'Justify' };
 
-/** Quick colour picks for text: print-friendly darks, white for dark backgrounds and a few accents. */
-export const TEXT_COLOUR_PRESETS = [
+/** Quick colour picks for text and shapes: print-friendly darks, white for dark backgrounds and a few accents. */
+export const COLOUR_PRESETS = [
   { hex: '#1b1f27', label: 'Ink' },
   { hex: '#4b5563', label: 'Slate grey' },
   { hex: '#ffffff', label: 'White' },
@@ -72,6 +71,43 @@ export const TEXT_COLOUR_PRESETS = [
   { hex: '#15803d', label: 'Green' },
   { hex: '#e8930c', label: 'Marigold' },
 ] as const;
+export const TEXT_COLOUR_PRESETS = COLOUR_PRESETS;
+
+// ---------------------------------------------------------------- Shapes
+
+/** Border and line widths in pt: quarter points, from a hairline that still prints. */
+export const STROKE_PT_RANGE = { lineMin: 0.25, max: 500 } as const;
+/** A border added by picking a border colour. */
+export const DEFAULT_BORDER_PT = 1;
+
+/** Stroke widths are stored in print px and shown in pt to two decimals (0.25 pt steps). */
+export function toStrokePt(px: number, print: Pick<SurfacePrint, 'dpi'>): number {
+  return Math.round(pxToPt(px, print.dpi) * 100) / 100;
+}
+
+/** A border sits inside the shape, so it can be at most half the shape's shorter side. */
+export function strokeMaxPt(element: Pick<DesignElement, 'width' | 'height'>, print: Pick<SurfacePrint, 'dpi'>): number {
+  return Math.max(0.25, Math.floor(pxToPt(Math.min(element.width, element.height) / 2, print.dpi) * 4) / 4);
+}
+
+/** Rounder than half the shorter side would no longer be a rectangle. */
+export function cornerRadiusMax(element: Pick<DesignElement, 'width' | 'height'>): number {
+  return round2(Math.min(element.width, element.height) / 2);
+}
+
+/** Stars: 3–20 points. Polygons: 3–12 sides. */
+export function pointsRange(element: ShapeElement): { min: number; max: number } {
+  return element.shape === 'star' ? { min: 3, max: 20 } : { min: 3, max: 12 };
+}
+
+/**
+ * A line's height is its thickness (derived, never typed): changing the width changes both,
+ * keeping the line's centre — and so where it sits and how it turns — in place.
+ */
+export function lineWidthPatch(element: ShapeElement, widthPx: number): ElementPatch<ShapeElement> {
+  const width = round2(Math.max(0.01, widthPx));
+  return { strokeWidth: width, height: width, y: round2(element.y + (element.height - width) / 2) };
+}
 
 /** Opacity is stored 0–1 and edited as a whole percentage. */
 export function opacityPercent(element: DesignElement): number {
@@ -84,22 +120,12 @@ export function opacityFromPercent(percent: number): number {
 
 // ------------------------------------------------------- Size and ratio lock
 
-/**
- * Whether the inspector offers a proportion lock: not for text (its height follows the text) or
- * lines (their height is a thickness).
- */
-export function canLockRatio(element: DesignElement): boolean {
-  return element.type !== 'text' && !(element.type === 'shape' && element.shape === 'line');
-}
+// Shared with the canvas handles, so the inspector lock and the handles always agree.
+export { alwaysKeepsRatio, canLockRatio, defaultRatioLock, ratioLocked } from '../canvas/transform-rules';
 
-/** Images start locked, like their canvas handles; shapes start free. */
-export function defaultRatioLock(element: DesignElement): boolean {
-  return element.type === 'image';
-}
-
-/** Whether width / height can be typed (text height follows the text). */
+/** Whether height can be typed: text height follows the text, a line's height is its width. */
 export function heightEditable(element: DesignElement): boolean {
-  return element.type !== 'text';
+  return element.type !== 'text' && !(element.type === 'shape' && element.shape === 'line');
 }
 
 /**
@@ -111,7 +137,7 @@ export function sizePatch(element: DesignElement, side: 'width' | 'height', valu
   const minFor = (px: number) => Math.min(mmToPx(MIN_SIZE_MM, print.dpi), px);
   const current = element[side];
   const next = Math.max(toPx(valueMm, print), minFor(current), 0.01);
-  if (!locked || !canLockRatio(element)) return { [side]: round2(next) };
+  if (!alwaysKeepsRatio(element) && (!locked || !canLockRatio(element))) return { [side]: round2(next) };
   const scale = next / current;
   const other = side === 'width' ? 'height' : 'width';
   return { [side]: round2(next), [other]: round2(Math.max(element[other] * scale, 0.01)) };

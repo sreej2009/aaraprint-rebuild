@@ -16,7 +16,8 @@
     "data:import": "node scripts/catalogue/import-catalogue.mjs",
     "assets:recover": "node scripts/recovery/recover-additional-assets.mjs",
     "content:import": "node scripts/content/import-content.mjs",
-    "studio:profiles": "node scripts/studio/build-studio-profiles.mjs"
+    "studio:profiles": "node scripts/studio/build-studio-profiles.mjs",
+    "studio:graphics": "node scripts/studio/extract-graphics.mjs"
   },
   "dependencies": {
     "@fontsource-variable/fraunces": "^5.3.0",

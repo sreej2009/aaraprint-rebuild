@@ -118,3 +118,38 @@ test('screenshot text editing and text properties', async ({ page, hasTouch, isM
   await page.waitForTimeout(300);
   await page.screenshot({ path: `review-screens/${info.project.name}-studio-text-style.png` });
 });
+
+/** M9: shapes on the card, the shape properties, and the graphics panel (empty until rights are confirmed). */
+test('screenshot shapes and graphics', async ({ page, hasTouch, isMobile }, info) => {
+  await page.goto('/products/business-card-classic/design?sample=1');
+  await samplePoint(page, 0, 0);
+  const openTool = async (name: string) => {
+    if (isMobile) {
+      if (name === 'Graphics') await page.getByRole('navigation', { name: 'Design tools' }).getByRole('button', { name }).click();
+      else {
+        await page.getByRole('button', { name: 'More' }).click();
+        await page.getByRole('button', { name: new RegExp(`^${name}`) }).click();
+      }
+    } else await page.getByRole('navigation', { name: 'Design tools' }).getByRole('button', { name, exact: true }).click();
+  };
+  await openTool('Shapes');
+  await page.waitForTimeout(300);
+  if (!isMobile) await page.screenshot({ path: `review-screens/${info.project.name}-studio-shapes-tool.png` });
+  await page.getByRole('button', { name: 'Add star', exact: true }).click();
+  if (!hasTouch && !isMobile) {
+    await page.getByRole('button', { name: 'Add circle', exact: true }).click();
+    await page.getByRole('button', { name: 'Add line', exact: true }).click();
+  }
+  if (hasTouch || isMobile) await page.getByRole('toolbar', { name: /^Selected:/ }).getByRole('button', { name: 'Properties' }).click();
+  const scope = hasTouch || isMobile ? page.getByRole('dialog', { name: 'Layers and properties' }) : page.getByRole('complementary', { name: 'Layers and properties' });
+  if (!hasTouch && !isMobile) await scope.getByRole('list', { name: 'Layers' }).getByRole('button', { name: /^Star,/ }).first().click(); // the new one, top first
+  await scope.getByRole('list', { name: 'Fill colour presets' }).getByRole('button', { name: 'Marigold' }).click();
+  await scope.getByRole('list', { name: 'Border colour presets' }).getByRole('button', { name: 'Ink' }).click();
+  await scope.getByRole('textbox', { name: 'Star points' }).scrollIntoViewIfNeeded();
+  await page.waitForTimeout(300);
+  await page.screenshot({ path: `review-screens/${info.project.name}-studio-shape-properties.png` });
+  if (hasTouch || isMobile) await page.keyboard.press('Escape');
+  await openTool('Graphics');
+  await page.waitForTimeout(400);
+  await page.screenshot({ path: `review-screens/${info.project.name}-studio-graphics.png` });
+});

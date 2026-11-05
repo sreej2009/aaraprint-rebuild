@@ -2,6 +2,8 @@ import {
   CURRENT_SCHEMA_VERSION,
   DESIGN_FORMAT,
   FONT_WEIGHTS,
+  LINE_CAPS,
+  LINE_DASHES,
   SHAPE_KINDS,
   TEXT_ALIGNS,
   UPLOAD_MIME_TYPES,
@@ -323,6 +325,10 @@ function readElement(c: Checker, path: string, raw: unknown, print: SurfacePrint
       strokeWidth: c.number(`${path}.strokeWidth`, e.strokeWidth, { min: 0, max: MAX_COORDINATE }) ?? 0,
       cornerRadius: c.number(`${path}.cornerRadius`, e.cornerRadius, { min: 0, max: MAX_COORDINATE }) ?? 0,
       points: c.number(`${path}.points`, e.points, { min: 3, max: 24, integer: true }) ?? 5,
+      // Added in M9; documents made before then don't have them (same schema version).
+      innerRadius: e.innerRadius === undefined ? 0.5 : (c.number(`${path}.innerRadius`, e.innerRadius, { min: 0.1, max: 0.95 }) ?? 0.5),
+      lineCap: e.lineCap === undefined ? 'round' : (c.oneOf(`${path}.lineCap`, e.lineCap, LINE_CAPS) ?? 'round'),
+      dash: e.dash === undefined ? 'solid' : (c.oneOf(`${path}.dash`, e.dash, LINE_DASHES) ?? 'solid'),
     };
   } else if (type === 'image') {
     const source = readImageSource(c, `${path}.source`, e.source);

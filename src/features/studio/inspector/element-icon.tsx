@@ -1,8 +1,7 @@
-import { Circle, Image, Minus, MoveRight, Shapes, Square, Star, Triangle, Type, type LucideIcon } from 'lucide-react';
+import { Image, Shapes, Type } from 'lucide-react';
 import { cn } from '@/lib/cn';
-import type { DesignElement, ShapeKind } from '../schema/types';
-
-const SHAPE_ICONS: Record<ShapeKind, LucideIcon> = { rect: Square, ellipse: Circle, line: Minus, triangle: Triangle, star: Star, arrow: MoveRight };
+import type { DesignElement } from '../schema/types';
+import { SHAPE_ICONS } from './shape-icons';
 
 /** Decorative type icon for layer rows and the inspector header (the type is also in the name). */
 export function ElementIcon({ element, className }: { element: DesignElement; className?: string }) {

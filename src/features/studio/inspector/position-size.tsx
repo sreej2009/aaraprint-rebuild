@@ -46,7 +46,7 @@ export function PositionSize({ element, print }: { element: DesignElement; print
         />
         <NumberField
           label="H"
-          accessibleLabel={heightEditable(element) ? 'H, height' : 'H, height (follows the text)'}
+          accessibleLabel={heightEditable(element) ? 'H, height' : element.type === 'text' ? 'H, height (follows the text)' : 'H, height (follows the line width)'}
           unit="mm"
           min={0.1}
           value={toMm(element.height, print)}

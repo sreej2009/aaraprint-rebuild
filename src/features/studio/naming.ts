@@ -1,13 +1,18 @@
 import type { DesignDocument, DesignElement, ShapeKind } from './schema/types';
 
-const SHAPE_NAMES: Record<ShapeKind, string> = {
+export const SHAPE_NAMES: Record<ShapeKind, string> = {
   rect: 'Rectangle',
+  circle: 'Circle',
   ellipse: 'Ellipse',
   line: 'Line',
   triangle: 'Triangle',
   star: 'Star',
+  polygon: 'Polygon',
   arrow: 'Arrow',
 };
+
+/** Regular polygons are named by their sides where there's a common name. */
+const POLYGON_NAMES: Record<number, string> = { 5: 'Pentagon', 6: 'Hexagon', 8: 'Octagon' };
 
 const MAX_NAME = 32;
 
@@ -19,7 +24,7 @@ export function elementDisplayName(element: DesignElement, document?: DesignDocu
     if (!firstLine) return 'Text';
     return firstLine.length > MAX_NAME ? `${firstLine.slice(0, MAX_NAME - 1)}…` : firstLine;
   }
-  if (element.type === 'shape') return SHAPE_NAMES[element.shape];
+  if (element.type === 'shape') return element.shape === 'polygon' ? (POLYGON_NAMES[element.points] ?? SHAPE_NAMES.polygon) : SHAPE_NAMES[element.shape];
   if (element.source.kind === 'asset') return document?.assets[element.source.assetId]?.name ?? 'Image';
   return titleCase(element.source.graphicId);
 }

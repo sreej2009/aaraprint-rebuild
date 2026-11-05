@@ -11,9 +11,11 @@ import { guideGeometry, trimShapeFromPrint } from './drawing';
  * How each kind of element can be transformed on the canvas, and how a transformed box maps back
  * to element fields (Plan §18.3):
  * - text: corners scale the text (font size follows); side handles change the box width only;
- * - images: corners only, proportions kept unless Shift is held;
- * - lines: width only (their thickness is a style, M7/M9);
- * - other shapes: all eight handles, free; Shift keeps proportions.
+ * - circles: corners only, always round;
+ * - lines and arrows: the end handles move that end freely (length and angle);
+ * - images, graphics and shapes follow their proportion lock (the inspector's "Keep proportions";
+ *   graphics, triangles, stars and polygons start locked): locked, only the corners show and keep
+ *   proportions; unlocked, all eight show and are free. Shift does the opposite while held.
  */
 
 /** Smallest box a resize can produce, as on the original site. */
@@ -24,19 +26,48 @@ export const NUDGE_LARGE_MM = 5;
 /** Duplicates land this far down and right of the original. */
 export const DUPLICATE_OFFSET_MM = 3;
 
-export function handlesFor(element: DesignElement): readonly Handle[] {
-  if (element.type === 'text') return ['nw', 'ne', 'se', 'sw', 'e', 'w'];
-  if (element.type === 'image') return CORNER_HANDLES;
-  if (element.shape === 'line') return ['e', 'w'];
-  return ALL_HANDLES;
+/** Lines and arrows: their box runs along the line, and the end handles move the ends. */
+export function isLineLike(element: DesignElement): boolean {
+  return element.type === 'shape' && (element.shape === 'line' || element.shape === 'arrow');
 }
 
-/** Whether dragging `handle` keeps the element's proportions. */
-export function keepsRatio(element: DesignElement, handle: Handle, shiftKey: boolean): boolean {
+/** Circles stay circles: width and height always change together. */
+export function alwaysKeepsRatio(element: DesignElement): boolean {
+  return element.type === 'shape' && element.shape === 'circle';
+}
+
+/**
+ * Whether the inspector offers a proportion lock: not for text (its height follows the text),
+ * lines (their height is their thickness) or circles (always round).
+ */
+export function canLockRatio(element: DesignElement): boolean {
+  return element.type !== 'text' && !(element.type === 'shape' && (element.shape === 'line' || element.shape === 'circle'));
+}
+
+/** Images, graphics and shapes that look wrong stretched start locked; rectangles, ellipses and arrows start free. */
+export function defaultRatioLock(element: DesignElement): boolean {
+  if (element.type === 'image') return true;
+  return element.type === 'shape' && (element.shape === 'triangle' || element.shape === 'star' || element.shape === 'polygon');
+}
+
+/** The proportion lock in effect: the customer's choice (stored) or the default. */
+export function ratioLocked(element: DesignElement, stored?: boolean): boolean {
+  return alwaysKeepsRatio(element) || (canLockRatio(element) && (stored ?? defaultRatioLock(element)));
+}
+
+export function handlesFor(element: DesignElement, locked = ratioLocked(element)): readonly Handle[] {
+  if (element.type === 'text') return ['nw', 'ne', 'se', 'sw', 'e', 'w'];
+  if (element.type === 'shape' && element.shape === 'line') return ['e', 'w'];
+  if (alwaysKeepsRatio(element)) return CORNER_HANDLES;
+  return locked ? CORNER_HANDLES : ALL_HANDLES;
+}
+
+/** Whether dragging `handle` keeps the element's proportions (Shift reverses the lock). */
+export function keepsRatio(element: DesignElement, handle: Handle, shiftKey: boolean, locked = ratioLocked(element)): boolean {
   if (!isCorner(handle)) return false;
   if (element.type === 'text') return true; // a corner scales the whole text block
-  if (element.type === 'image') return !shiftKey;
-  return shiftKey;
+  if (alwaysKeepsRatio(element)) return true;
+  return locked !== shiftKey;
 }
 
 const HANDLE_ANGLES: Record<Handle, number> = { e: 0, se: 45, s: 90, sw: 135, w: 180, nw: 225, n: 270, ne: 315 };

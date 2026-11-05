@@ -386,3 +386,37 @@ describe('SegmentedControl with icons', () => {
     expect(onChange).toHaveBeenCalledTimes(1); // already selected
   });
 });
+
+describe('ColorField with no colour', () => {
+  it('switches the colour off and on, and clearing the hex field means none', async () => {
+    const onChange = vi.fn<(value: string | null, info: { live: boolean }) => void>();
+    function Harness() {
+      const [value, setValue] = useState<string | null>('#2f5bd3');
+      return (
+        <ColorField
+          label="Fill colour"
+          noneLabel="No fill"
+          value={value}
+          presets={[{ hex: '#b91c1c', label: 'Red' }]}
+          onChange={(v, info) => {
+            setValue(v);
+            onChange(v, info);
+          }}
+        />
+      );
+    }
+    const user = userEvent.setup();
+    render(<Harness />);
+    await user.click(screen.getByRole('button', { name: 'No fill' }));
+    expect(onChange).toHaveBeenLastCalledWith(null, { live: false });
+    expect(screen.getByRole('button', { name: 'No fill' })).toHaveAttribute('aria-pressed', 'true');
+    expect(screen.getByRole('textbox', { name: 'Fill colour, hex code' })).toHaveValue('');
+    await user.click(screen.getByRole('button', { name: 'Red' }));
+    expect(onChange).toHaveBeenLastCalledWith('#b91c1c', { live: false });
+    const hex = screen.getByRole('textbox', { name: 'Fill colour, hex code' });
+    await user.clear(hex);
+    await user.tab();
+    expect(onChange).toHaveBeenLastCalledWith(null, { live: false });
+    expect(hex).not.toHaveAttribute('aria-invalid');
+  });
+});

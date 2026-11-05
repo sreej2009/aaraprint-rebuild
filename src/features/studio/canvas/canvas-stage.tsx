@@ -1,8 +1,10 @@
 import Konva from 'konva';
 import { memo, useEffect, useMemo, useRef } from 'react';
-import { Arrow, Ellipse, Group, Layer, Line, Rect, Shape, Stage, Text } from 'react-konva';
+import { Arrow, Ellipse, Group, Image as KonvaImage, Layer, Line, Rect, Shape, Stage, Text } from 'react-konva';
 import { colorTokens } from '@/design-system/tokens';
 import { ensureFonts, facesFor, useFontsVersion } from '../assets/fonts';
+import { graphicById, useGraphicsLibrary } from '../assets/graphics';
+import { useImage } from '../assets/image-cache';
 import { appendPath, tracePath } from '../geometry/shapes';
 import type { Viewport } from '../geometry/viewport';
 import type { DesignElement, SurfaceDesign, TextElement } from '../schema/types';
@@ -144,24 +146,45 @@ function DrawingNode({ drawing }: { drawing: Drawing }) {
       return <Text {...text} wrap="word" verticalAlign="top" perfectDrawEnabled={false} />;
     }
     case 'rect':
-      return <Rect width={drawing.width} height={drawing.height} cornerRadius={drawing.cornerRadius} {...paint(drawing)} />;
+      return <Rect x={drawing.x} y={drawing.y} width={drawing.width} height={drawing.height} cornerRadius={drawing.cornerRadius} {...paint(drawing)} />;
     case 'ellipse':
       return <Ellipse x={drawing.x} y={drawing.y} radiusX={drawing.radiusX} radiusY={drawing.radiusY} {...paint(drawing)} />;
     case 'polyline':
-      return <Line points={drawing.points} closed={drawing.closed} lineJoin="round" {...paint(drawing)} />;
+      return <Line points={drawing.points} closed={drawing.closed} lineJoin="round" {...(drawing.lineCap ? { lineCap: drawing.lineCap } : {})} {...(drawing.dash ? { dash: drawing.dash } : {})} {...paint(drawing)} />;
     case 'arrow':
-      return <Arrow points={drawing.points} pointerLength={drawing.pointerLength} pointerWidth={drawing.pointerWidth} {...paint(drawing)} />;
+      return <Arrow points={drawing.points} pointerLength={drawing.pointerLength} pointerWidth={drawing.pointerWidth} lineCap={drawing.lineCap} {...paint(drawing)} />;
+    case 'graphic':
+      return <GraphicNode graphicId={drawing.graphicId} width={drawing.width} height={drawing.height} />;
     case 'image-placeholder':
-      // Images arrive with uploads (M12) and graphics (M9); until their source loads, show a frame.
-      return (
-        <>
-          <Rect width={drawing.width} height={drawing.height} fill={colorTokens['surface-sunken']} perfectDrawEnabled={false} />
-          <Line points={[0, 0, drawing.width, drawing.height]} stroke={colorTokens['border-strong']} {...hairline} />
-          <Line points={[drawing.width, 0, 0, drawing.height]} stroke={colorTokens['border-strong']} {...hairline} />
-          <Rect width={drawing.width} height={drawing.height} stroke={colorTokens['border-strong']} dash={[6, 4]} {...hairline} />
-        </>
-      );
+      // Uploaded images arrive with M12; until then (and while a source loads) show a frame.
+      return <ImagePlaceholder width={drawing.width} height={drawing.height} state="missing" />;
   }
+}
+
+/**
+ * A library graphic, drawn from its SVG file (decoded once, shared by every copy). While it loads
+ * a light frame stands in; if it can't be shown (not in the library, or the file failed) a crossed
+ * frame does — the element stays in the design either way.
+ */
+function GraphicNode({ graphicId, width, height }: { graphicId: string; width: number; height: number }) {
+  const library = useGraphicsLibrary();
+  const entry = graphicById(library, graphicId);
+  const image = useImage(entry?.url ?? null);
+  if (image?.status === 'loaded') return <KonvaImage image={image.image} width={width} height={height} perfectDrawEnabled={false} />;
+  const loading = library.status === 'loading' || image?.status === 'loading';
+  return <ImagePlaceholder width={width} height={height} state={loading ? 'loading' : 'missing'} />;
+}
+
+function ImagePlaceholder({ width, height, state }: { width: number; height: number; state: 'loading' | 'missing' }) {
+  if (state === 'loading') return <Rect name="graphic-loading" width={width} height={height} fill={colorTokens['surface-sunken']} opacity={0.6} perfectDrawEnabled={false} />;
+  return (
+    <>
+      <Rect name="image-missing" width={width} height={height} fill={colorTokens['surface-sunken']} perfectDrawEnabled={false} />
+      <Line points={[0, 0, width, height]} stroke={colorTokens['border-strong']} {...hairline} />
+      <Line points={[width, 0, 0, height]} stroke={colorTokens['border-strong']} {...hairline} />
+      <Rect width={width} height={height} stroke={colorTokens['border-strong']} dash={[6, 4]} {...hairline} />
+    </>
+  );
 }
 
 /**

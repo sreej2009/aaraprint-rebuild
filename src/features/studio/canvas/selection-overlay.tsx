@@ -11,7 +11,7 @@ import type { DesignElement } from '../schema/types';
 import { selectActiveSurface, useStudio, useStudioStoreApi } from '../store';
 import { startResize, startRotate, type ElementSession, type SessionContext } from './element-sessions';
 import { useInteraction, useInteractionStoreApi, type Gesture } from './interaction-store';
-import { cursorFor, elementBounds, handlesFor, placementFor } from './transform-rules';
+import { cursorFor, elementBounds, handlesFor, isLineLike, placementFor, ratioLocked } from './transform-rules';
 import { useViewport, useViewportStoreApi } from './viewport-context';
 
 /**
@@ -97,9 +97,11 @@ function Selection({ element, viewport, dpi, placement, gesture }: { element: De
   const style = PLACEMENT_STYLES[placement];
   const f = screenFrame(element, viewport);
   const editable = !element.locked && !element.hidden;
+  const storedLock = useInteraction((s) => s.ratioLocks[element.id]);
   const handles = editable
-    ? handlesFor(element).filter((h) => {
+    ? handlesFor(element, ratioLocked(element, storedLock)).filter((h) => {
         if (gesture?.handle === h) return true; // never pull a handle out from under the pointer
+        if (isLineLike(element) && (h === 'e' || h === 'w')) return true; // a line's ends are its only handles
         const dir = handleDirection(h);
         if (dir.x !== 0 && dir.y !== 0) return true;
         return (dir.x === 0 ? f.width : f.height) >= MIN_SIDE_FOR_HANDLE;

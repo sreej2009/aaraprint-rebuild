@@ -1185,7 +1185,8 @@ I'll report after steps 2, 4 and 5 (or after each milestone, if you prefer). Eac
 | M6 Selecting, moving, resizing and rotating | Done |
 | M7 Inspector and layers panel | Done |
 | M8 Text tool | Done |
-| M9–M16 | Not started |
+| M9 Shapes and graphics | Done |
+| M10–M16 | Not started |
 
 #### M1 findings
 
@@ -1220,7 +1221,7 @@ The other named-size products match: 3 A4 brochures, A4 flyer, DL flyer and DL e
 | 556 product mockup images + 70 fabric masks (incl. the shared polo mockup) | Unconfirmed — origin and licence unknown; some show brand-name products | **Not used** until the business confirms rights. Side thumbnails and the Preview reference (M10, M15) are drawn from the customer's own design instead. |
 | `models/polo-shirt.glb` | Attribution required — CC BY 4.0 (credit on `/credits`) | Allowed (3D is Phase 5). |
 | `shirt_baked.glb` | Unconfirmed | Not used. |
-| 33 Studio graphics | To be checked in M9 | — |
+| 33 Studio graphics | **Checked in M9: not confirmed.** Hand-written SVGs in the original site's own code; no licence, author or source found, rights holder unknown. | **Not used.** Recorded in `scripts/studio/graphics-register.mjs` as `unconfirmed`; the library ships empty until the business confirms (then set `cleared` and run `npm run studio:graphics`). |
 | Fraunces, Plus Jakarta Sans | **Verified in M8: SIL Open Font License 1.1** (`@fontsource-variable` 5.3.0; © The Fraunces Project Authors, © The Plus Jakarta Sans Project Authors). Licence files ship in the packages. | Allowed. Self-hosted, loaded only in the Studio; credited on `/credits` with Inter and Manrope. |
 
 Note: the Phase 2 product pages already show mockups as gallery images on 234 products (approved in Phase 2). They are unchanged; the business may want to confirm those rights too.
@@ -1496,4 +1497,70 @@ StudioState
 - While typing in place, the browser lays the textarea out and may wrap a line slightly differently from the canvas; the canvas (and the stored height) take over as soon as the edit ends.
 - Proofs that wait for fonts are M15; the canvas already redraws when fonts arrive.
 - Font choice is the four bundled families; a larger font library is Phase 4.
+
+#### M9 — Shapes and graphics
+
+**Shapes** (`tools/shapes-tool.tsx`, `tools/shape-presets.ts`):
+- **The picker:** Rectangle, Rounded rectangle, Circle, Ellipse, Triangle, Star, Hexagon (a regular polygon), Line and Arrow, each named "Add …".
+- **Size:** follows the product, at 40 % of the safe area's shorter side, so a business card gets a small shape and a banner a large one. Line thickness is in quarter points, at least ½ pt.
+- **Placement:** new shapes land centred in the safe area and are selected, in one undo step. A shape that would land exactly on an earlier one steps 3 mm aside.
+- **Panel:** closes on tablets and phones so the canvas shows.
+
+**Schema** (same version 2):
+- `ShapeKind` gains `circle` and `polygon`. Shapes gain `innerRadius` (stars), `lineCap` and `dash` (lines).
+- Designs made before M9 open with defaults (0.5, round, solid).
+- A circle is its own kind: it always keeps width = height. An ellipse is separate.
+- A line runs along its box's middle. Its length is the width and its height is its thickness (`strokeWidth`), derived and never typed.
+
+**Drawing** (React-Konva `Rect`, `Ellipse`, `Line`, `Arrow`):
+- Closed shapes draw their border inside the box, so what's selected is what prints.
+- Borders scale with the zoom like the artwork, so they keep their physical width at every zoom.
+- Stars and polygons are deterministic point lists that stretch with the box.
+- Dotted lines always use round ends.
+
+**Handles (extends M6):**
+- Circles have corner handles only.
+- Lines and arrows: dragging an end moves that end freely (length and angle; snaps to 45° within 5°, Shift gives 15° steps) while the other end stays put.
+- **Proportion lock:** the inspector's "Keep proportions" now also drives the canvas handles.
+  - Locked: corners only, which keep proportions.
+  - Unlocked: all eight handles, free.
+  - Shift reverses the lock while held.
+- **Default locks:** graphics, triangles, stars and polygons start locked; rectangles, ellipses and arrows start free.
+- **Line end handles always show.** M6 hid side handles on boxes thinner than 40 px, which hid a line's only handles.
+
+**Inspector** (`inspector/shape-style-section.tsx`):
+- **Closed shapes:** Fill colour and Border colour (both can be switched off: "No fill", "No border"), Border width in pt (bounded to half the shape), Corner radius in mm (rectangles, bounded), Star points and Inner radius % (stars), Sides (polygons).
+- **Lines:** Line colour, Line width (the height follows, keeping the centre), Line ends (flat, round, square) and Line style (solid, dashed, dotted). Arrows have colour, width and ends.
+- **Undo:** every change is one undo step; − / + steps merge within 600 ms, and a colour-picker drag is one step.
+- **Existing controls reused:** Position & size, opacity, quick actions, layer order, lock/hide/rename and duplicate are M7's, unchanged.
+- **ColorField:** gains `noneLabel` (the "none" choice; clearing the hex field also means none). Text colour, fill and border all use it.
+- **Layer names:** polygons are named by their sides (Pentagon, Hexagon, Octagon).
+
+**Graphics** (`assets/graphics.ts`, `tools/graphics-tool.tsx`):
+- **Rights check (D5):** the 33 original graphics are small hand-written SVGs, defined inline in the original site's own code.
+  - None carries a licence, author, copyright or editor metadata, and none matches a known icon set.
+  - That points to them being made for the original site, but the rights holder and terms are not confirmed.
+  - All 33 are therefore `unconfirmed` in `scripts/studio/graphics-register.mjs`. They're listed and audited (`src/data/generated/studio/graphics-meta.json`) but never copied into the app or shown.
+- **Extraction** (`npm run studio:graphics`, `scripts/studio/extract-graphics.mjs`):
+  - Reads the original chunk read-only and checks it against the register.
+  - Sanitises every SVG with `assets/svg-sanitise.ts`, shared with uploads in M12. It removes scripts, foreignObject, event handlers, `javascript:` and external references.
+  - Writes only cleared graphics to `public/studio/graphics/` and `public/api/v1/graphics.json`.
+  - Today that's 0 included and 33 withheld. **To use them once the business confirms the rights:** set `rights` to `cleared` in the register, then run the script.
+- **The panel:**
+  - Approved graphics are grouped (Backgrounds, Icons, Illustrations, Badges) with local search over names, groups and tags.
+  - Shows "Graphics are being prepared for Studio use." while the library is empty, and a retry if it fails to load.
+- **Adding a graphic:** it's placed at 30 % of the trim width in its own proportions, shrunk to fit the safe area, centred and selected. Designs store only the graphic id, never the artwork or base64.
+- **Rendering:**
+  - Graphics are drawn as images in the artwork layer, so they're clipped, rotated, faded, selected, hidden and locked like everything else.
+  - The shared image cache (`assets/image-cache.ts`, reused by uploads in M12) decodes each file once for the canvas and the panel thumbnails.
+  - While a graphic loads, a light frame stands in.
+  - If it's unavailable (not in the approved library) or its file fails, a crossed frame stays and the inspector explains, with a retry. The element is never removed.
+
+**Sample design:** the back's ring is now a real circle, and its divider line is as tall as it is thick.
+
+**Known limits**
+- No graphic is selectable until the original graphics' rights are confirmed. The full flow is tested with a stand-in library served by the tests themselves.
+- Recolouring graphics, gradients, freehand polygons and per-shape dash styles for borders are Phase 4.
+- Triangles are isosceles in their box and polygons are regular; there's no point editing.
+- Touch was tested in Chrome's emulation, not on physical devices.
 

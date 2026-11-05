@@ -89,20 +89,39 @@ export interface TextElement extends BaseElement {
   placeholder: boolean;
 }
 
-export const SHAPE_KINDS = ['rect', 'ellipse', 'line', 'triangle', 'star', 'arrow'] as const;
+export const SHAPE_KINDS = ['rect', 'circle', 'ellipse', 'line', 'triangle', 'star', 'polygon', 'arrow'] as const;
 export type ShapeKind = (typeof SHAPE_KINDS)[number];
 
+export const LINE_CAPS = ['butt', 'round', 'square'] as const;
+export type LineCap = (typeof LINE_CAPS)[number];
+export const LINE_DASHES = ['solid', 'dashed', 'dotted'] as const;
+export type LineDash = (typeof LINE_DASHES)[number];
+
+/**
+ * A shape drawn in its box. Closed shapes keep their border inside the box. A circle always keeps
+ * width = height (an ellipse is its own kind). A line runs along its box's middle, from the left
+ * edge to the right edge (rotation turns it): its length is the width and its height is its
+ * thickness, which is `strokeWidth`.
+ */
 export interface ShapeElement extends BaseElement {
   type: 'shape';
   shape: ShapeKind;
+  /** `#rrggbb`, or null for no fill. Lines have none. */
   fill: string | null;
+  /** `#rrggbb`, or null for no border. */
   stroke: string | null;
-  /** Print px. */
+  /** Print px; 0 = no border. A line's thickness. */
   strokeWidth: number;
   /** Print px; rectangles only. */
   cornerRadius: number;
-  /** Number of points; stars only. */
+  /** Stars: number of points. Polygons: number of sides. */
   points: number;
+  /** Stars: inner radius as a fraction of the outer one (0.1–0.95). */
+  innerRadius: number;
+  /** Lines and arrows: how the ends look. */
+  lineCap: LineCap;
+  /** Lines: solid, dashed or dotted. */
+  dash: LineDash;
 }
 
 export type ImageSource = { kind: 'asset'; assetId: string } | { kind: 'graphic'; graphicId: string };

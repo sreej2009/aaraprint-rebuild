@@ -1,6 +1,8 @@
 import { Link } from 'react-router';
 import { Button } from '@/design-system';
 import { formatINR } from '@/lib/format';
+import { GraphicsTool } from '../tools/graphics-tool';
+import { ShapesTool } from '../tools/shapes-tool';
 import { TextTool } from '../tools/text-tool';
 import { useStudioSession } from './session-context';
 import type { ToolDefinition } from './tools';
@@ -10,6 +12,8 @@ export function ToolContent({ tool }: { tool: ToolDefinition }) {
   if (tool.id === 'product') return <ProductDetails />;
   if (tool.id === 'help') return <PrintTips />;
   if (tool.id === 'text') return <TextTool />;
+  if (tool.id === 'shapes') return <ShapesTool />;
+  if (tool.id === 'graphics') return <GraphicsTool />;
   return <ComingSoonTool tool={tool} />;
 }
 

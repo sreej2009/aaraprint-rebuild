@@ -1,0 +1,373 @@
+{
+  "source": {
+    "chunk": "_next/static/chunks/10tigen5gn4-f.js",
+    "note": "Original Studio graphics library (`eJ(name, svg)` entries), read from ../recovered without modifying it."
+  },
+  "total": 33,
+  "included": 0,
+  "graphics": [
+    {
+      "id": "sunset",
+      "name": "Sunset",
+      "group": "Backgrounds",
+      "rights": "unconfirmed",
+      "width": 400,
+      "height": 300,
+      "bytes": 383,
+      "removed": [],
+      "included": false
+    },
+    {
+      "id": "leaves",
+      "name": "Leaves",
+      "group": "Backgrounds",
+      "rights": "unconfirmed",
+      "width": 400,
+      "height": 300,
+      "bytes": 597,
+      "removed": [],
+      "included": false
+    },
+    {
+      "id": "abstract",
+      "name": "Abstract",
+      "group": "Backgrounds",
+      "rights": "unconfirmed",
+      "width": 400,
+      "height": 300,
+      "bytes": 304,
+      "removed": [],
+      "included": false
+    },
+    {
+      "id": "marble",
+      "name": "Marble",
+      "group": "Backgrounds",
+      "rights": "unconfirmed",
+      "width": 800,
+      "height": 600,
+      "bytes": 749,
+      "removed": [],
+      "included": false
+    },
+    {
+      "id": "ocean-gradient",
+      "name": "Ocean gradient",
+      "group": "Backgrounds",
+      "rights": "unconfirmed",
+      "width": 800,
+      "height": 600,
+      "bytes": 704,
+      "removed": [],
+      "included": false
+    },
+    {
+      "id": "paper-texture",
+      "name": "Paper texture",
+      "group": "Backgrounds",
+      "rights": "unconfirmed",
+      "width": 800,
+      "height": 600,
+      "bytes": 357,
+      "removed": [],
+      "included": false
+    },
+    {
+      "id": "luxury-navy",
+      "name": "Luxury navy",
+      "group": "Backgrounds",
+      "rights": "unconfirmed",
+      "width": 800,
+      "height": 600,
+      "bytes": 722,
+      "removed": [],
+      "included": false
+    },
+    {
+      "id": "soft-geometry",
+      "name": "Soft geometry",
+      "group": "Backgrounds",
+      "rights": "unconfirmed",
+      "width": 800,
+      "height": 600,
+      "bytes": 367,
+      "removed": [],
+      "included": false
+    },
+    {
+      "id": "heart",
+      "name": "Heart",
+      "group": "Icons",
+      "rights": "unconfirmed",
+      "width": 128,
+      "height": 128,
+      "bytes": 185,
+      "removed": [],
+      "included": false
+    },
+    {
+      "id": "star",
+      "name": "Star",
+      "group": "Icons",
+      "rights": "unconfirmed",
+      "width": 128,
+      "height": 128,
+      "bytes": 181,
+      "removed": [],
+      "included": false
+    },
+    {
+      "id": "check",
+      "name": "Check",
+      "group": "Icons",
+      "rights": "unconfirmed",
+      "width": 128,
+      "height": 128,
+      "bytes": 256,
+      "removed": [],
+      "included": false
+    },
+    {
+      "id": "camera",
+      "name": "Camera",
+      "group": "Icons",
+      "rights": "unconfirmed",
+      "width": 128,
+      "height": 128,
+      "bytes": 267,
+      "removed": [],
+      "included": false
+    },
+    {
+      "id": "bolt",
+      "name": "Bolt",
+      "group": "Icons",
+      "rights": "unconfirmed",
+      "width": 128,
+      "height": 128,
+      "bytes": 147,
+      "removed": [],
+      "included": false
+    },
+    {
+      "id": "location",
+      "name": "Location",
+      "group": "Icons",
+      "rights": "unconfirmed",
+      "width": 128,
+      "height": 128,
+      "bytes": 219,
+      "removed": [],
+      "included": false
+    },
+    {
+      "id": "phone",
+      "name": "Phone",
+      "group": "Icons",
+      "rights": "unconfirmed",
+      "width": 128,
+      "height": 128,
+      "bytes": 259,
+      "removed": [],
+      "included": false
+    },
+    {
+      "id": "website",
+      "name": "Website",
+      "group": "Icons",
+      "rights": "unconfirmed",
+      "width": 128,
+      "height": 128,
+      "bytes": 308,
+      "removed": [],
+      "included": false
+    },
+    {
+      "id": "email",
+      "name": "Email",
+      "group": "Icons",
+      "rights": "unconfirmed",
+      "width": 128,
+      "height": 128,
+      "bytes": 316,
+      "removed": [],
+      "included": false
+    },
+    {
+      "id": "calendar",
+      "name": "Calendar",
+      "group": "Icons",
+      "rights": "unconfirmed",
+      "width": 128,
+      "height": 128,
+      "bytes": 412,
+      "removed": [],
+      "included": false
+    },
+    {
+      "id": "secure",
+      "name": "Secure",
+      "group": "Icons",
+      "rights": "unconfirmed",
+      "width": 128,
+      "height": 128,
+      "bytes": 332,
+      "removed": [],
+      "included": false
+    },
+    {
+      "id": "delivery",
+      "name": "Delivery",
+      "group": "Icons",
+      "rights": "unconfirmed",
+      "width": 128,
+      "height": 128,
+      "bytes": 496,
+      "removed": [],
+      "included": false
+    },
+    {
+      "id": "flower",
+      "name": "Flower",
+      "group": "Illustrations",
+      "rights": "unconfirmed",
+      "width": 240,
+      "height": 240,
+      "bytes": 338,
+      "removed": [],
+      "included": false
+    },
+    {
+      "id": "rocket",
+      "name": "Rocket",
+      "group": "Illustrations",
+      "rights": "unconfirmed",
+      "width": 240,
+      "height": 240,
+      "bytes": 417,
+      "removed": [],
+      "included": false
+    },
+    {
+      "id": "gift",
+      "name": "Gift",
+      "group": "Illustrations",
+      "rights": "unconfirmed",
+      "width": 240,
+      "height": 240,
+      "bytes": 412,
+      "removed": [],
+      "included": false
+    },
+    {
+      "id": "business-growth",
+      "name": "Business growth",
+      "group": "Illustrations",
+      "rights": "unconfirmed",
+      "width": 300,
+      "height": 240,
+      "bytes": 619,
+      "removed": [],
+      "included": false
+    },
+    {
+      "id": "customer-support",
+      "name": "Customer support",
+      "group": "Illustrations",
+      "rights": "unconfirmed",
+      "width": 300,
+      "height": 240,
+      "bytes": 629,
+      "removed": [],
+      "included": false
+    },
+    {
+      "id": "creative-teamwork",
+      "name": "Creative teamwork",
+      "group": "Illustrations",
+      "rights": "unconfirmed",
+      "width": 300,
+      "height": 240,
+      "bytes": 584,
+      "removed": [],
+      "included": false
+    },
+    {
+      "id": "global-delivery",
+      "name": "Global delivery",
+      "group": "Illustrations",
+      "rights": "unconfirmed",
+      "width": 300,
+      "height": 240,
+      "bytes": 477,
+      "removed": [],
+      "included": false
+    },
+    {
+      "id": "priority-mail",
+      "name": "Priority mail",
+      "group": "Badges",
+      "rights": "unconfirmed",
+      "width": 240,
+      "height": 240,
+      "bytes": 490,
+      "removed": [],
+      "included": false
+    },
+    {
+      "id": "air-mail",
+      "name": "Air mail",
+      "group": "Badges",
+      "rights": "unconfirmed",
+      "width": 240,
+      "height": 240,
+      "bytes": 445,
+      "removed": [],
+      "included": false
+    },
+    {
+      "id": "verified-seal",
+      "name": "Verified seal",
+      "group": "Badges",
+      "rights": "unconfirmed",
+      "width": 240,
+      "height": 240,
+      "bytes": 420,
+      "removed": [],
+      "included": false
+    },
+    {
+      "id": "leaf-monogram",
+      "name": "Leaf monogram",
+      "group": "Badges",
+      "rights": "unconfirmed",
+      "width": 240,
+      "height": 240,
+      "bytes": 397,
+      "removed": [],
+      "included": false
+    },
+    {
+      "id": "express-stamp",
+      "name": "Express stamp",
+      "group": "Badges",
+      "rights": "unconfirmed",
+      "width": 240,
+      "height": 240,
+      "bytes": 423,
+      "removed": [],
+      "included": false
+    },
+    {
+      "id": "premium-crest",
+      "name": "Premium crest",
+      "group": "Badges",
+      "rights": "unconfirmed",
+      "width": 240,
+      "height": 240,
+      "bytes": 403,
+      "removed": [],
+      "included": false
+    }
+  ]
+}

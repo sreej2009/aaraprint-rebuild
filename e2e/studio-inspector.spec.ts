@@ -69,7 +69,8 @@ test.describe('desktop: docked inspector and layers', () => {
     await x.fill('20');
     await x.press('Enter');
     await expect.poll(async () => (await drawn(page, 'el_star'))!.x).toBeCloseTo(20 * MM, 1);
-    await inspector.getByRole('button', { name: 'Keep proportions' }).click();
+    // Stars start with proportions locked (M9), so the height follows the width.
+    await expect(inspector.getByRole('button', { name: 'Keep proportions' })).toHaveAttribute('aria-pressed', 'true');
     const w = inspector.getByRole('textbox', { name: 'W, width' });
     await w.fill('15.2');
     await w.press('Enter');

@@ -1,10 +1,10 @@
 import type { Point } from '../geometry/boxes';
-import { moveBox, resizeBox, rotationFromPointer, type Handle } from '../geometry/transform';
+import { moveBox, resizeBox, rotationFromPointer, snapRotation, type Handle } from '../geometry/transform';
 import { describeElements } from '../naming';
 import type { DesignElement, ElementPatch } from '../schema/types';
 import { selectActiveSurface, type StudioStore } from '../store';
 import type { InteractionStore } from './interaction-store';
-import { boxOf, keepsRatio, minSizePx, patchForBox } from './transform-rules';
+import { boxOf, isLineLike, keepsRatio, minSizePx, patchForBox, ratioLocked } from './transform-rules';
 import type { ViewportStore } from './viewport-store';
 
 /**
@@ -115,6 +115,7 @@ export function startMove(ctx: SessionContext, element: DesignElement, start: Po
 
 /** Drag a resize handle. */
 export function startResize(ctx: SessionContext, element: DesignElement, handle: Handle, start: Point, dpi: number): ElementSession {
+  if (isLineLike(element) && (handle === 'e' || handle === 'w')) return startEndpointDrag(ctx, element, handle, start, dpi);
   return startSession(ctx, element, start, {
     kind: 'resize',
     handle,
@@ -126,8 +127,39 @@ export function startResize(ctx: SessionContext, element: DesignElement, handle:
       const box = boxOf(el);
       const anchor = handlePoint(box, handle);
       const target = { x: anchor.x + to.x - from.x, y: anchor.y + to.y - from.y };
-      const next = resizeBox(box, handle, target, { keepRatio: keepsRatio(el, handle, shiftKey), fromCentre: altKey, minSize: minSizePx(dpi) });
+      const locked = ratioLocked(el, ctx.interaction.getState().ratioLocks[el.id]);
+      const next = resizeBox(box, handle, target, { keepRatio: keepsRatio(el, handle, shiftKey, locked), fromCentre: altKey, minSize: minSizePx(dpi) });
       return patchForBox(el, next, handle);
+    },
+  });
+}
+
+/**
+ * Drag one end of a line or arrow: that end follows the pointer while the other stays put, so
+ * the length and the angle change together (snapping to 0/45/90 within 5 degrees; Shift: 15
+ * degree steps). The thickness (height) never changes.
+ */
+function startEndpointDrag(ctx: SessionContext, element: DesignElement, handle: 'e' | 'w', start: Point, dpi: number): ElementSession {
+  return startSession(ctx, element, start, {
+    kind: 'resize',
+    handle,
+    label: 'Resize',
+    threshold: 1,
+    patchFor(el, from, to, { shiftKey }) {
+      const box = boxOf(el);
+      const fixed = handlePoint(box, handle === 'e' ? 'w' : 'e');
+      const grabbed = handlePoint(box, handle);
+      const moving = { x: grabbed.x + to.x - from.x, y: grabbed.y + to.y - from.y };
+      // Direction from the left end (start) to the right end, as the box draws it.
+      const [a, b] = handle === 'e' ? [fixed, moving] : [moving, fixed];
+      const rotation = snapRotation((Math.atan2(b.y - a.y, b.x - a.x) * 180) / Math.PI, shiftKey);
+      const length = Math.max(minSizePx(dpi), Math.hypot(b.x - a.x, b.y - a.y));
+      const rad = (rotation * Math.PI) / 180;
+      // The fixed end stays exactly where it was; the centre sits half a length from it.
+      const sign = handle === 'e' ? 1 : -1;
+      const cx = fixed.x + (sign * Math.cos(rad) * length) / 2;
+      const cy = fixed.y + (sign * Math.sin(rad) * length) / 2;
+      return patchForBox(el, { x: cx - length / 2, y: cy - el.height / 2, width: length, height: el.height, rotation }, null);
     },
   });
 }
