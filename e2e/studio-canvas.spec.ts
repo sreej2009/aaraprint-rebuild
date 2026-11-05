@@ -253,15 +253,19 @@ test.describe('zoom', () => {
 });
 
 test.describe('front and back', () => {
-  test('switching sides keeps the zoom', async ({ page }) => {
+  test('each side keeps its own zoom (M10)', async ({ page }) => {
     await page.goto(STUDIO);
     await waitForStage(page);
+    const fitted = await zoomLabel(page);
     const zoomIn = page.getByRole('button', { name: 'Zoom in' }).first();
     await zoomIn.click();
     const zoomed = await zoomLabel(page);
+    expect(zoomed).not.toBe(fitted);
     await page.getByRole('radio', { name: 'Back, 0 items' }).click();
     await expect(page.getByRole('region', { name: /^Design canvas: Back/ })).toBeVisible();
-    expect(await zoomLabel(page)).toBe(zoomed);
+    await expect.poll(() => zoomLabel(page)).toBe(fitted); // the back hasn't been zoomed: it fits
+    await page.getByRole('radio', { name: 'Front, 0 items' }).click();
+    await expect.poll(() => zoomLabel(page)).toBe(zoomed); // the front comes back as it was left
   });
 });
 

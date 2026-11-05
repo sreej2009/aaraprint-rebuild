@@ -72,17 +72,27 @@ export function announcementFor(prev: StudioState, next: StudioState): string | 
   // (While a text edit runs its undo step is still open: its merge key is set until it ends.)
   if (next.history.past.at(-1)?.coalesceKey?.startsWith(TEXT_EDIT_KEY)) return null;
 
+  // Undo and redo can take you to the other side: say so.
+  const sideChanged = prev.editor.activeSurfaceId !== next.editor.activeSurfaceId && surface;
+  const side = sideChanged ? ` Now on the ${surface.label.toLowerCase()}.` : '';
+
   if (next.history !== prev.history) {
     const { past, future } = next.history;
     // Undo moves the latest step to the redo stack (sealed, so compare its contents); redo moves it back.
     const undone = future.at(-1);
-    if (undone && undone !== prev.history.future.at(-1) && undone.before === prev.history.past.at(-1)?.before) return `Undone: ${undone.label}.${where}`;
+    if (undone && undone !== prev.history.future.at(-1) && undone.before === prev.history.past.at(-1)?.before) return `Undone: ${undone.label}.${side}${where}`;
     const latest = past.at(-1);
-    if (latest && latest === prev.history.future.at(-1)) return `Redone: ${latest.label}.${where}`;
+    if (latest && latest === prev.history.future.at(-1)) return `Redone: ${latest.label}.${side}${where}`;
     if (latest && next.document !== prev.document) {
       const undo = latest.label.startsWith('Delete') ? ' Press Ctrl Z to undo.' : '';
-      return `${pastTense(latest.label)}.${undo}${where}`;
+      return `${pastTense(latest.label)}.${undo}${side}${where}`;
     }
+  }
+
+  // Switching sides: which side, and how much is on it.
+  if (sideChanged && next.document === prev.document) {
+    const n = surface.elements.length;
+    return `${surface.label} side selected. ${n === 0 ? 'It’s empty.' : `${n} ${n === 1 ? 'item' : 'items'}.`}`;
   }
 
   const before = prev.editor.selectedIds;

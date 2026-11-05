@@ -21,7 +21,7 @@ export const TOOLS: readonly ToolDefinition[] = [
   { id: 'uploads', label: 'Uploads', title: 'Uploads', icon: ImageUp, intro: 'Add your logo or photos. PNG, JPG, WEBP, GIF or SVG up to 20 MB.', comingSoon: true },
   { id: 'graphics', label: 'Graphics', title: 'Graphics', icon: Sparkles, intro: 'Icons, badges and illustrations for your design.', comingSoon: false },
   { id: 'shapes', label: 'Shapes', title: 'Shapes', icon: Shapes, intro: 'Rectangles, circles, lines, stars and arrows.', comingSoon: false },
-  { id: 'background', label: 'Background', title: 'Background', icon: PaintBucket, intro: 'Colour the whole side, right to the edge.', comingSoon: true },
+  { id: 'background', label: 'Background', title: 'Background', icon: PaintBucket, intro: 'Colour the whole side, right to the edge.', comingSoon: false },
   { id: 'product', label: 'Product', title: 'Product and print size', icon: Package, intro: 'What you’re designing and how it will print.', comingSoon: false },
   { id: 'help', label: 'Help', title: 'Print tips', icon: CircleQuestionMark, intro: 'How to get a sharp, well-trimmed print.', comingSoon: false },
 ];

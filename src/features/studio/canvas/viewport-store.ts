@@ -21,6 +21,9 @@ import {
  *
  * `mode: 'fit'` keeps the sheet fitted as the window or panels resize; any manual zoom or pan
  * switches to `manual`, which keeps the point at the centre of the screen fixed on resize.
+ *
+ * Each side keeps its own view (M10): switching sides remembers where the one you leave was
+ * zoomed and panned, and comes back to it. Views are session state, never part of the design.
  */
 export interface ViewportState {
   /** Screen px available to the stage. */
@@ -31,13 +34,29 @@ export interface ViewportState {
   mode: 'fit' | 'manual';
   viewport: Viewport;
   showGuides: boolean;
+  /** The side on screen, and the views of the others, as they were left. */
+  surfaceId: string | null;
+  saved: Readonly<Record<string, SavedView>>;
   actions: ViewportActions;
+}
+
+export interface SavedView {
+  viewport: Viewport;
+  mode: 'fit' | 'manual';
+  area: Size;
+  content: Rect;
+  dpi: number;
 }
 
 export interface ViewportActions {
   setArea(area: Size): void;
   /** New side or product geometry. Re-fits when the content box changes. */
   setContent(content: Rect, dpi: number): void;
+  /**
+   * Show a side: remembers the current side's view, then restores the new side's (if it was
+   * zoomed or panned and has the same geometry) or fits it.
+   */
+  showSurface(surfaceId: string, content: Rect, dpi: number): void;
   fit(): void;
   /** Zoom to a percentage of real size, around `anchor` (screen px; default: centre). */
   zoomTo(percent: number, anchor?: Point): void;
@@ -69,6 +88,10 @@ function writeGuidesPreference(show: boolean): void {
   } catch {
     /* private mode: keep the setting for this session only */
   }
+}
+
+function sameRect(a: Rect, b: Rect): boolean {
+  return a.x === b.x && a.y === b.y && a.width === b.width && a.height === b.height;
 }
 
 export function fitScaleFor(state: Pick<ViewportState, 'area' | 'content'>): number {
@@ -124,6 +147,26 @@ export function createViewportStore(initial: { showGuides?: boolean } = {}): Vie
         set({ content, dpi, mode: 'fit', ...(hasArea ? { viewport: fitted(state.area, content) } : {}) });
       },
 
+      showSurface(surfaceId, content, dpi) {
+        const state = get();
+        if (state.surfaceId === surfaceId) {
+          actions.setContent(content, dpi);
+          return;
+        }
+        const saved = { ...state.saved };
+        if (state.surfaceId && state.content) saved[state.surfaceId] = { viewport: state.viewport, mode: state.mode, area: state.area, content: state.content, dpi: state.dpi };
+        const view = saved[surfaceId];
+        const hasArea = state.area.width > 0 && state.area.height > 0;
+        const restorable = view && view.mode === 'manual' && view.dpi === dpi && sameRect(view.content, content) && view.area.width > 0;
+        if (restorable && hasArea) {
+          // The window may have resized meanwhile: keep the point that was at the centre there.
+          const shifted = { ...view.viewport, x: view.viewport.x + (state.area.width - view.area.width) / 2, y: view.viewport.y + (state.area.height - view.area.height) / 2 };
+          set({ surfaceId, saved, content, dpi, mode: 'manual', viewport: clampPan(shifted, state.area, content) });
+          return;
+        }
+        set({ surfaceId, saved, content, dpi, mode: 'fit', ...(hasArea ? { viewport: fitted(state.area, content) } : {}) });
+      },
+
       fit() {
         const content = ready();
         if (!content) return;
@@ -177,6 +220,8 @@ export function createViewportStore(initial: { showGuides?: boolean } = {}): Vie
       mode: 'fit',
       viewport: { scale: 1, x: 0, y: 0 },
       showGuides: initial.showGuides ?? readGuidesPreference(),
+      surfaceId: null,
+      saved: {},
       actions,
     };
   });

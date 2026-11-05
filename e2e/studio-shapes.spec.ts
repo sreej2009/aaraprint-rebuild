@@ -226,7 +226,7 @@ test.describe('desktop: graphics', () => {
     await open(page);
     await page.getByRole('navigation', { name: 'Design tools' }).getByRole('button', { name: 'Graphics' }).click();
     await expect(page.getByText('Graphics are being prepared for Studio use.')).toBeVisible();
-    await expect(page.getByRole('button', { name: /^Add graphic/ })).toHaveCount(0);
+    await expect(page.getByRole('button', { name: /^Add graphic:/ })).toHaveCount(0);
   });
 
   test('approved graphics are added, drawn crisply, resized in proportion and rotated; failures keep the layer', async ({ page }) => {
@@ -236,7 +236,7 @@ test.describe('desktop: graphics', () => {
     await expect(page.getByRole('button', { name: 'Add graphic: Test seal' })).toBeEnabled();
     await expect(page.getByRole('button', { name: 'Add graphic: Not cleared' })).toHaveCount(0); // rights filter
     await page.getByRole('searchbox', { name: 'Search graphics' }).fill('approved');
-    await expect(page.getByRole('button', { name: /^Add graphic/ })).toHaveCount(1);
+    await expect(page.getByRole('button', { name: /^Add graphic:/ })).toHaveCount(1);
     await page.getByRole('button', { name: 'Add graphic: Test seal' }).click();
     await expect.poll(async () => (await top(page)).kind).toBe('Image');
     const seal = await top(page);

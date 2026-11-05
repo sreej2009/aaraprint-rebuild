@@ -1,12 +1,13 @@
 import { ArrowLeft, ArrowRight, CloudOff, Eye, PanelRightOpen, Redo2, Undo2 } from 'lucide-react';
 import type { MouseEvent, ReactNode } from 'react';
 import { Link } from 'react-router';
-import { Button, IconButton, SegmentedControl, Separator, Tooltip } from '@/design-system';
+import { Button, IconButton, Separator, Tooltip } from '@/design-system';
 import { formatINR } from '@/lib/format';
 import { cn } from '@/lib/cn';
-import { selectActiveSurfaceId, selectCanRedo, selectCanUndo, selectRedoLabel, selectUndoLabel, useStudio, useStudioActions } from '../store';
+import { selectCanRedo, selectCanUndo, selectRedoLabel, selectUndoLabel, useStudio, useStudioActions } from '../store';
 import { ZoomControl } from '../canvas/zoom-control';
 import { useStudioSession } from './session-context';
+import { SideMenu, SideSwitcher } from './side-controls';
 import { useStudioUi } from './ui-context';
 
 /** Studio top bar (Blueprint §11.1 desktop, §13.2 phone). Holds the page's (visually hidden) h1. */
@@ -27,7 +28,10 @@ export function TopBar({ title }: { title: string }) {
             <Separator orientation="vertical" className="mx-1 h-6" />
             <ZoomControl />
             <Separator orientation="vertical" className="mx-1 h-6" />
-            <SideSwitcher size="sm" />
+            <div className="flex items-center gap-0.5">
+              <SideSwitcher size="sm" />
+              <SideMenu />
+            </div>
           </>
         )}
       </div>
@@ -109,22 +113,6 @@ function HistoryButtons() {
         </span>
       </Tooltip>
     </fieldset>
-  );
-}
-
-export function SideSwitcher({ size = 'md', className }: { size?: 'sm' | 'md'; className?: string }) {
-  const actions = useStudioActions();
-  const active = useStudio(selectActiveSurfaceId);
-  const surfaces = useStudio((s) => s.document.surfaces);
-  return (
-    <SegmentedControl
-      label="Side"
-      size={size}
-      value={active}
-      onValueChange={(id) => actions.setActiveSurface(id)}
-      options={surfaces.map((s) => ({ value: s.id, label: s.label, count: s.elements.length }))}
-      className={className}
-    />
   );
 }
 

@@ -313,10 +313,7 @@ export function createStudioStore(options: CreateStudioStoreOptions): StudioStor
 
       setBackground(color, opts = {}) {
         const surfaceId = opts.surfaceId ?? get().editor.activeSurfaceId;
-        return actions.execute('Change background', (d) => cmd.setBackground(d, surfaceId, color), {
-          surfaceId,
-          ...(opts.coalesceKey ? { coalesceKey: opts.coalesceKey } : {}),
-        });
+        return actions.execute('Change background', (d) => cmd.setBackground(d, surfaceId, color), { surfaceId, ...mergeOptions(opts) });
       },
 
       copySurface(fromId, toId, mode) {

@@ -284,3 +284,21 @@ describe('the phone sheet editor', () => {
     expect(editing()).toBeNull();
   });
 });
+
+describe('switching sides while editing', () => {
+  it('keeps what was typed on its own side, in one undo step, and leaves no editor behind', async () => {
+    const { user } = setup();
+    act(() => studio.getState().actions.setEditingText('el_name'));
+    await user.keyboard('{End} Kapoor');
+    act(() => studio.getState().actions.setActiveSurface('back'));
+    expect(overlay()).toBeNull();
+    expect(editing()).toBeNull();
+    const front = studio.getState().document.surfaces[0]!.elements.find((e) => e.id === 'el_name') as TextElement;
+    expect(front.text).toBe('Riya Sharma Kapoor');
+    expect(studio.getState().document.surfaces[1]!.elements.some((e) => e.type === 'text' && e.text.includes('Kapoor'))).toBe(false);
+    expect(studio.getState().history.past).toHaveLength(1);
+    act(() => studio.getState().actions.undo());
+    expect(studio.getState().editor.activeSurfaceId).toBe('front');
+    expect(el()!.text).toBe('Riya Sharma');
+  });
+});

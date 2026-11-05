@@ -153,3 +153,23 @@ test('screenshot shapes and graphics', async ({ page, hasTouch, isMobile }, info
   await page.waitForTimeout(400);
   await page.screenshot({ path: `review-screens/${info.project.name}-studio-graphics.png` });
 });
+
+/** M10: an empty back, the copy choice, the clear confirmation and the side menu. */
+test('screenshot front and back', async ({ page }, info) => {
+  await page.goto('/products/business-card-classic/design?sample=1&side=back');
+  await samplePoint(page, 0, 0);
+  await page.getByRole('button', { name: 'Side options' }).click();
+  await page.waitForTimeout(250);
+  await page.screenshot({ path: `review-screens/${info.project.name}-studio-side-menu.png` });
+  await page.getByRole('menuitem', { name: /Clear back/ }).click();
+  await page.waitForTimeout(400);
+  await page.screenshot({ path: `review-screens/${info.project.name}-studio-clear-side.png` });
+  await page.getByRole('alertdialog').getByRole('button', { name: 'Clear back' }).click();
+  await page.waitForTimeout(400);
+  await page.screenshot({ path: `review-screens/${info.project.name}-studio-empty-back.png` });
+  await page.getByRole('button', { name: 'Copy front to back' }).click();
+  await page.getByRole('button', { name: 'Side options' }).click();
+  await page.getByRole('menuitem', { name: /Copy front to back/ }).click();
+  await page.waitForTimeout(400);
+  await page.screenshot({ path: `review-screens/${info.project.name}-studio-copy-side.png` });
+});

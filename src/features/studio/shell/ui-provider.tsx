@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
-import { StudioUiContext, type StudioUi } from './ui-context';
+import { StudioUiContext, type SideDialog, type StudioUi } from './ui-context';
 import type { ToolId } from './tools';
 import { useStudioLayout, type StudioLayout } from './use-studio-layout';
 
@@ -12,6 +12,7 @@ export function StudioUiProvider({ initialTool, children }: { initialTool: ToolI
   const [activeTool, setActiveTool] = useState<ToolId | null>(() => initialTool ?? (docksPanel(layout) ? 'templates' : null));
   const [inspectorOpen, setInspectorOpen] = useState(false);
   const [moreOpen, setMoreOpen] = useState(false);
+  const [sideDialog, openSideDialog] = useState<SideDialog | null>(null);
 
   // When the window shrinks to a layout where panels cover the canvas, close them.
   const previous = useRef(layout);
@@ -37,8 +38,10 @@ export function StudioUiProvider({ initialTool, children }: { initialTool: ToolI
       setInspectorOpen,
       moreOpen,
       setMoreOpen,
+      sideDialog,
+      openSideDialog,
     }),
-    [layout, activeTool, inspectorOpen, moreOpen],
+    [layout, activeTool, inspectorOpen, moreOpen, sideDialog],
   );
 
   return <StudioUiContext.Provider value={ui}>{children}</StudioUiContext.Provider>;

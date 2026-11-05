@@ -213,7 +213,7 @@ describe('Graphics tool', () => {
     const user = renderStudio();
     await user.click(screen.getByRole('button', { name: 'Graphics' }));
     expect(screen.getByText('Graphics are being prepared for Studio use.')).toBeInTheDocument();
-    expect(screen.queryByRole('button', { name: /^Add graphic/ })).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: /^Add graphic:/ })).not.toBeInTheDocument();
   });
 
   it('lists approved graphics by group, searches them and adds one as a selected layer', async () => {
@@ -223,7 +223,7 @@ describe('Graphics tool', () => {
     const panel = screen.getByRole('complementary', { name: 'Graphics' });
     expect(within(panel).getAllByRole('heading', { level: 3 }).map((h) => h.textContent)).toEqual(['Icons', 'Badges']);
     await user.type(within(panel).getByRole('searchbox', { name: 'Search graphics' }), 'contact');
-    expect(within(panel).getAllByRole('button', { name: /^Add graphic/ }).map((b) => b.getAttribute('aria-label'))).toEqual(['Add graphic: Phone', 'Add graphic: Email']);
+    expect(within(panel).getAllByRole('button', { name: /^Add graphic:/ }).map((b) => b.getAttribute('aria-label'))).toEqual(['Add graphic: Phone', 'Add graphic: Email']);
     expect(within(panel).getByText('2 graphics found')).toBeInTheDocument();
     await user.click(within(panel).getByRole('button', { name: 'Clear search' }));
     await user.click(within(panel).getByRole('button', { name: 'Add graphic: Verified seal' }));

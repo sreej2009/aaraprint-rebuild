@@ -1,15 +1,16 @@
 import { Ellipsis, Layers } from 'lucide-react';
 import { Sheet, SheetContent } from '@/design-system';
 import { cn } from '@/lib/cn';
-import { SideSwitcher } from './top-bar';
+import { SideMenu, SideSwitcher } from './side-controls';
 import { PHONE_MORE, PHONE_TOOLBAR, toolById } from './tools';
 import { useStudioUi } from './ui-context';
 
-/** Phones: side switcher under the top bar (Blueprint §13.2). */
+/** Phones: side switcher under the top bar (Blueprint §13.2), with the side menu. */
 export function PhoneSideBar() {
   return (
-    <div className="flex shrink-0 justify-center border-b border-border bg-surface px-3 py-2">
-      <SideSwitcher size="sm" className="w-full max-w-sm [&>*]:flex-1" />
+    <div className="flex shrink-0 items-center justify-center gap-1 border-b border-border bg-surface px-3 py-2">
+      <SideSwitcher size="sm" className="w-full max-w-sm [&>*]:flex-1 pointer-coarse:[&>*]:h-10" />
+      <SideMenu className="shrink-0 pointer-coarse:size-11" />
     </div>
   );
 }

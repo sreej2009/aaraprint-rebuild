@@ -19,7 +19,12 @@ export interface StudioUi {
   /** Phone "More" sheet. */
   moreOpen: boolean;
   setMoreOpen(open: boolean): void;
+  /** Confirmation for copying onto a side with artwork, or clearing a side. */
+  sideDialog: SideDialog | null;
+  openSideDialog(dialog: SideDialog | null): void;
 }
+
+export type SideDialog = 'copy' | 'clear';
 
 export const StudioUiContext = createContext<StudioUi | null>(null);
 

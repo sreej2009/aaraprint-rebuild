@@ -5,6 +5,7 @@ import { InspectorAside, InspectorSheet } from './inspector';
 import { MobileToolbar, MoreSheet, PhoneSideBar } from './mobile-toolbar';
 import { useStudioSession } from './session-context';
 import { ToolPanel, ToolSheet } from './tool-panel';
+import { SideDialogs } from './side-controls';
 import { ToolRail } from './tool-rail';
 import { TopBar } from './top-bar';
 import { useStudioUi } from './ui-context';
@@ -47,6 +48,7 @@ export function StudioShell() {
         </>
       )}
       {layout !== 'desktop' && <InspectorSheet />}
+      <SideDialogs />
     </div>
   );
 }

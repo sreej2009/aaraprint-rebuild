@@ -1,6 +1,7 @@
 import { Link } from 'react-router';
 import { Button } from '@/design-system';
 import { formatINR } from '@/lib/format';
+import { BackgroundTool } from '../tools/background-tool';
 import { GraphicsTool } from '../tools/graphics-tool';
 import { ShapesTool } from '../tools/shapes-tool';
 import { TextTool } from '../tools/text-tool';
@@ -14,6 +15,7 @@ export function ToolContent({ tool }: { tool: ToolDefinition }) {
   if (tool.id === 'text') return <TextTool />;
   if (tool.id === 'shapes') return <ShapesTool />;
   if (tool.id === 'graphics') return <GraphicsTool />;
+  if (tool.id === 'background') return <BackgroundTool />;
   return <ComingSoonTool tool={tool} />;
 }
 

@@ -1186,7 +1186,8 @@ I'll report after steps 2, 4 and 5 (or after each milestone, if you prefer). Eac
 | M7 Inspector and layers panel | Done |
 | M8 Text tool | Done |
 | M9 Shapes and graphics | Done |
-| M10–M16 | Not started |
+| M10 Front/back sides and core editor polish | Done |
+| M11–M16 | Not started |
 
 #### M1 findings
 
@@ -1562,5 +1563,53 @@ StudioState
 - No graphic is selectable until the original graphics' rights are confirmed. The full flow is tested with a stand-in library served by the tests themselves.
 - Recolouring graphics, gradients, freehand polygons and per-shape dash styles for borders are Phase 4.
 - Triangles are isosceles in their box and polygons are regular; there's no point editing.
+- Touch was tested in Chrome's emulation, not on physical devices.
+
+#### M10 — Front/back sides and core editor polish
+
+**Sides** (`shell/side-controls.tsx`, `shell/use-side-actions.ts`, `shell/side-rules.ts`):
+- **Switcher:** the Front / Back control (top bar; above the canvas on phones) shows each side's item count. It's a keyboard-operable radio group: arrows move, Space or Enter switches.
+- **Switching sides:**
+  - finishes text being edited in place first (it commits as it loses focus), so nothing is left half-typed;
+  - then clears selection, hover and editing (M3), and is announced: "Back side selected. 5 items.";
+  - never changes either side.
+- **Deep link:** `?side=` follows the active side (unchanged). An unknown side opens the front.
+- **Single-sided profiles:** no switcher; the side menu offers "Clear design". Every Phase 3 profile currently has a front and a back, so this is tested with a one-sided fixture.
+
+**Side menu** ("Side options", next to the switcher):
+- **Copy front to back:**
+  - Disabled while the front is empty.
+  - Onto an empty back, it copies straight away and moves you to the back.
+  - Onto a back with artwork, it first asks: Replace back, Keep both (adds on top) or Cancel.
+  - Copies get new ids; graphics keep their reference; the front never changes. One undo step, which puts you back where you were.
+- **Clear {side}:** clears only the active side, elements and background, after a confirmation. One undo step; disabled (and a no-op) on an empty side.
+
+**Empty side:**
+- An empty side shows a card over the canvas: "Back side is empty", with Add text, Add shape and Add graphic. On the back, while the front has artwork, it also offers Copy front to back.
+- It's plain HTML: never exported, never stored in the design.
+
+**Background tool** (`tools/background-tool.tsx`; Plan §18.5, previously "Coming soon"):
+- One colour per side, running into the bleed, or No background (the unprinted material).
+- A colour-picker drag is one undo step.
+- Not included: recent colours on this device, and gradients.
+
+**Views:** each side keeps its own zoom and pan (viewport store `showSurface`).
+- A side seen for the first time fits.
+- A side whose size changed re-fits.
+- A resized window keeps the remembered centre.
+- Views are editor state: never in the design, never undo steps. The guides preference is shared by both sides.
+
+**Undo across sides:** the global history is unchanged. Undo and redo take you to the side they change and say so ("Undone: … Now on the back.").
+
+**Hardening** (tests over existing code, no new systems):
+- **Print warnings:** they cover every element kind, use rotated corners, and update after every move, resize, rotation and property change.
+- **Resizes:** never flip and never go below 2 mm or produce non-numbers.
+- **Angles:** stay within 0–360° and snap as before.
+- **The store:** refuses invalid geometry, and documents stay valid after copy, clear and undo.
+
+**Known limits**
+- Side thumbnails in the switcher come with the Preview work (M15). Linking sides to the "Sides printed" option and its price is Phase 4.
+- Flaps, covers and pockets (more than two sides) are supported by the schema but not edited in Phase 3.
+- There's no shortcut for switching sides: the switcher is one Tab stop away and works with arrows and Space.
 - Touch was tested in Chrome's emulation, not on physical devices.
 

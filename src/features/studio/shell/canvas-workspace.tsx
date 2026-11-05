@@ -18,6 +18,7 @@ import { formatSize } from '../profile/describe';
 import type { SurfaceDesign } from '../schema/types';
 import { selectActiveSurface, useStudio, useStudioStoreApi } from '../store';
 import { CANVAS_HELP_ID, CANVAS_REGION_ID } from './dom-ids';
+import { EmptySideCard } from './empty-side';
 import { TextEditSheet } from './text-edit-sheet';
 import { StudioUiContext } from './ui-context';
 import { useElementSize } from './use-element-size';
@@ -88,10 +89,11 @@ export function CanvasWorkspace({ zoomPill = false, onStage }: CanvasWorkspacePr
     viewportStore.getState().actions.setArea(size);
   }, [viewportStore, size]);
 
+  const surfaceId = surface?.id;
   useEffect(() => {
-    // Front and back share a size, so switching sides keeps the view; a different size re-fits.
-    if (print) viewportStore.getState().actions.setContent(printBoxes(print).bleed, print.dpi);
-  }, [viewportStore, print]);
+    // Each side keeps its own zoom and pan; a side seen for the first time (or resized) fits.
+    if (print && surfaceId) viewportStore.getState().actions.showSurface(surfaceId, printBoxes(print).bleed, print.dpi);
+  }, [viewportStore, print, surfaceId]);
 
   if (!surface) return null;
   const finished = finishedSizeMm(surface.print);
@@ -143,6 +145,7 @@ export function CanvasWorkspace({ zoomPill = false, onStage }: CanvasWorkspacePr
         {ready && <SelectionOverlay />}
         {ready && !sheetEditing && <TextEditOverlay />}
         <SelectionToolbar />
+        <EmptySideCard />
         {zoomPill && (
           <div className="absolute right-3 bottom-3 rounded-full border border-border bg-surface/95 px-1 shadow-2 backdrop-blur">
             <ZoomControl />
