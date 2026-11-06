@@ -4,6 +4,7 @@ import { Arrow, Ellipse, Group, Image as KonvaImage, Layer, Line, Rect, Shape, S
 import { colorTokens } from '@/design-system/tokens';
 import { ensureFonts, facesFor, useFontsVersion } from '../assets/fonts';
 import { graphicById, useGraphicsLibrary } from '../assets/graphics';
+import { useAssetImage } from '../assets/asset-library';
 import { useImage } from '../assets/image-cache';
 import { appendPath, tracePath } from '../geometry/shapes';
 import type { Viewport } from '../geometry/viewport';
@@ -155,10 +156,20 @@ function DrawingNode({ drawing }: { drawing: Drawing }) {
       return <Arrow points={drawing.points} pointerLength={drawing.pointerLength} pointerWidth={drawing.pointerWidth} lineCap={drawing.lineCap} {...paint(drawing)} />;
     case 'graphic':
       return <GraphicNode graphicId={drawing.graphicId} width={drawing.width} height={drawing.height} />;
-    case 'image-placeholder':
-      // Uploaded images arrive with M12; until then (and while a source loads) show a frame.
-      return <ImagePlaceholder width={drawing.width} height={drawing.height} state="missing" />;
+    case 'upload':
+      return <UploadNode assetId={drawing.assetId} width={drawing.width} height={drawing.height} />;
   }
+}
+
+/**
+ * An uploaded image (M12), drawn from its file in this browser (decoded once, shared by every
+ * element that uses it). A light frame while it loads; a crossed frame if the file isn't here —
+ * the element stays either way, so it can be replaced.
+ */
+function UploadNode({ assetId, width, height }: { assetId: string; width: number; height: number }) {
+  const image = useAssetImage(assetId);
+  if (image?.status === 'loaded') return <KonvaImage image={image.image} width={width} height={height} perfectDrawEnabled={false} />;
+  return <ImagePlaceholder width={width} height={height} state={image?.status === 'loading' ? 'loading' : 'missing'} />;
 }
 
 /**

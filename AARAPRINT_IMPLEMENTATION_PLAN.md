@@ -1188,7 +1188,8 @@ I'll report after steps 2, 4 and 5 (or after each milestone, if you prefer). Eac
 | M9 Shapes and graphics | Done |
 | M10 Front/back sides and core editor polish | Done |
 | M11 Autosave, restore and version history | Done |
-| M12–M16 | Not started |
+| M12 Image uploads and image assets | Done |
+| M13–M16 | Not started |
 
 #### M1 findings
 
@@ -1451,7 +1452,7 @@ StudioState
 **Known limits**
 - No style controls yet (font, colour, fill, stroke): text tool M8, shapes and graphics M9.
 - Layers are reordered with buttons and Alt + arrows, not by dragging (drag-and-drop is Phase 4).
-- Fit inside safe area / Fill to bleed (Plan §18.6) are not in M7; they arrive with images (M12), where they matter most.
+- Fit inside safe area / Fill to bleed (Plan §18.6) are not in M7; they were planned with images (M12), but M12 places images by their pixels instead (see M12) and leaves Fit/Fill for later.
 
 #### M8 — Text tool
 
@@ -1545,7 +1546,7 @@ StudioState
   - All 33 are therefore `unconfirmed` in `scripts/studio/graphics-register.mjs`. They're listed and audited (`src/data/generated/studio/graphics-meta.json`) but never copied into the app or shown.
 - **Extraction** (`npm run studio:graphics`, `scripts/studio/extract-graphics.mjs`):
   - Reads the original chunk read-only and checks it against the register.
-  - Sanitises every SVG with `assets/svg-sanitise.ts`, shared with uploads in M12. It removes scripts, foreignObject, event handlers, `javascript:` and external references.
+  - Sanitises every SVG with `assets/svg-sanitise.ts`. (M12 doesn't accept SVG uploads at all, so this stays the graphics' own path.) It removes scripts, foreignObject, event handlers, `javascript:` and external references.
   - Writes only cleared graphics to `public/studio/graphics/` and `public/api/v1/graphics.json`.
   - Today that's 0 included and 33 withheld. **To use them once the business confirms the rights:** set `rights` to `cleared` in the register, then run the script.
 - **The panel:**
@@ -1690,3 +1691,125 @@ StudioState
 - There's no list of all designs on this device yet; a design is reopened as the product's latest, or by its `?design=` link.
 - Undo history isn't kept across reloads (by design); versions are the way back.
 
+#### M12 — Image uploads and image assets
+
+**Scope:**
+- Customers add their own PNG, JPEG or WebP images from this device and place them on either side.
+- Files are kept in this browser, in IndexedDB. Nothing is uploaded to a server, and there are no accounts.
+- Templates (M13), preview (M14), proof and download (M15) and final hardening (M16) are not part of M12.
+
+**Three separate things:**
+- **Asset record** (IndexedDB, `assets` store): the file itself plus what was learned from it.
+- **Design asset** (`document.assets[id]`, schema v2 as before): name, type, byte size, pixel size and `storage: { kind: 'local', blobId }`. It holds no bytes, base64, `blob:` URLs or decoded images.
+- **Image element** (the existing M2 image element; no new element type): `source: { kind: 'asset', assetId }` plus the usual box, rotation, opacity, lock, hidden, name and layer position.
+- At runtime, an object URL and a decoded image per asset live in memory only and are never saved.
+
+**IndexedDB** (`aaraprint-studio`, storage version **2**):
+- Version 2 adds `assets`, keyed by `assetId`, with an index on `createdAt`.
+- Each record holds the asset id, display name, real type, byte size, pixel size, created time, the original Blob and a thumbnail Blob.
+- The upgrade only creates what's missing, so M11's `designs` and `versions` are kept untouched. The browser test opens a real version 1 database and checks this.
+- `blobId` is the asset id. One record per upload; using it on both sides or in many designs still stores it once.
+- The repository (`persistence/repository.ts`) gains `putAsset`, `getAsset`, `listAssets` (newest first, without the Blob), `deleteAsset` and `isAssetReferenced`, in the same IndexedDB and in-memory versions as M11.
+
+**Uploading** (`assets/uploads.ts`):
+- **Accepted:** PNG, JPEG and WebP (`UPLOAD_MIME`), up to **10 MB** (`UPLOAD_MAX_BYTES`).
+- **Order of checks:** empty file, then size (before reading anything), then the file's first bytes (its signature), then a real decode.
+- **The signature decides the type.** The file name and the browser's guess don't. A JPEG called `.png` is stored as JPEG.
+- **Refused files:**
+  - SVG: "SVG files can't be uploaded. Use a PNG, JPEG or WebP image." Uploaded SVG can never become markup or script. Vector graphics stay with the M9 graphics library and its rights rules.
+  - HTML, PDF, GIF and anything else: "This file type isn't supported. Use a PNG, JPEG or WebP image."
+  - Too large: "Image is too large. Maximum file size is 10 MB."
+  - Damaged: "This file couldn't be read as an image. It may be damaged."
+- **Decoding:** `createImageBitmap(blob, { imageOrientation: 'from-image' })`, so phone photos with EXIF rotation are measured, listed and placed upright. The browser test uses a JPEG with orientation 6.
+- **Thumbnail:** a WebP at most 240 px (`THUMBNAIL_SIZE`), made from the same decode and stored next to the file, so the panel never decodes full-size images.
+- **No pixel limit.** A size the browser can't decode gets the "damaged" message.
+- **Names are display text only.** Path parts and control characters are removed and names are cut at 120 characters. Names are only ever rendered as React text. Ids are generated (`asset_<uuid>`), never taken from file names.
+- **Progress:** "Reading…", "Processing…" and "Saving…" in a live `<output>`. The file is stored before anything can refer to it, so a design never points at a file that wasn't saved.
+
+**Uploads panel** (`tools/uploads-tool.tsx`; rail, phone toolbar, More sheet, and `?mode=upload` from the product page's "Upload your file"):
+- Upload image button, which opens the file picker with only the accepted types.
+- Drop zone for files: dragged text and links are ignored. It is hidden on touch.
+- **My uploads:** every upload in this browser, newest first, with thumbnail, name, pixel size and file size. Empty: "No uploaded images yet."
+- Uploading doesn't change the design and adds no undo step.
+- **Choosing an upload** places it on the side being edited as one undo step ("Add image"). It's selected straight away. On phones and tablets the panel closes to show the canvas.
+- Drag and drop works only on the panel's drop zone, so dragging on the canvas still pans and moves as in M5/M6.
+
+**Placement** (`assets/image-placement.ts`):
+- **Starting size:** the image's pixels at **150 DPI** (`PLACEMENT_DPI`), so a small logo doesn't start blown up.
+- **Capped** at **35 %** of the trim width (`PLACEMENT_MAX_SHARE`, within the 30–40 % asked for) and fitted inside the safe area.
+- **Proportions:** always the image's own. Images start with proportions locked (M9 rule).
+- **Position:** centred in the safe area. If something is already there it steps 3 mm aside.
+- The product's size, bleed, safe area and shape never change. M6 transforms, M7 inspector, and the M5 amber and red warnings apply unchanged.
+
+**Resolution:**
+- Effective DPI = the smaller of pixel width ÷ printed inches wide and pixel height ÷ printed inches high, at the current size.
+- **Bands:** ≥ 300 is "Good" (`DPI_GOOD`), 150–299 "Acceptable", under 150 "Low resolution" (`DPI_ACCEPTABLE`).
+- Low resolution is advice, not a block: "At this size the image may print soft… You can still use it."
+- It updates as the image is resized.
+
+**Inspector** (`inspector/image-asset-section.tsx`, above M7's position, size, rotation and opacity):
+- Shows File, Pixels, File size, Resolution, and Replace image.
+- **Replace image** is one undo step ("Replace image "…"").
+  - It keeps the element id, layer order, position, width, rotation, opacity, lock, hidden and any custom layer name.
+  - The height follows the new image's proportions, so it's never stretched.
+  - The new file goes through the same checks.
+- **Layer names:** a custom name is kept. Otherwise the layer is named after the file, falling back to "Image" (M7 rule).
+
+**Front and back:** one upload can be placed on both sides. The design lists the asset once and both elements refer to it; the browser test checks one stored record and two references.
+
+**Saving (M11):**
+- Placing, moving or replacing an image is an ordinary design change: autosave writes the design (references only) about 1 s later.
+- The file itself was written once, at upload. Moving an image never rewrites it.
+- Saved designs contain no Blob, base64, `blob:` URL or decoded image; unit and browser tests check this.
+- **Version restore** brings back image elements with their `assetId`s; the files are still in the asset store.
+
+**Missing files** (the record is gone, e.g. site data cleared, or a design from elsewhere):
+- The layer stays, with its box. The canvas draws a crossed placeholder frame and the inspector shows "Image unavailable".
+- Retry looks again. Replace image or Delete fix it.
+- The Studio never crashes and nothing is saved over.
+- The M6 sample design's logo shows this state, as its file was never uploaded.
+
+**Removing an upload:**
+- Deleting an image layer never deletes the file.
+- **Remove from My uploads** is allowed only when no design uses the file. That means the open design (including files it still lists after a delete or replace, so undo can bring them back), any saved design and any kept version.
+- Otherwise: "This image is used in a design (or one of its saved versions), so it stays in My uploads."
+- If the check can't be made, the file is kept.
+
+**Runtime images and memory** (`assets/asset-library.ts`):
+- **One object URL per asset**, created when the canvas or inspector first needs it and shared through the M9 image cache, so each image is decoded once.
+- **Thumbnails** get their own URL, made once.
+- **Releasing:** both are revoked when the upload is removed.
+- Nothing is loaded at start-up: the list loads when the panel opens (without Blobs) and full images load when the canvas needs them.
+- Konva draws the same element model that preview and proof will use (M14/M15); there's no second export-only image path.
+
+**Security:**
+- **Content:** uploads are untrusted. They are checked by signature and decode, and shown only through `<img>`/canvas from a `blob:` URL. File content is never put into HTML, and SVG is refused.
+- **Names:** file names are never used as DOM ids or markup.
+
+**Testing:**
+- **Unit:** `assets/uploads.test.ts` (14 tests): signatures, accepted and refused files, size and empty checks, names and ids, references without bytes, placement at 150 DPI with the cap, DPI bands, replacement box, library upload and remove rules (open design, saved versions), object URL create-once and revoke, M11 saves carrying references only, one asset on both sides, version restore keeping `assetId`.
+- **Component:** `tools/uploads-tool.test.tsx` (8 tests): empty state, upload then place as one undo step, error with Dismiss, removal refused and allowed, phone sheet, inspector resolution and low-resolution advice, Replace keeping place and width as one undo step, the unavailable state with Retry and Delete.
+- **Browser:** `e2e/studio-images.spec.ts` (18 tests, with the real decoder and IndexedDB; images are drawn in the page, so no binary files are in the repository):
+  - PNG, and JPEG with EXIF rotation;
+  - refused SVG, HTML, damaged PNG and GIF (no script runs), and over 10 MB;
+  - place, aspect ratio and safe-area centring;
+  - move, resize, rotate and reload;
+  - DPI bands while resizing;
+  - delete and undo;
+  - front and back with one record, both resolving after a reload;
+  - version restore;
+  - missing file with placeholder, Retry and Replace;
+  - autosave and reload;
+  - a version 1 database upgraded in place;
+  - the product page's "Upload your file";
+  - phone sheet, tablet panel, 1440–360 px with no sideways scroll;
+  - no console errors in any test.
+- **Screenshots:** `e2e/studio-visual.spec.ts` "uploads and images" (`SCREENSHOTS=1`).
+
+**Known limits**
+- **This browser only.** Uploads stay on this device, with no cloud copy or sync (Phase 6). Clearing site data removes them, and their layers then show "Image unavailable".
+- **No crop, Fit inside safe area, Fill to bleed, flip, filters or background removal.** Images are resized as a whole; there's no photo editor.
+- **No drag and drop or paste onto the canvas.** Drag and drop is on the panel's drop zone only.
+- **No automatic cleanup.** Files still listed by a design or version stay until nothing uses them; there's no clean-up of old uploads beyond Remove.
+- **PNG, JPEG and WebP only.** HEIC/AVIF photos must be converted first. No multi-page or vector uploads.
+- **Resolution isn't final.** Thresholds are advice; the print check before ordering is M15.

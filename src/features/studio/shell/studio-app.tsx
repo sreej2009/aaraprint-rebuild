@@ -11,6 +11,8 @@ import { useZoomShortcuts } from '../canvas/use-zoom-shortcuts';
 import { useStudioShortcuts } from '../keyboard/use-studio-shortcuts';
 import { ViewportStoreContext } from '../canvas/viewport-context';
 import { createViewportStore, type ViewportStore } from '../canvas/viewport-store';
+import { createUploadLibrary, setAssetSource, UploadLibraryContext } from '../assets/asset-library';
+import type { DecodedImage } from '../assets/uploads';
 import { SaveControllerContext, useSaveState } from '../persistence/persistence-context';
 import { browserRepository, type DesignRepository } from '../persistence/repository';
 import { openSavedDesign, type OpenResult } from '../persistence/restore';
@@ -37,6 +39,8 @@ export interface StudioAppProps {
   designId?: string | null;
   /** Where designs are saved (IndexedDB in the browser; injectable for tests). */
   repository?: DesignRepository;
+  /** How uploads are decoded (the browser's own decoder; injectable for tests). */
+  decodeImage?: (blob: Blob) => Promise<DecodedImage>;
 }
 
 type Opened = OpenResult | { kind: 'sample' };
@@ -100,7 +104,7 @@ interface EditorSessionProps extends StudioAppProps {
  * One editing session: the Studio store for one design, its save controller, and the product facts
  * and editor chrome state for the shell. A new design is a new session.
  */
-function EditorSession({ product, profile, variantId, initialSurface, initialTool, opened, repository, onStartNew }: EditorSessionProps) {
+function EditorSession({ product, profile, variantId, initialSurface, initialTool, opened, repository, onStartNew, decodeImage }: EditorSessionProps) {
   const restored = opened.kind === 'restored' ? opened : null;
   // The options chosen on the product page win; otherwise the design keeps its own.
   const effectiveVariantId = resolveStudioVariant(product, variantId ?? restored?.document.product.variantId ?? null)?.id ?? null;
@@ -127,6 +131,12 @@ function EditorSession({ product, profile, variantId, initialSurface, initialToo
   );
   // Watches the design while the session is on screen; leaving writes anything still pending.
   useEffect(() => controller.start(), [controller]);
+  // Uploaded images on this device (M12): the library, and where the canvas reads their files.
+  const [uploads] = useState(() => createUploadLibrary(repository, decodeImage ? { decode: decodeImage } : {}));
+  useEffect(() => {
+    setAssetSource(repository);
+    return () => setAssetSource(null);
+  }, [repository]);
 
   const session = useMemo<StudioSession>(() => {
     const variant = resolveStudioVariant(product, effectiveVariantId);
@@ -145,6 +155,7 @@ function EditorSession({ product, profile, variantId, initialSurface, initialToo
   return (
     <StudioProvider store={store}>
       <SaveControllerContext.Provider value={controller}>
+        <UploadLibraryContext.Provider value={uploads}>
         <StudioSessionContext.Provider value={session}>
           <ViewportStoreContext.Provider value={viewportStore}>
             <InteractionStoreContext.Provider value={interactionStore}>
@@ -157,6 +168,7 @@ function EditorSession({ product, profile, variantId, initialSurface, initialToo
             </InteractionStoreContext.Provider>
           </ViewportStoreContext.Provider>
         </StudioSessionContext.Provider>
+        </UploadLibraryContext.Provider>
       </SaveControllerContext.Provider>
     </StudioProvider>
   );

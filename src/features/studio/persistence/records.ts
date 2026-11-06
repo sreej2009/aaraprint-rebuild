@@ -9,10 +9,11 @@
  */
 
 export const DB_NAME = 'aaraprint-studio';
-/** IndexedDB structure version — not the design schema version. */
-export const DB_VERSION = 1;
+/** IndexedDB structure version — not the design schema version. 1: designs, versions (M11). 2: + assets (M12). */
+export const DB_VERSION = 2;
 export const DESIGNS_STORE = 'designs';
 export const VERSIONS_STORE = 'versions';
+export const ASSETS_STORE = 'assets';
 
 /** Quiet time after the last edit before autosave writes (ms). */
 export const AUTOSAVE_DELAY_MS = 1000;
@@ -60,6 +61,29 @@ export interface VersionRecord {
   fingerprint: string;
   document: unknown;
 }
+
+/**
+ * An uploaded image on this device (M12): the original file and a small thumbnail, with the facts
+ * designs need. Designs refer to it by `assetId` (their `assets` map holds the same metadata and
+ * `storage: { kind: 'local', blobId: assetId }`) — never the bytes themselves.
+ */
+export interface AssetRecord {
+  assetId: string;
+  /** Display name (the original file name, tidied). Never used as a key or a path. */
+  name: string;
+  mime: 'image/png' | 'image/jpeg' | 'image/webp';
+  bytes: number;
+  /** As displayed (camera orientation applied). */
+  naturalWidth: number;
+  naturalHeight: number;
+  createdAt: number;
+  blob: Blob;
+  /** About 240 px on the long side, for the Uploads panel. */
+  thumbnail: Blob | null;
+}
+
+/** An asset without its file, for lists. */
+export type AssetSummary = Omit<AssetRecord, 'blob'>;
 
 /** A version without its document, for lists. */
 export type VersionSummary = Omit<VersionRecord, 'document'>;

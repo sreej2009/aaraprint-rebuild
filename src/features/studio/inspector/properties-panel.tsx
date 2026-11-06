@@ -11,6 +11,7 @@ import { selectDocument, useStudio, useStudioActions } from '../store';
 import { ElementIcon } from './element-icon';
 import { arrangeOptions, elementTypeLabel, opacityFromPercent, opacityPercent } from './inspector-rules';
 import { GraphicNotice } from './graphic-notice';
+import { ImageAssetSection } from './image-asset-section';
 import { PositionSize } from './position-size';
 import { ShapeStyleSection } from './shape-style-section';
 import { TextContentField } from './text-content-field';
@@ -69,6 +70,7 @@ export function PropertiesPanel({ element, surface }: { element: DesignElement; 
       )}
 
       {element.type === 'image' && <GraphicNotice element={element} />}
+      {element.type === 'image' && element.source.kind === 'asset' && <ImageAssetSection element={element} print={surface.print} />}
       {element.type === 'text' && (
         <>
           <TextContentField element={element} />

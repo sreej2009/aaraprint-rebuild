@@ -202,3 +202,70 @@ test('screenshot saving and versions', async ({ page, hasTouch, isMobile }, info
     await page.screenshot({ path: `review-screens/${info.project.name}-studio-restore-confirm.png` });
   }
 });
+
+/** M12: Uploads (empty, an error, listed), a placed image with its resolution, low resolution, and an unavailable image. */
+test('screenshot uploads and images', async ({ page, hasTouch, isMobile }, info) => {
+  const shot = (name: string) => page.screenshot({ path: `review-screens/${info.project.name}-studio-${name}.png` });
+  // Drawn in the page, so no image files live in the repository.
+  const png = async (w: number, h: number) =>
+    Buffer.from(
+      await page.evaluate(
+        async ([width, height]) => {
+          const c = document.createElement('canvas');
+          c.width = width;
+          c.height = height;
+          const g = c.getContext('2d')!;
+          g.fillStyle = '#2f5bd3';
+          g.fillRect(0, 0, width, height);
+          g.fillStyle = '#e8930c';
+          g.fillRect(0, 0, width / 3, height);
+          g.fillStyle = '#ffffff';
+          g.beginPath();
+          g.arc(width * 0.66, height / 2, Math.min(width, height) / 4, 0, Math.PI * 2);
+          g.fill();
+          const blob = await new Promise<Blob>((r) => c.toBlob((b) => r(b!), 'image/png'));
+          return [...new Uint8Array(await blob.arrayBuffer())];
+        },
+        [w, h] as const,
+      ),
+    );
+  const desktop = !hasTouch && !isMobile;
+  await page.goto('/products/business-card-classic/design');
+  await page.waitForLoadState('networkidle');
+  await page.waitForFunction(() => Boolean((window as unknown as { Konva?: { stages: unknown[] } }).Konva?.stages.length));
+  await page.getByRole('navigation', { name: 'Design tools' }).getByRole('button', { name: /^Uploads/ }).click();
+  await page.getByText('No uploaded images yet.').waitFor();
+  await page.waitForTimeout(300);
+  await shot('uploads-empty');
+  const input = page.getByTestId('upload-input');
+  await input.setInputFiles({ name: 'logo.svg', mimeType: 'image/svg+xml', buffer: Buffer.from('<svg xmlns="http://www.w3.org/2000/svg"/>') });
+  await page.getByRole('alert').waitFor();
+  await shot('upload-error');
+  await page.getByRole('alert').getByRole('button', { name: 'Dismiss' }).click();
+  await input.setInputFiles({ name: 'team-photo.png', mimeType: 'image/png', buffer: await png(1200, 800) });
+  await input.setInputFiles({ name: 'small-logo.png', mimeType: 'image/png', buffer: await png(160, 160) });
+  await page.getByRole('button', { name: /^Add image: small-logo/ }).waitFor();
+  await page.waitForTimeout(300);
+  await shot('uploads-listed');
+  if (desktop) {
+    // The panel stays open on desktop: place the small logo too, and make it big enough to print soft.
+    await page.getByRole('button', { name: /^Add image: small-logo/ }).click();
+    const w = page.getByRole('complementary', { name: 'Layers and properties' }).getByRole('textbox', { name: 'W, width' });
+    await w.fill('40');
+    await w.press('Enter');
+    await page.waitForTimeout(400);
+    await shot('image-low-resolution');
+  }
+  await page.getByRole('button', { name: /^Add image: team-photo/ }).click();
+  await page.waitForTimeout(500);
+  await shot('image-placed');
+  await page.goto('/products/business-card-classic/design?sample=1');
+  await page.waitForLoadState('networkidle');
+  await page.waitForTimeout(600);
+  if (desktop) {
+    await page.getByRole('complementary', { name: 'Layers and properties' }).locator('[data-layer-row][aria-label*="image" i]').first().click();
+    await page.getByText('Image unavailable').waitFor();
+    await page.waitForTimeout(300);
+  }
+  await shot('image-unavailable');
+});

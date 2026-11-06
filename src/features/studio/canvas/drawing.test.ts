@@ -61,13 +61,13 @@ describe('element drawings', () => {
   });
 
   it('shows a frame for images until their source loads', () => {
-    expect(drawingFor(createImageElement({ kind: 'asset', assetId: 'a' }, box))).toEqual({ kind: 'image-placeholder', width: 200, height: 80 });
+    expect(drawingFor(createImageElement({ kind: 'asset', assetId: 'a' }, box))).toEqual({ kind: 'upload', assetId: 'a', width: 200, height: 80 }); // drawn from the uploaded file (M12)
   });
 
   it('draws every element of the demo design', () => {
     const elements = demoDesign().surfaces.flatMap((s) => s.elements);
     expect(elements.map((e) => drawingFor(e).kind)).toContain('text');
-    expect(new Set(elements.map((e) => drawingFor(e).kind))).toEqual(new Set(['text', 'rect', 'ellipse', 'polyline', 'arrow', 'image-placeholder']));
+    expect(new Set(elements.map((e) => drawingFor(e).kind))).toEqual(new Set(['text', 'rect', 'ellipse', 'polyline', 'arrow', 'upload']));
   });
 });
 

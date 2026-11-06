@@ -1,4 +1,4 @@
-import { DB_NAME, DB_VERSION, DESIGNS_STORE, StorageError, summarise, toStorageError, VERSIONS_STORE, type DesignRecord, type VersionRecord, type VersionSummary } from './records';
+import { ASSETS_STORE, DB_NAME, DB_VERSION, DESIGNS_STORE, StorageError, summarise, toStorageError, VERSIONS_STORE, type AssetRecord, type AssetSummary, type DesignRecord, type VersionRecord, type VersionSummary } from './records';
 
 /**
  * Where designs are kept. One contract, two implementations: IndexedDB in the browser, and an
@@ -19,7 +19,26 @@ export interface DesignRepository {
   getVersion(versionId: string): Promise<VersionRecord | null>;
   /** Add a version and drop the oldest beyond `limit` (the newest is always kept). */
   addVersion(version: VersionRecord, limit: number): Promise<void>;
+
+  /** Uploaded images on this device (M12). */
+  putAsset(asset: AssetRecord): Promise<void>;
+  getAsset(assetId: string): Promise<AssetRecord | null>;
+  /** Newest first, without the original files. */
+  listAssets(): Promise<AssetSummary[]>;
+  deleteAsset(assetId: string): Promise<void>;
+  /** Whether any saved design or version still uses the asset. */
+  isAssetReferenced(assetId: string): Promise<boolean>;
 }
+
+/** A stored document mentions the asset (its `assets` map or an element's source). */
+function mentionsAsset(document: unknown, assetId: string): boolean {
+  if (!document || typeof document !== 'object') return false;
+  const assets = (document as { assets?: Record<string, unknown> }).assets;
+  if (assets && typeof assets === 'object' && assetId in assets) return true;
+  return JSON.stringify(document).includes(`"assetId":${JSON.stringify(assetId)}`);
+}
+
+const assetSummary = ({ blob: _blob, ...summary }: AssetRecord): AssetSummary => summary;
 
 const newestFirst = (a: { createdAt: number; versionId: string }, b: { createdAt: number; versionId: string }) => b.createdAt - a.createdAt || (b.versionId > a.versionId ? 1 : -1);
 
@@ -28,6 +47,7 @@ const newestFirst = (a: { createdAt: number; versionId: string }, b: { createdAt
 export interface MemoryRepository extends DesignRepository {
   designs: Map<string, DesignRecord>;
   versions: Map<string, VersionRecord>;
+  assets: Map<string, AssetRecord>;
   /** Make the next writes fail (quota, blocked…) — tests. */
   failWrites(error: Error | null): void;
 }
@@ -36,14 +56,18 @@ export interface MemoryRepository extends DesignRepository {
 export function createMemoryRepository(): MemoryRepository {
   const designs = new Map<string, DesignRecord>();
   const versions = new Map<string, VersionRecord>();
+  const assets = new Map<string, AssetRecord>();
   let failure: Error | null = null;
   const clone = <T>(value: T): T => structuredClone(value);
+  // Blobs are immutable: copy the record, share the file.
+  const cloneAsset = (a: AssetRecord): AssetRecord => ({ ...a });
   const writing = () => {
     if (failure) throw toStorageError(failure);
   };
   return {
     designs,
     versions,
+    assets,
     failWrites(error) {
       failure = error;
     },
@@ -74,6 +98,24 @@ export function createMemoryRepository(): MemoryRepository {
       versions.set(version.versionId, clone(version));
       const mine = [...versions.values()].filter((v) => v.designId === version.designId).sort(newestFirst);
       for (const old of mine.slice(Math.max(1, limit))) versions.delete(old.versionId);
+    },
+    async putAsset(asset) {
+      writing();
+      assets.set(asset.assetId, cloneAsset(asset));
+    },
+    async getAsset(assetId) {
+      const asset = assets.get(assetId);
+      return asset ? cloneAsset(asset) : null;
+    },
+    async listAssets() {
+      return [...assets.values()].sort((a, b) => b.createdAt - a.createdAt).map(assetSummary);
+    },
+    async deleteAsset(assetId) {
+      writing();
+      assets.delete(assetId);
+    },
+    async isAssetReferenced(assetId) {
+      return [...designs.values(), ...versions.values()].some((r) => mentionsAsset(r.document, assetId));
     },
   };
 }
@@ -117,6 +159,11 @@ export function openStudioDatabase(factory: IDBFactory | undefined = globalThis.
         const versions = db.createObjectStore(VERSIONS_STORE, { keyPath: 'versionId' });
         versions.createIndex('designId', 'designId');
         versions.createIndex('createdAt', 'createdAt');
+      }
+      // Version 2 (M12): uploaded images. Designs and versions saved by version 1 stay as they are.
+      if (!db.objectStoreNames.contains(ASSETS_STORE)) {
+        const assets = db.createObjectStore(ASSETS_STORE, { keyPath: 'assetId' });
+        assets.createIndex('createdAt', 'createdAt');
       }
     };
     open.onsuccess = () => {
@@ -188,6 +235,37 @@ export function createIdbRepository(factory?: IDBFactory): DesignRepository {
       const keys = (await request(store.index('designId').getAll(version.designId))) as VersionRecord[];
       for (const old of keys.sort(newestFirst).slice(Math.max(1, limit))) store.delete(old.versionId);
       await finished;
+    },
+
+    async putAsset(asset) {
+      const tx = (await database()).transaction(ASSETS_STORE, 'readwrite');
+      const finished = done(tx);
+      tx.objectStore(ASSETS_STORE).put(asset);
+      await finished;
+    },
+
+    async getAsset(assetId) {
+      const tx = (await database()).transaction(ASSETS_STORE, 'readonly');
+      return ((await request(tx.objectStore(ASSETS_STORE).get(assetId))) as AssetRecord | undefined) ?? null;
+    },
+
+    async listAssets() {
+      const tx = (await database()).transaction(ASSETS_STORE, 'readonly');
+      const all = (await request(tx.objectStore(ASSETS_STORE).getAll())) as AssetRecord[];
+      return all.sort((a, b) => b.createdAt - a.createdAt).map(assetSummary);
+    },
+
+    async deleteAsset(assetId) {
+      const tx = (await database()).transaction(ASSETS_STORE, 'readwrite');
+      const finished = done(tx);
+      tx.objectStore(ASSETS_STORE).delete(assetId);
+      await finished;
+    },
+
+    async isAssetReferenced(assetId) {
+      const tx = (await database()).transaction([DESIGNS_STORE, VERSIONS_STORE], 'readonly');
+      const [designs, versions] = await Promise.all([request(tx.objectStore(DESIGNS_STORE).getAll()), request(tx.objectStore(VERSIONS_STORE).getAll())]);
+      return [...(designs as DesignRecord[]), ...(versions as VersionRecord[])].some((r) => mentionsAsset(r.document, assetId));
     },
   };
 }

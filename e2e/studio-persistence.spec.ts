@@ -89,7 +89,7 @@ test.describe('desktop: saving in this browser', () => {
     await expect(status(page)).toHaveText(/Saved just now/);
     await expect(page).toHaveURL(/\?design=design_/);
     const db = await stored(page);
-    expect(db.stores).toEqual(['designs', 'versions']);
+    expect(db.stores).toEqual(['assets', 'designs', 'versions']); // assets: M12 uploads
     expect(db.designs).toHaveLength(1);
     expect(db.designs[0]!.json).not.toMatch(/selectedIds|viewport|"history"|data:image|base64/);
     await page.reload();

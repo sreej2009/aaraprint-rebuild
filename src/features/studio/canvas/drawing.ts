@@ -49,7 +49,7 @@ export type Drawing =
   | { kind: 'ellipse'; x: number; y: number; radiusX: number; radiusY: number; fill: string | null; stroke: string | null; strokeWidth: number }
   | { kind: 'polyline'; points: number[]; closed: boolean; fill: string | null; stroke: string | null; strokeWidth: number; lineCap?: LineCap; dash?: number[] }
   | { kind: 'arrow'; points: number[]; pointerLength: number; pointerWidth: number; fill: string | null; stroke: string | null; strokeWidth: number; lineCap: LineCap }
-  | { kind: 'image-placeholder'; width: number; height: number }
+  | { kind: 'upload'; assetId: string; width: number; height: number }
   | { kind: 'graphic'; graphicId: string; width: number; height: number };
 
 /** Families map to the self-hosted web fonts in assets/fonts.ts. */
@@ -113,7 +113,7 @@ export function drawingFor(element: DesignElement): Drawing {
   if (element.type === 'image') {
     return element.source.kind === 'graphic'
       ? { kind: 'graphic', graphicId: element.source.graphicId, width: w, height: h }
-      : { kind: 'image-placeholder', width: w, height: h };
+      : { kind: 'upload', assetId: element.source.assetId, width: w, height: h };
   }
   return shapeDrawing(element);
 }
