@@ -47,6 +47,7 @@ const PAST_TENSE: Record<string, string> = {
   Clear: 'Cleared',
   Centre: 'Centred',
   Align: 'Aligned',
+  Apply: 'Applied',
 };
 
 /** "Move “Logo”" → "Moved “Logo”". */
@@ -84,7 +85,7 @@ export function announcementFor(prev: StudioState, next: StudioState): string | 
     const latest = past.at(-1);
     if (latest && latest === prev.history.future.at(-1)) return `Redone: ${latest.label}.${side}${where}`;
     if (latest && next.document !== prev.document) {
-      const undo = latest.label.startsWith('Delete') ? ' Press Ctrl Z to undo.' : '';
+      const undo = latest.label.startsWith('Delete') || latest.label.startsWith('Apply template') ? ' Press Ctrl Z to undo.' : '';
       return `${pastTense(latest.label)}.${undo}${side}${where}`;
     }
   }

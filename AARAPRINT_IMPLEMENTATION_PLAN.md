@@ -1189,7 +1189,8 @@ I'll report after steps 2, 4 and 5 (or after each milestone, if you prefer). Eac
 | M10 Front/back sides and core editor polish | Done |
 | M11 Autosave, restore and version history | Done |
 | M12 Image uploads and image assets | Done |
-| M13–M16 | Not started |
+| M13 Templates | Done |
+| M14–M16 | Not started |
 
 #### M1 findings
 
@@ -1813,3 +1814,150 @@ StudioState
 - **No automatic cleanup.** Files still listed by a design or version stay until nothing uses them; there's no clean-up of old uploads beyond Remove.
 - **PNG, JPEG and WebP only.** HEIC/AVIF photos must be converted first. No multi-page or vector uploads.
 - **Resolution isn't final.** Thresholds are advice; the print check before ordering is M15.
+
+#### M13 — Templates
+
+**Scope:**
+- A Templates tool to find, preview and apply ready-made layouts to one side or both sides of a design.
+- Everything stays in the app: no server templates, remote URLs, imports, template editor or marketplace.
+- This is the plan's original "M14 — Templates engine and first 15 templates" (milestones were renumbered in M11). The relative-geometry layout engine planned there was replaced by the predictable fit rules below.
+- Preview (M14), proof and download (M15) and hardening (M16) are not part of M13.
+
+**Templates are design data** (`src/features/studio/templates/`):
+- **`types.ts`:** a `StudioTemplate` holds:
+  - a stable id, name, description, category and tags;
+  - the product families it was laid out for (M1 profiles), its rights status (the M1 `RightsStatus`) and `basedOn` (the original template it was re-authored from, if any);
+  - `surfaces.front` and optionally `surfaces.back`. Each side is `{ print, background, elements }`, using M2 elements, an M10 side background, and the print size it was laid out on.
+- **What they never hold:** Konva nodes, HTML, SVG markup, object URLs, Blobs, base64 or uploaded images. No new element type or schema change: the M2 document schema is unchanged.
+- **`data/`:** the definitions, written in millimetres and points with small helpers (`data/build.ts`) that output plain M2 elements. Template texts are marked `placeholder: true`, the M2 sample-copy flag; editing a text clears it, as in M8.
+- **`validate.ts`:** template data is treated as untrusted and checked one template at a time:
+  - **Both sides together** go through the M2 parser (`parseDesign`). Element ids are unique across sides, values are in range, unknown fields are dropped and embedded `data:` is refused.
+  - **Template-only rules:**
+    - id format, name, category, short tags and known families;
+    - Studio fonts only (`assets/fonts.ts`) and no uploaded images;
+    - every element at least partly on the bleed box, and the back the same size as the front.
+  - **Rights:** a template whose rights aren't confirmed is withheld.
+  - **Bad entries:** a failing template is left out, with its reasons, in `rejected` (for tests and development). It never stops the others, and a repeated id is dropped.
+- **`registry.ts`:** the catalogue loads only when the panel first needs it, as its own chunk, and is checked once. It has loading, ready and error states with Try again; `setTemplateSourceForTests` swaps the source.
+- **`registry.ts` search:** local search over name, category and tags. It's case-insensitive, every word must match, and it combines with a category.
+
+**The catalogue: 16 templates.** The original site had 95 code-defined templates (Reconnaissance Appendix B).
+- **Nothing reused:** none of their code, copy or artwork is used; the original definitions aren't copied into this repository.
+- **The 16 are new layouts in the new visual style:** 10 re-authored from an original layout idea (`basedOn`) and 6 new.
+- **Content:** shapes, text and the Studio's OFL fonts only. No M9 graphics (none are cleared yet) and no images, so every template is `rights: 'cleared'`.
+- **The other 79 originals** weren't re-authored and aren't offered. Their list stays in Appendix B, not duplicated here.
+
+| Category | Templates | Laid out on |
+|---|---|---|
+| Business | Minimal centred (2 sides), Bold left-aligned, Diagonal spotlight, Classic emblem (2 sides), Editorial serif | 88.9 × 50.8 mm card |
+| Business | Editorial notice | A5 flyer |
+| Events | Event poster | A5 flyer |
+| Events | Modern wedding (2 sides) | 127 × 177.8 mm invitation |
+| Events | Birthday bash | 127 mm square invitation |
+| Promotions | Sale announcement | A5 flyer |
+| Promotions | Sleek pen wordmark | 101.6 × 20.3 mm pen |
+| Stationery | Editorial sidebar letterhead | A4 |
+| Stationery | Minimal corporate envelope | DL envelope |
+| Labels & stamps | Centred badge | 59.3 mm round |
+| Labels & stamps | Product label | 76.2 mm square label |
+| Labels & stamps | Address stamp | 50.8 × 16.9 mm stamp |
+
+**Compatibility** (`compat.ts`; shown as text and an icon, never colour alone):
+- **Fits this product:** the template's product family, same trim shape (round or straight-edged) and the same finished size within 1 mm. It's applied as laid out: same millimetres, positions, proportions, rotations and layer order (DPI converted).
+- **Fitted to W × H mm:** same family and trim shape, proportions within 20 %.
+  - The template's safe area is scaled uniformly into this side's safe area and centred, so anything safe stays safe.
+  - Rectangles that ran to or into the bleed past an edge (background bands) are stretched to the new edge.
+  - Nothing else is rearranged.
+- **Not for this product:** another family ("Made for visiting cards"), another trim shape ("Made for round products") or very different proportions ("Made for a different shape (88.9 × 50.8 mm)"). It can be previewed but not applied.
+- **Product size:** never changes. D2 is untouched: templates use each side's own print geometry, and the 8 named-size mismatches and 106 option-dependent sizes are not altered.
+- **Coverage today:** 199 of the 532 Studio products have at least one fitting template, 117 of them an exact fit.
+  - Most visiting cards, pens, stamps and A-size stationery, flyers and signs are covered, plus some labels and gifts.
+  - Clothing, bags, drinkware, mugs and umbrellas have none yet; those families say "No templates fit this product's size and shape yet".
+
+**Panel** (`tools/templates-tool.tsx`; the existing tool rail, docked panel, tablet overlay and phone sheet; open by default on desktop as before):
+- **Search:** "Search templates", with a polite live count of results.
+- **Categories:** All plus the categories that have templates (Business, Events, Promotions, Stationery, Labels & stamps), as toggle buttons in a labelled group.
+- **For this product:** templates that fit, exact ones first.
+- **Made for other products (N):** collapsed by default.
+- **No results:** "No templates match your search." with "Clear search and filters".
+- **Cards:** preview, name, "2 sides" and "Fitted" or "Other product". Each card's accessible name is exactly what it shows followed by the details, e.g. "Minimal centred 2 sides. Business. Fits this product." (WCAG label-in-name). The preview sits outside the button, which stretches over the whole card.
+- **Details** (in the panel, no navigation):
+  - an "All templates" back link; the heading takes focus, and going back returns focus to the card;
+  - front and back previews labelled as images;
+  - the description, sides and the size it was made for;
+  - the fit with its explanation, and the apply buttons.
+- **Previews** (`template-preview.tsx`):
+  - **Format:** a static SVG built from the same pure drawing descriptions as the canvas (`canvas/drawing.ts`), clipped to the trim shape.
+  - **Cost:** no Konva stage per card, no image decoding and no stored thumbnail files, so dozens can show at once.
+  - **Text:** follows the template's own line breaks (the templates are laid out not to wrap).
+  - **Editing:** the list reads only the side's print size, so editing the design never redraws the previews.
+
+**Applying** (`apply.ts`, a pure command; store action `applyTemplate(template, 'side' | 'both', mode)`):
+- **Fresh ids:** every element is a copy with a new `el_` id. Template ids are never reused, and applying the same template twice never repeats an id. The template itself is never changed.
+- **Empty side:** applied at once, no question.
+- **A side with artwork:** "Replace what's on the front?", saying what's there ("The front has 5 items and a background colour…"), with three choices:
+  - **Replace front:** the side's elements and background become the template's.
+  - **Add to front:** keeps everything and adds the template on top. The side's background stays; the template's is used only if the side has none.
+  - **Cancel:** nothing changes and no undo step is recorded.
+  - Escape closes it, and focus returns to the Apply button.
+- **One undo step** in every case ("Apply template "…""), however many sides and elements. Undo and redo restore exactly. Nothing is selected afterwards. Searching, filtering and previewing never record history.
+- **Announced:** "Applied template "…". Press Ctrl Z to undo."
+- **Phones and tablets:** the panel closes after applying, to show the design.
+- **Front and back (M10):**
+  - A one-sided template goes on the side being edited ("Apply to back").
+  - A two-sided template offers "Apply to both sides" (front to front, back to back, one step) or "Apply to front only" (its matching side).
+  - The other side is never changed unless "both" was chosen.
+- **Backgrounds:** use the M10 side background, never an extra rectangle. Bands that are part of a layout are ordinary editable rectangles.
+- **Editable:** everything applied stays editable — text, styles, shapes, positions, layers, names and background. Layer names follow M7 rules: decorative shapes carry names such as "Colour block", "Ring" or "Divider", and texts are named by their content. No locked elements are used.
+
+**Assets and rights:**
+- **Graphics:** templates may reference M9 graphics by id only. A template is offered only while every graphic it uses is in the approved library, so blocked graphics keep their templates hidden. Previews draw approved graphics from their library URL. No shipped template uses graphics yet.
+- **Images:** templates can't reference uploaded images (M12), since a template can't rely on files in someone's browser. If an image ever went missing it would follow M12's "Image unavailable" handling. Nothing is ever substituted.
+
+**Saving (M11):**
+- Applying is an ordinary design change. Autosave stores the design's own elements (references and values only); a reload restores it.
+- Saved designs contain no template ids or previews.
+- Template designs take part in version history as usual; restoring a version brings its template content back.
+
+**Testing:**
+- **Unit:** `templates/templates.test.ts` (15 tests):
+  - the shipped catalogue (16 valid and cleared, unique ids, no images, graphics or embedded data, texts inside the safe area, placeholders);
+  - validation of broken, unsafe and withheld definitions, and one bad entry not affecting others;
+  - compatibility levels and labels;
+  - search and categories;
+  - applying: fresh ids, applying twice, replace and add with backgrounds, both sides and one-sided targets, same size at another DPI, safe-area fit with edge bands, and the store's single undo step.
+- **Component:** `tools/templates-tool.test.tsx` (10 tests):
+  - list order, collapsed other products and names;
+  - search, categories, the no-result state and Clear;
+  - details with focus, previews and fit;
+  - apply to both sides with undo and redo, and focus back to the card;
+  - cancel, add and replace with focus returning;
+  - a template for another product can't be applied;
+  - load failure with Try again, and the loading state;
+  - broken, withheld and unapproved-graphic templates left out;
+  - an approved graphic shown in the preview;
+  - the phone sheet.
+- **Browser:** `e2e/studio-templates.spec.ts` (15 tests: 13 desktop, 1 tablet, 1 phone):
+  - the panel and SVG previews;
+  - search, categories and no results;
+  - two-sided apply and its single undo;
+  - a one-sided template on the back;
+  - a template for another product;
+  - replace, add and cancel with undo and redo;
+  - fresh ids;
+  - editing what was applied;
+  - a fitted template on A4;
+  - autosave and reload, and version restore;
+  - keyboard only, with focus and the announcement;
+  - tablet and phone;
+  - 1440–360 px with no sideways scroll;
+  - no console errors in any test.
+- **Screenshots:** `e2e/studio-visual.spec.ts` "templates" (`SCREENSHOTS=1`).
+- **One existing test changed:** `e2e/studio.spec.ts` now finds the rail's Product button by its exact name, because template cards (open by default on desktop) also say "product".
+
+**Known limits**
+- **16 templates, not 95.** The other originals weren't re-authored. Clothing, bags, drinkware, mugs and umbrellas have none, because their on-product layouts come with the mockup work.
+- **Simple fitting.** A template only scales and centres into another size within 20 % of its proportions; nothing is rearranged for very different shapes.
+- **Approximate previews.** Text in previews follows line breaks but not automatic wrapping, and fonts appear once loaded.
+- **No graphics or photos yet.** No template uses M9 graphics (none are cleared) or photo areas.
+- **Placeholder text isn't flagged to customers yet.** Template text is marked as placeholder for the Phase 4 preflight; the Studio doesn't warn about unchanged sample text yet.

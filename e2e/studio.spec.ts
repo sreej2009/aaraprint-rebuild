@@ -105,10 +105,10 @@ test.describe('tools and panels', () => {
     await page.goto(STUDIO);
     await expect(page.getByRole('complementary', { name: 'Templates' })).toBeVisible();
     await expect(page.getByRole('complementary', { name: 'Layers and properties' })).toBeVisible();
-    await page.getByRole('button', { name: 'Product' }).click();
+    await page.getByRole('button', { name: 'Product', exact: true }).click();
     const panel = page.getByRole('complementary', { name: 'Product and print size' });
     expect(nbsp((await panel.textContent()) ?? '')).toContain('91.9 × 53.8 mm');
-    await page.getByRole('button', { name: 'Product' }).click();
+    await page.getByRole('button', { name: 'Product', exact: true }).click();
     await expect(panel).toHaveCount(0);
   });
 

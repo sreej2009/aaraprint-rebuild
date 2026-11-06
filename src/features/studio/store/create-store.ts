@@ -3,6 +3,8 @@ import { layoutChanges, relayoutDocument, textMeasurer, type TextMeasurer } from
 import * as cmd from '../commands';
 import { createId, type IdFactory } from '../ids';
 import { describeElements } from '../naming';
+import { applyTemplate, templateTargets, type ApplyMode } from '../templates/apply';
+import type { StudioTemplate } from '../templates/types';
 import type { DesignAsset, DesignDocument, DesignElement, ElementPatch, ImageElement, SurfaceDesign } from '../schema/types';
 import { emptyHistory, HISTORY_LIMIT, rebaseHistory, recordEntry, redoStep, sealLatest, undoStep, type EditorSnapshot, type HistoryEntry, type HistoryState } from './history';
 import { isAllowedOnLocked, isPickable, nextSelection, pruneSelection, type SelectMode } from './selection';
@@ -85,6 +87,11 @@ export interface StudioActions {
   setBackground(color: string | null, options?: EditOptions & { surfaceId?: string }): boolean;
   copySurface(fromId: string, toId: string, mode: cmd.CopyMode): boolean;
   clearSurface(surfaceId?: string): boolean;
+  /**
+   * Apply a template (M13) as one undo step: its matching side to the active side, or (`both`) its
+   * front and back to the design's front and back. Elements get new ids; nothing is selected.
+   */
+  applyTemplate(template: StudioTemplate, scope: 'side' | 'both', mode: ApplyMode): boolean;
   renameDesign(name: string): boolean;
   /** Not undoable: the variant comes from the product options, so it's applied to every history step. */
   setVariant(variantId: string | null): void;
@@ -323,6 +330,13 @@ export function createStudioStore(options: CreateStudioStoreOptions): StudioStor
 
       clearSurface(surfaceId = get().editor.activeSurfaceId) {
         return actions.execute(`Clear ${surface(get(), surfaceId)?.label ?? surfaceId}`, (d) => cmd.clearSurface(d, surfaceId), { surfaceId, select: [] });
+      },
+
+      applyTemplate(template, scope, mode) {
+        const state = get();
+        const surfaceId = state.editor.activeSurfaceId;
+        const targets = templateTargets(template, state.document, surfaceId, scope);
+        return actions.execute(`Apply template “${template.name}”`, (d) => applyTemplate(d, template, targets, mode, () => newId('el')), { surfaceId, select: [] });
       },
 
       renameDesign(name) {

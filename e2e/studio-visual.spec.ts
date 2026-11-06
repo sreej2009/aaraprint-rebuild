@@ -269,3 +269,49 @@ test('screenshot uploads and images', async ({ page, hasTouch, isMobile }, info)
   }
   await shot('image-unavailable');
 });
+
+/** M13: the Templates panel, search and categories, a template's details, the replace question, an applied template, and the phone sheet. */
+test('screenshot templates', async ({ page, hasTouch, isMobile }, info) => {
+  const shot = (name: string) => page.screenshot({ path: `review-screens/${info.project.name}-studio-${name}.png` });
+  const settle = async () => {
+    await page.evaluate(() => document.fonts.ready);
+    await page.waitForTimeout(400);
+  };
+  const card = (name: string) => page.getByRole('button', { name: new RegExp(`^${name}[ .]`) });
+  await page.goto('/products/business-card-classic/design');
+  await page.waitForLoadState('networkidle');
+  await page.waitForFunction(() => Boolean((window as unknown as { Konva?: { stages: unknown[] } }).Konva?.stages.length));
+  if (hasTouch) await page.getByRole('navigation', { name: 'Design tools' }).getByRole('button', { name: /^Templates/ }).click();
+  await card('Minimal centred').waitFor();
+  await settle();
+  await shot('templates');
+  const search = page.getByRole('searchbox', { name: 'Search templates' });
+  if (!isMobile) {
+    await page.getByRole('group', { name: 'Template categories' }).getByRole('button', { name: 'Events' }).click();
+    await page.getByRole('button', { name: /^Made for other products/ }).click();
+    await settle();
+    await shot('templates-filtered');
+    await page.getByRole('group', { name: 'Template categories' }).getByRole('button', { name: 'All' }).click();
+    await search.fill('zebra');
+    await settle();
+    await shot('templates-no-results');
+    await search.fill('');
+  }
+  await card('Classic emblem').click();
+  await settle();
+  await shot('template-details');
+  await page.getByRole('button', { name: 'Apply to both sides' }).click();
+  await page.waitForTimeout(600);
+  await shot('template-applied');
+  if (!hasTouch) {
+    await page.getByRole('button', { name: 'Apply to both sides' }).click();
+    await page.getByRole('dialog').waitFor();
+    await settle();
+    await shot('template-replace');
+    await page.keyboard.press('Escape');
+    await page.getByRole('button', { name: 'All templates' }).click();
+    await card('Event poster').click(); // "other products" is still open from before
+    await settle();
+    await shot('template-not-for-product');
+  }
+});

@@ -9,4 +9,4 @@ export { addAsset, removeAssets, renameDesign, setVariant, MAX_DESIGN_NAME } fro
 export { addElement, duplicateElement, removeElements, updateElement } from './elements';
 export { arrangeElement, moveElementTo, type ArrangeAction } from './order';
 export { DesignCommandError, findElement, getSurface } from './shared';
-export { clearSurface, copySurface, resizeSurface, setBackground, type CopyMode, type ResizeMode } from './surfaces';
+export { clearSurface, copySurface, resizeSurface, setBackground, transformElement, type CopyMode, type ResizeMode, type Transform } from './surfaces';

@@ -4,6 +4,7 @@ import { formatINR } from '@/lib/format';
 import { BackgroundTool } from '../tools/background-tool';
 import { GraphicsTool } from '../tools/graphics-tool';
 import { ShapesTool } from '../tools/shapes-tool';
+import { TemplatesTool } from '../tools/templates-tool';
 import { TextTool } from '../tools/text-tool';
 import { UploadsTool } from '../tools/uploads-tool';
 import { useStudioSession } from './session-context';
@@ -18,6 +19,7 @@ export function ToolContent({ tool }: { tool: ToolDefinition }) {
   if (tool.id === 'graphics') return <GraphicsTool />;
   if (tool.id === 'background') return <BackgroundTool />;
   if (tool.id === 'uploads') return <UploadsTool />;
+  if (tool.id === 'templates') return <TemplatesTool />;
   return <ComingSoonTool tool={tool} />;
 }
 

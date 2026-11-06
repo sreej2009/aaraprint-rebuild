@@ -16,7 +16,7 @@ export interface ToolDefinition {
 }
 
 export const TOOLS: readonly ToolDefinition[] = [
-  { id: 'templates', label: 'Templates', title: 'Templates', icon: LayoutTemplate, intro: 'Start from a layout made to fit this product.', comingSoon: true },
+  { id: 'templates', label: 'Templates', title: 'Templates', icon: LayoutTemplate, intro: 'Start from a ready-made layout, then make it yours.', comingSoon: false },
   { id: 'text', label: 'Text', title: 'Text', icon: Type, intro: 'Add headings, names, contact details and more.', comingSoon: false },
   { id: 'uploads', label: 'Uploads', title: 'Uploads', icon: ImageUp, intro: 'Add your logo or photos from this device.', comingSoon: false },
   { id: 'graphics', label: 'Graphics', title: 'Graphics', icon: Sparkles, intro: 'Icons, badges and illustrations for your design.', comingSoon: false },

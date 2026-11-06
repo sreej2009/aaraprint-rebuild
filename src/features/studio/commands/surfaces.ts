@@ -58,7 +58,8 @@ export function resizeSurface(document: DesignDocument, surfaceId: string, print
   });
 }
 
-interface Transform {
+/** Uniform scale then offset, in print px: how artwork moves to another print size. */
+export interface Transform {
   scale: number;
   dx: number;
   dy: number;
@@ -74,7 +75,8 @@ function keepSizeTransform(from: SurfacePrint, to: SurfacePrint): Transform {
   return { scale, dx: (to.widthPx - from.widthPx * scale) / 2, dy: (to.heightPx - from.heightPx * scale) / 2 };
 }
 
-function transformElement<T extends DesignElement>(element: T, { scale, dx, dy }: Transform): T {
+/** One element through a `Transform`: box, text size, border width and corner radius scale together. */
+export function transformElement<T extends DesignElement>(element: T, { scale, dx, dy }: Transform): T {
   const moved = { ...element, x: element.x * scale + dx, y: element.y * scale + dy, width: element.width * scale, height: element.height * scale };
   if (moved.type === 'text') return { ...moved, fontSize: moved.fontSize * scale };
   if (moved.type === 'shape') return { ...moved, strokeWidth: moved.strokeWidth * scale, cornerRadius: moved.cornerRadius * scale };
