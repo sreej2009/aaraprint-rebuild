@@ -16,7 +16,8 @@ const LABELS: Record<ContentSlug, { label: string; description: string }> = {
 
 export async function loader({ request }: Route.LoaderArgs) {
   // Pre-rendering also requests "<path>.data" for client navigation; strip that suffix.
-  const slug = new URL(request.url).pathname.replace(/\.data$/, '').replace(/^\/|\/$/g, '') as ContentSlug;
+  // The last path segment, so it also works under a basename (the GitHub Pages preview).
+  const slug = (new URL(request.url).pathname.replace(/\.data$/, '').split('/').filter(Boolean).at(-1) ?? '') as ContentSlug;
   if (!CONTENT_PAGES.includes(slug)) throw data('Not found', { status: 404 });
   return { page: await getContentPage(slug), ...LABELS[slug] };
 }

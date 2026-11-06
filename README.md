@@ -126,3 +126,12 @@ e2e/                       Playwright specs (routing, navigation, keyboard, axe 
 | `npm run test:e2e` | 112 passed, 10 skipped by design (desktop/mobile only), including axe WCAG 2.2 AA on 19 page types |
 
 Known limitations are listed in `AARAPRINT_IMPLEMENTATION_PLAN.md` §17.
+
+## Public preview (GitHub Pages)
+
+Every push to `main` rebuilds the site and publishes it at https://sreej2009.github.io/aaraprint-rebuild/ (`.github/workflows/pages.yml`). It's built under the `/aaraprint-rebuild/` sub-path (`PAGES_BASE`) and without the recovered media library, which isn't in this repository, so product photos show their placeholders there. To check that build locally:
+
+```bash
+PAGES_BASE=/aaraprint-rebuild/ VITE_API_BASE_URL=/aaraprint-rebuild/api/v1 VITE_MEDIA_BASE_URL=none npm run build
+node scripts/pages/prepare-pages.mjs && node scripts/pages/serve-pages.mjs   # http://localhost:4174/aaraprint-rebuild/
+```

@@ -1,4 +1,5 @@
 import type { Product, ProductImage as ProductImageData } from '@/lib/catalogue/types';
+import { hasMedia } from '@/lib/media';
 
 /** Product photos first, then the Studio mockups (front / back), without duplicates. */
 /** Polos share one Studio mockup in the original site (`/products/polo/*`). */
@@ -12,5 +13,5 @@ export function galleryImages(product: Pick<Product, 'name' | 'images' | 'print'
   const polo = product.categorySlug === 'custom-polo-t-shirts';
   add(product.print?.mockups.front ?? (polo ? POLO_MOCKUPS.front : null), 'front');
   add(product.print?.mockups.back ?? (polo ? POLO_MOCKUPS.back : null), 'back');
-  return images;
+  return images.filter((image) => hasMedia(image.src));
 }

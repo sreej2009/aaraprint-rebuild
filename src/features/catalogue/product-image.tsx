@@ -1,7 +1,7 @@
 import { CategoryIcon } from '@/components/shell/category-icon';
 import type { ProductImage as ProductImageData } from '@/lib/catalogue/types';
 import { cn } from '@/lib/cn';
-import { mediaUrl } from '@/lib/media';
+import { hasMedia, mediaUrl } from '@/lib/media';
 
 export interface ProductImageProps {
   image: ProductImageData | null;
@@ -19,7 +19,7 @@ export interface ProductImageProps {
  * Products without a picture get a calm placeholder instead of an empty box.
  */
 export function ProductImage({ image, name, categorySlug, priority = false, className }: ProductImageProps) {
-  if (!image) {
+  if (!image || !hasMedia(image.src)) {
     return (
       <div className={cn('grid place-items-center bg-surface-subtle text-fg-subtle', className)} aria-hidden="true">
         <CategoryIcon slug={categorySlug ?? ''} className="size-10" />

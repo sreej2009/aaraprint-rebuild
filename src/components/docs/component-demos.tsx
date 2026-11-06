@@ -79,9 +79,12 @@ import {
 } from '@/design-system';
 import type { Product } from '@/lib/catalogue/types';
 import { formatINR } from '@/lib/format';
-import { mediaUrl } from '@/lib/media';
+import { hasMedia, mediaUrl } from '@/lib/media';
 import { defaultSelection, quantityGroup, quantityTiers, resolveVariant, type Selection } from '@/lib/pricing';
 import { DocsSection, Example } from './docs-layout';
+
+/** Demo tile images, when the media library is available. */
+const demoImage = (ref: string) => (hasMedia(ref) ? { imageSrc: mediaUrl(ref) } : {});
 
 // ----------------------------------------------------------------- Buttons
 
@@ -277,14 +280,14 @@ const shirtColours: ColorOption[] = [
 ];
 
 const lidTypes: TileOption[] = [
-  { value: 'flip', label: 'Flip cap', description: 'One-hand opening', imageSrc: mediaUrl('products/drinkware-2d/drinkware-bottle-cello-swift-flip-front.png') },
-  { value: 'screw', label: 'Screw cap', description: 'Leak-proof seal', imageSrc: mediaUrl('products/drinkware-2d/drinkware-bottle-cello-swift-screw-front.png') },
+  { value: 'flip', label: 'Flip cap', description: 'One-hand opening', ...demoImage('products/drinkware-2d/drinkware-bottle-cello-swift-flip-front.png') },
+  { value: 'screw', label: 'Screw cap', description: 'Leak-proof seal', ...demoImage('products/drinkware-2d/drinkware-bottle-cello-swift-screw-front.png') },
   {
     value: 'sipper',
     label: 'Sipper',
     description: 'Built-in straw',
     priceDeltaCents: 4000,
-    imageSrc: mediaUrl('products/drinkware-2d/drinkware-bottle-cello-swift-sipper-front.png'),
+    ...demoImage('products/drinkware-2d/drinkware-bottle-cello-swift-sipper-front.png'),
   },
 ];
 

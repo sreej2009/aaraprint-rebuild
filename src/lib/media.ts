@@ -8,6 +8,17 @@
  */
 const MEDIA_BASE = (import.meta.env.VITE_MEDIA_BASE_URL ?? '/media').replace(/\/+$/, '');
 
+/**
+ * False when the site is published without the media library (`VITE_MEDIA_BASE_URL=none`, as on
+ * the GitHub Pages preview, which can't host the recovered files): only external images (stock
+ * photos) can be shown then, and everything else falls back to its placeholder.
+ */
+export const MEDIA_AVAILABLE = MEDIA_BASE !== 'none';
+
+export function hasMedia(ref: string): boolean {
+  return MEDIA_AVAILABLE || /^https?:\/\//i.test(ref);
+}
+
 export function mediaUrl(ref: string): string {
   if (/^https?:\/\//i.test(ref)) return ref;
   return `${MEDIA_BASE}/${ref.replace(/^\/+/, '')}`;

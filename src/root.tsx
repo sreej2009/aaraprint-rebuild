@@ -11,9 +11,10 @@ import '@/styles/app.css';
 export const links: Route.LinksFunction = () => [
   { rel: 'preload', href: interLatinUrl, as: 'font', type: 'font/woff2', crossOrigin: 'anonymous' },
   { rel: 'preload', href: manropeLatinUrl, as: 'font', type: 'font/woff2', crossOrigin: 'anonymous' },
-  { rel: 'icon', href: '/favicon.ico', sizes: '32x32' },
-  { rel: 'icon', href: '/icon.png', type: 'image/png' },
-  { rel: 'apple-touch-icon', href: '/apple-icon.png' },
+  // BASE_URL is "/" normally, "/aaraprint-rebuild/" on the GitHub Pages preview.
+  { rel: 'icon', href: `${import.meta.env.BASE_URL}favicon.ico`, sizes: '32x32' },
+  { rel: 'icon', href: `${import.meta.env.BASE_URL}icon.png`, type: 'image/png' },
+  { rel: 'apple-touch-icon', href: `${import.meta.env.BASE_URL}apple-icon.png` },
 ];
 
 export const meta: Route.MetaFunction = () => seo();

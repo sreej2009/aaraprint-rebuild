@@ -5,6 +5,8 @@ import { defineConfig } from 'vite';
 import { localMedia } from './tooling/local-media.ts';
 
 export default defineConfig({
+  // Matches the router basename: "/" normally, "/aaraprint-rebuild/" on GitHub Pages.
+  base: process.env.PAGES_BASE ?? '/',
   plugins: [tailwindcss(), reactRouter(), localMedia()],
   resolve: {
     alias: { '@': fileURLToPath(new URL('./src', import.meta.url)) },
