@@ -173,3 +173,32 @@ test('screenshot front and back', async ({ page }, info) => {
   await page.waitForTimeout(400);
   await page.screenshot({ path: `review-screens/${info.project.name}-studio-copy-side.png` });
 });
+
+/** M11: saving state, saved state, version history and the restore confirmation. */
+test('screenshot saving and versions', async ({ page, hasTouch, isMobile }, info) => {
+  await page.goto('/products/business-card-classic/design');
+  await page.waitForFunction(() => Boolean((window as unknown as { Konva?: { stages: unknown[] } }).Konva?.stages.length));
+  const status = page.getByTestId('save-status');
+  if (isMobile) {
+    await page.getByRole('button', { name: 'Add shape' }).click();
+    await page.getByRole('dialog', { name: 'Shapes' }).getByRole('button', { name: 'Add circle' }).click();
+  } else {
+    await page.getByRole('navigation', { name: 'Design tools' }).getByRole('button', { name: 'Shapes' }).click();
+    await page.getByRole('button', { name: 'Add circle', exact: true }).click();
+  }
+  if (!hasTouch && !isMobile) await page.screenshot({ path: `review-screens/${info.project.name}-studio-saving.png` });
+  await page.waitForFunction(() => document.querySelector('[data-testid="save-status"]')?.getAttribute('data-status') === 'saved');
+  await page.keyboard.press('Control+s');
+  await page.waitForTimeout(300);
+  await page.screenshot({ path: `review-screens/${info.project.name}-studio-saved.png` });
+  await status.click();
+  await page.getByRole('menuitem', { name: /Version history/ }).click();
+  await page.getByRole('dialog', { name: 'Version history' }).waitFor();
+  await page.waitForTimeout(400);
+  await page.screenshot({ path: `review-screens/${info.project.name}-studio-version-history.png` });
+  if (!hasTouch || isMobile) {
+    await page.getByRole('dialog', { name: 'Version history' }).getByRole('button', { name: /^Restore/ }).first().click();
+    await page.waitForTimeout(400);
+    await page.screenshot({ path: `review-screens/${info.project.name}-studio-restore-confirm.png` });
+  }
+});

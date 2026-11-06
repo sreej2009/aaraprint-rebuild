@@ -17,6 +17,8 @@ export type StudioLoad =
       initialTool: ToolId | null;
       /** `?sample=1`: start from the sample card instead of a blank design (preview aid, M6). */
       sample: boolean;
+      /** `?design=`: continue this design saved in the browser (M11). */
+      designId: string | null;
     };
 
 /**
@@ -45,5 +47,6 @@ export async function loadStudio(slug: string, url: URL, apis: { catalogue: Cata
     // The product page's "Upload your design" button links here with ?mode=upload.
     initialTool: params.get('mode') === 'upload' ? 'uploads' : isToolId(tool) ? tool : null,
     sample: params.get('sample') === '1',
+    designId: /^[A-Za-z0-9_-]{1,80}$/.test(params.get('design') ?? '') ? params.get('design') : null,
   };
 }

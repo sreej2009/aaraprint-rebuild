@@ -27,14 +27,20 @@ export interface DialogContentProps {
   footer?: ReactNode;
   size?: keyof typeof widths;
   className?: string;
+  /** Where focus goes when the dialog closes; call `preventDefault()` to place it yourself. */
+  onCloseAutoFocus?: (event: Event) => void;
   children?: ReactNode;
 }
 
-export function DialogContent({ title, description, footer, size = 'md', className, children }: DialogContentProps) {
+export function DialogContent({ title, description, footer, size = 'md', className, onCloseAutoFocus, children }: DialogContentProps) {
   return (
     <DialogPrimitive.Portal>
       <DialogPrimitive.Overlay className={overlayClasses}>
-        <DialogPrimitive.Content className={cn(panelClasses, widths[size], className)} {...(description ? {} : { 'aria-describedby': undefined })}>
+        <DialogPrimitive.Content
+          className={cn(panelClasses, widths[size], className)}
+          onCloseAutoFocus={onCloseAutoFocus}
+          {...(description ? {} : { 'aria-describedby': undefined })}
+        >
           <div className="flex items-start gap-4 px-5 pt-5 pb-3 sm:px-6 sm:pt-6">
             <div className="flex min-w-0 flex-1 flex-col gap-1">
               <DialogPrimitive.Title className="font-display text-h3 font-semibold text-fg">{title}</DialogPrimitive.Title>

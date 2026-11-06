@@ -100,3 +100,50 @@ export function StudioLoadError({ productHref }: { productHref: string | null })
     </StudioFrame>
   );
 }
+
+export type OpenProblemKind = 'corrupt' | 'mismatch' | 'missing';
+
+/**
+ * A saved design that can't be opened here (M11): damaged, saved for another product, or not in
+ * this browser. Nothing is deleted; the customer can start a new design or go to the right product.
+ */
+export function StudioOpenProblem({
+  kind,
+  productHref,
+  detail,
+  otherProductHref,
+  onStartNew,
+}: {
+  kind: OpenProblemKind;
+  productHref: string;
+  detail?: string;
+  /** Mismatch: the saved design, opened with its own product. */
+  otherProductHref?: string;
+  onStartNew(): void;
+}) {
+  const copy = {
+    corrupt: { title: 'This saved design can’t be opened', description: `${detail ?? 'The saved data is damaged.'} It’s kept in this browser as it was, so nothing is lost. You can start a new design.` },
+    mismatch: { title: 'This saved design belongs to another product', description: `${detail ? `“${detail}” was` : 'It was'} made for a different product, so it isn’t opened here. Open it with its own product, or start a new design.` },
+    missing: { title: 'This design isn’t saved in this browser', description: 'Designs are saved on the device they were made on. Start a new design here.' },
+  }[kind];
+  return (
+    <StudioFrame backHref={productHref}>
+      <EmptyState
+        headingLevel={1}
+        icon={SearchX}
+        title={copy.title}
+        description={copy.description}
+        action={
+          <div className="flex flex-wrap justify-center gap-2">
+            {otherProductHref && (
+              <Button asChild variant="secondary">
+                <Link to={otherProductHref}>Open it with its product</Link>
+              </Button>
+            )}
+            <Button onClick={onStartNew}>Start a new design</Button>
+          </div>
+        }
+      />
+    </StudioFrame>
+  );
+}

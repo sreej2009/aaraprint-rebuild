@@ -11,9 +11,14 @@ import { useZoomShortcuts } from '../canvas/use-zoom-shortcuts';
 import { useStudioShortcuts } from '../keyboard/use-studio-shortcuts';
 import { ViewportStoreContext } from '../canvas/viewport-context';
 import { createViewportStore, type ViewportStore } from '../canvas/viewport-store';
+import { SaveControllerContext, useSaveState } from '../persistence/persistence-context';
+import { browserRepository, type DesignRepository } from '../persistence/repository';
+import { openSavedDesign, type OpenResult } from '../persistence/restore';
+import { createSaveController, type SaveController } from '../persistence/save-controller';
 import { createStudioStore, selectActiveSurfaceId, StudioProvider, useStudio, useStudioStoreApi } from '../store';
 import { StudioSessionContext, type StudioSession } from './session-context';
 import { StudioShell } from './studio-shell';
+import { StudioLoading, StudioOpenProblem } from './studio-states';
 import type { ToolId } from './tools';
 import { StudioUiProvider } from './ui-provider';
 import { resolveStudioVariant, variantSummary } from './variant';
@@ -26,24 +31,105 @@ export interface StudioAppProps {
   variantId: string | null;
   initialSurface: string | null;
   initialTool: ToolId | null;
-  /** Start from the sample card (`?sample=1`) instead of a blank design. */
+  /** Start from the sample card (`?sample=1`) instead of a blank or saved design. */
   sample?: boolean;
+  /** `?design=`: continue exactly this saved design. */
+  designId?: string | null;
+  /** Where designs are saved (IndexedDB in the browser; injectable for tests). */
+  repository?: DesignRepository;
+}
+
+type Opened = OpenResult | { kind: 'sample' };
+
+/**
+ * The Studio for one product. First it finds the design to continue (M11): `?sample=1` opens the
+ * sample; `?design=` that saved design; otherwise the latest design saved in this browser for
+ * this product, or a new blank one. Problems (damaged, another product's, not in this browser)
+ * get their own screen — nothing is deleted. "Start a new design" begins a fresh session.
+ */
+export function StudioApp(props: StudioAppProps) {
+  const { product, sample = false, designId = null } = props;
+  const [repository] = useState(() => props.repository ?? browserRepository());
+  const [opened, setOpened] = useState<{ key: number; result: Opened } | null>(() => {
+    if (sample) return { key: 0, result: { kind: 'sample' } };
+    // No IndexedDB at all (very old browsers, some private modes): edit in memory, and say so.
+    if (!props.repository && typeof globalThis.indexedDB === 'undefined') return { key: 0, result: { kind: 'new', storageError: 'This browser can’t store designs.' } };
+    return null;
+  });
+  const lookedUp = opened !== null;
+
+  useEffect(() => {
+    if (lookedUp) return;
+    let live = true;
+    void openSavedDesign(repository, { productSlug: product.slug, designId }).then((result) => {
+      if (live) setOpened({ key: 0, result });
+    });
+    return () => {
+      live = false;
+    };
+    // Only the first lookup: later sessions start from "Start a new design".
+    // oxlint-disable-next-line react-hooks/exhaustive-deps
+  }, [repository, product.slug, designId]);
+
+  const startNew = () => setOpened((current) => ({ key: (current?.key ?? 0) + 1, result: { kind: 'new' } }));
+  const productHref = `/products/${product.slug}`;
+
+  if (!opened) return <StudioLoading />;
+  const { result } = opened;
+  if (result.kind === 'corrupt' || result.kind === 'missing' || result.kind === 'mismatch') {
+    return (
+      <StudioOpenProblem
+        kind={result.kind}
+        productHref={productHref}
+        {...(result.kind === 'corrupt' ? { detail: result.reason } : {})}
+        {...(result.kind === 'mismatch' ? { detail: result.name, otherProductHref: `/products/${result.productSlug}/design?design=${encodeURIComponent(result.designId)}` } : {})}
+        onStartNew={startNew}
+      />
+    );
+  }
+  return <EditorSession key={opened.key} {...props} opened={result} repository={repository} onStartNew={startNew} />;
+}
+
+interface EditorSessionProps extends StudioAppProps {
+  opened: Exclude<Opened, { kind: 'corrupt' | 'missing' | 'mismatch' }>;
+  repository: DesignRepository;
+  onStartNew(): void;
 }
 
 /**
- * One editing session: creates the Studio store for this product and provides it, with the
- * product facts and editor chrome state, to the shell. Remount (key by product) to start over.
- * Until local drafts arrive (M11) every visit starts from a blank design.
+ * One editing session: the Studio store for one design, its save controller, and the product facts
+ * and editor chrome state for the shell. A new design is a new session.
  */
-export function StudioApp({ product, profile, variantId, initialSurface, initialTool, sample = false }: StudioAppProps) {
+function EditorSession({ product, profile, variantId, initialSurface, initialTool, opened, repository, onStartNew }: EditorSessionProps) {
+  const restored = opened.kind === 'restored' ? opened : null;
+  // The options chosen on the product page win; otherwise the design keeps its own.
+  const effectiveVariantId = resolveStudioVariant(product, variantId ?? restored?.document.product.variantId ?? null)?.id ?? null;
   const [store] = useState(() => {
-    const blank = createBlankDesign(profile, { variantId: resolveStudioVariant(product, variantId)?.id ?? null });
-    return createStudioStore({ document: sample ? sampleDesignFor(blank) : blank, ...(initialSurface ? { surfaceId: initialSurface } : {}) });
+    const blank = createBlankDesign(profile, { variantId: effectiveVariantId });
+    const document = restored ? restored.document : opened.kind === 'sample' ? sampleDesignFor(blank) : blank;
+    const studio = createStudioStore({ document, ...(initialSurface ? { surfaceId: initialSurface } : {}) });
+    // Not an undo step: the variant follows the product page (as in M3).
+    if (restored && restored.document.product.variantId !== effectiveVariantId) studio.getState().actions.setVariant(effectiveVariantId);
+    return studio;
   });
   const [viewportStore] = useState(() => createViewportStore());
   const [interactionStore] = useState(() => createInteractionStore());
+  const [controller] = useState<SaveController>(() =>
+    createSaveController({
+      studio: store,
+      repository,
+      productSlug: product.slug,
+      productId: product.id,
+      record: restored?.record ?? null,
+      sample: opened.kind === 'sample',
+      ...(opened.kind === 'new' && opened.storageError ? { storageError: opened.storageError } : {}),
+    }),
+  );
+  // Watches the design while the session is on screen; leaving writes anything still pending.
+  useEffect(() => controller.start(), [controller]);
+
   const session = useMemo<StudioSession>(() => {
-    const variant = resolveStudioVariant(product, variantId);
+    const variant = resolveStudioVariant(product, effectiveVariantId);
     const params = new URLSearchParams(variant ? { variantId: variant.id } : {});
     return {
       product,
@@ -52,22 +138,26 @@ export function StudioApp({ product, profile, variantId, initialSurface, initial
       variantLabel: variantSummary(product, variant),
       print: describePrint(profile),
       productHref: `/products/${product.slug}${params.size ? `?${params}` : ''}`,
+      startNewDesign: onStartNew,
     };
-  }, [product, profile, variantId]);
+  }, [product, profile, effectiveVariantId, onStartNew]);
 
   return (
     <StudioProvider store={store}>
-      <StudioSessionContext.Provider value={session}>
-        <ViewportStoreContext.Provider value={viewportStore}>
-          <InteractionStoreContext.Provider value={interactionStore}>
-            <StudioUiProvider initialTool={initialTool}>
-              <SideInUrl />
-              <Shortcuts viewport={viewportStore} interaction={interactionStore} />
-              <StudioShell />
-            </StudioUiProvider>
-          </InteractionStoreContext.Provider>
-        </ViewportStoreContext.Provider>
-      </StudioSessionContext.Provider>
+      <SaveControllerContext.Provider value={controller}>
+        <StudioSessionContext.Provider value={session}>
+          <ViewportStoreContext.Provider value={viewportStore}>
+            <InteractionStoreContext.Provider value={interactionStore}>
+              <StudioUiProvider initialTool={initialTool}>
+                <SideInUrl />
+                <DesignInUrl />
+                <Shortcuts viewport={viewportStore} interaction={interactionStore} />
+                <StudioShell />
+              </StudioUiProvider>
+            </InteractionStoreContext.Provider>
+          </ViewportStoreContext.Provider>
+        </StudioSessionContext.Provider>
+      </SaveControllerContext.Provider>
     </StudioProvider>
   );
 }
@@ -94,5 +184,26 @@ function SideInUrl() {
     else next.delete('side');
     setParams(next, { replace: true, preventScrollReset: true });
   }, [active, first, params, setParams]);
+  return null;
+}
+
+/**
+ * Once a design is saved, `?design=` names it, so a reload or a bookmark reopens exactly this one
+ * (several designs can exist for one product). A saved sample stops being a sample.
+ */
+function DesignInUrl() {
+  const id = useStudio((s) => s.document.id);
+  const persisted = useSaveState((s) => s.persisted);
+  const [params, setParams] = useSearchParams();
+  useEffect(() => {
+    const wanted = persisted ? id : null;
+    const stale = params.get('design') !== wanted || (persisted && params.has('sample'));
+    if (!stale) return;
+    const next = new URLSearchParams(params);
+    if (wanted) next.set('design', wanted);
+    else next.delete('design');
+    if (persisted) next.delete('sample');
+    setParams(next, { replace: true, preventScrollReset: true });
+  }, [id, persisted, params, setParams]);
   return null;
 }

@@ -1,4 +1,4 @@
-import { ArrowLeft, ArrowRight, CloudOff, Eye, PanelRightOpen, Redo2, Undo2 } from 'lucide-react';
+import { ArrowLeft, ArrowRight, Eye, PanelRightOpen, Redo2, Undo2 } from 'lucide-react';
 import type { MouseEvent, ReactNode } from 'react';
 import { Link } from 'react-router';
 import { Button, IconButton, Separator, Tooltip } from '@/design-system';
@@ -6,6 +6,7 @@ import { formatINR } from '@/lib/format';
 import { cn } from '@/lib/cn';
 import { selectCanRedo, selectCanUndo, selectRedoLabel, selectUndoLabel, useStudio, useStudioActions } from '../store';
 import { ZoomControl } from '../canvas/zoom-control';
+import { SaveStatus } from './save-status';
 import { useStudioSession } from './session-context';
 import { SideMenu, SideSwitcher } from './side-controls';
 import { useStudioUi } from './ui-context';
@@ -84,11 +85,8 @@ function DesignTitle() {
       <p className="truncate text-body-sm font-semibold text-fg" title={name}>
         {name}
       </p>
-      {/* Autosave arrives with local drafts (M11); until then nothing is stored. */}
-      <p className="flex items-center gap-1 text-caption text-fg-muted">
-        <CloudOff aria-hidden="true" className="size-3.5 shrink-0" />
-        <span className="truncate">Not saved yet</span>
-      </p>
+      {/* Saved in this browser (M11): status, Save now, Version history, Start a new design. */}
+      <SaveStatus />
     </div>
   );
 }

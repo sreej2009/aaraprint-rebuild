@@ -1187,7 +1187,8 @@ I'll report after steps 2, 4 and 5 (or after each milestone, if you prefer). Eac
 | M8 Text tool | Done |
 | M9 Shapes and graphics | Done |
 | M10 Front/back sides and core editor polish | Done |
-| M11–M16 | Not started |
+| M11 Autosave, restore and version history | Done |
+| M12–M16 | Not started |
 
 #### M1 findings
 
@@ -1612,4 +1613,80 @@ StudioState
 - Flaps, covers and pockets (more than two sides) are supported by the schema but not edited in Phase 3.
 - There's no shortcut for switching sides: the switcher is one Tab stop away and works with arrows and Space.
 - Touch was tested in Chrome's emulation, not on physical devices.
+
+#### M11 — Autosave, restore and version history
+
+**Milestone order:** version history moved into M11. The remaining milestones are M12 image uploads, M13 templates, M14 preview, M15 proof and download, and M16 hardening.
+
+**Scope:**
+- Designs are saved in this browser, in IndexedDB; there's still no cloud or server saving.
+- **Autosave:** about 1 s after the last change.
+- **Save now:** from the status menu, or Ctrl/⌘ S.
+- **Status:** honest wording.
+- **On opening:** the design is restored.
+- **Versions:** local version history with restore.
+- **Undo:** the runtime undo history is never saved.
+
+**Architecture** (`src/features/studio/persistence/`, no React):
+- The design document stays the single source of truth: `Design document → Zustand → canvas`, and the controller writes copies, `Design document → validate → plain JSON → IndexedDB`.
+- Never the Konva stage (Konva's own advice for React apps), images, base64, selection, hover, text editing, zoom, pan, guides, panels or undo history.
+- **Database `aaraprint-studio`** (storage version 1; separate from the design schema version 2):
+  - `designs`, keyed by `designId`, with indexes `productSlug` and `updatedAt`. Each record holds the designId, product slug and id, variant, name, schema version, created and updated times, revision, content fingerprint, current version id and the document.
+  - `versions`, keyed by `versionId`, with indexes `designId` and `createdAt`. Each holds the design id, time, reason, schema version, fingerprint and the document.
+- **`repository.ts`:** one contract with two implementations, IndexedDB (browser) and in-memory (tests). The design record's revision is checked and written in a single transaction.
+- **`save-controller.ts`:**
+  - Watches the store's document and writes it about 1 s after the last change. Gestures and typing already merge into finished updates, so a drag is one write.
+  - Never edits the design, selection, side, view or history.
+  - Writes run one at a time, newest content last.
+  - Every write validates first (M2 `validateDesign`); an invalid design is never stored.
+- **`restore.ts`:** `IndexedDB → parseDesign (migrations) → validate → product check → store`.
+- **`fingerprint.ts`:** a content hash over key-ordered JSON, ignoring `meta`, used for dirty state and version de-duplication.
+
+**Dirty and saved:**
+- Dirty state compares content, not history length. Undoing back to what was saved shows "Saved" again without writing.
+- Status labels: "Not saved yet", "Unsaved changes", "Saving…", "Saved just now / N min ago / 4:05 pm", "Save failed", "Saved in another tab", "Sample · not saved". The menu says designs are saved in this browser on this device; nothing claims cloud or sync.
+
+**Opening** (`/products/:slug/design`):
+- `?sample=1` opens the sample. It's never autosaved; Save now turns it into a design of its own.
+- `?design=<id>` opens that design.
+- Otherwise the latest design saved in this browser for the product opens, or a new blank one.
+- Once saved, `?design=` names the design in the URL (replace, no history entry), so reloads and bookmarks reopen exactly it. Several designs can exist per product.
+- **Restored state:** nothing is selected, no text editor is open, the side follows `?side=` (M10), and each side fits.
+- **Product options:** the options chosen on the product page win (applied as M3's non-undoable variant); otherwise the design keeps its own.
+- **Problems** get their own screen, and nothing is deleted:
+  - damaged or unmigratable data → "This saved design can't be opened";
+  - saved for another product → "This saved design belongs to another product", with "Open it with its product";
+  - an unknown `?design=` → "This design isn't saved in this browser".
+  - Each offers "Start a new design".
+
+**Versions:**
+- **Kept:** the first save ("Initial save"), each Save now that changed something ("Manual save"), an autosave when the newest version is at least 10 minutes old ("Autosave"), and around restores ("Before restore", "Restored version"). Nothing is kept when nothing changed.
+- **Limit:** the newest 20 are kept per design (`VERSION_LIMIT`). The design record and the newest version are never pruned.
+- **Version history** is in the status menu, on every layout (a bottom sheet on phones). Rows aren't clickable; each has a Restore button and a confirmation.
+- **Restoring:**
+  - keeps a safety copy first (unless the newest version already is the current design);
+  - replaces the design as one undo step ("Restore version from …"); undo and redo move between the two; element ids are kept;
+  - then saves. The chosen version is never removed.
+- **Start a new design** (status menu): a new id and a blank design. The previous one stays saved with its versions.
+
+**Failures:**
+- **Storage problems** (no IndexedDB, blocked, quota, failed transactions): "Save failed — Unable to save locally. Your changes are still in this session." The editor keeps working in memory; Save now ("Try again") retries.
+- **Another tab:** each write carries the revision it was based on. If another tab saved in between: "Saved in another tab", nothing is overwritten, and "Keep this tab's version" can overwrite on purpose.
+- **Leaving the page:** pending changes are written when the page is hidden or closed. The browser's leave warning appears only when changes can't be kept (save failed or conflict).
+
+**Accessibility:**
+- The status button is named "<status>. Saving and versions".
+- An `<output>` live region announces saves you asked for, restores and failures, never every autosave.
+- The dialogs trap focus and close on Escape; focus returns to the status button.
+
+**Testing:**
+- Unit: `persistence/persistence.test.ts` (22 tests).
+- Components: `shell/save-status.test.tsx` (11).
+- Browser: `e2e/studio-persistence.spec.ts`, covering autosave and reload, Save now, dirty to saved, version restore with undo and redo, front, back and backgrounds after reload, view, selection and editing not kept, samples, another product's design, storage failure, phone UI, and 1440–360 px.
+
+**Known limits**
+- Saved only in this browser on this device: no account, no cloud copy, no cross-device recovery (Phase 6). Clearing site data removes designs.
+- Two tabs on the same design don't sync live; the second tab is stopped from overwriting and can choose to.
+- There's no list of all designs on this device yet; a design is reopened as the product's latest, or by its `?design=` link.
+- Undo history isn't kept across reloads (by design); versions are the way back.
 

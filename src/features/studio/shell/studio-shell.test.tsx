@@ -55,7 +55,8 @@ describe('Studio shell — desktop (≥ 1280 px)', () => {
     expect(screen.getByRole('heading', { level: 1, name: 'Design Studio: Classic Visiting Cards' })).toBeInTheDocument();
     const banner = screen.getByRole('banner');
     expect(within(banner).getByText('Classic Visiting Cards design')).toBeInTheDocument();
-    expect(within(banner).getByText('Not saved yet')).toBeInTheDocument();
+    // jsdom has no IndexedDB: the save status says plainly that it can't save (M11).
+    expect(within(banner).getByTestId('save-status')).toHaveAccessibleName('Save failed. Saving and versions');
     expect(within(banner).getByText(/100 cards · Classic Black/)).toBeInTheDocument();
     expect(within(banner).getByText('₹229')).toBeInTheDocument();
     expect(screen.getByRole('navigation', { name: 'Design tools' })).toBeInTheDocument();

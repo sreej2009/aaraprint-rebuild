@@ -71,6 +71,7 @@ export const SHORTCUT_LIST: { keys: string; action: string }[] = [
   { keys: 'Ctrl D', action: 'Duplicate' },
   { keys: 'Ctrl ] / Ctrl [', action: 'Bring forward / Send backward' },
   { keys: 'Ctrl Shift ] / Ctrl Shift [', action: 'Bring to front / Send to back' },
+  { keys: 'Ctrl S', action: 'Save now (designs also save automatically in this browser)' },
   { keys: 'Ctrl Z', action: 'Undo' },
   { keys: 'Ctrl Shift Z / Ctrl Y', action: 'Redo' },
 ];

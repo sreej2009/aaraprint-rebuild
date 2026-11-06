@@ -13,6 +13,8 @@ export interface StudioSession {
   print: PrintDescription;
   /** Link back to the product page with the same options. */
   productHref: string;
+  /** Leave this design (it stays saved) and start a new blank one (M11). */
+  startNewDesign?: () => void;
 }
 
 export const StudioSessionContext = createContext<StudioSession | null>(null);
