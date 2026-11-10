@@ -4,7 +4,7 @@ import type { AssetRecord, AssetSummary } from '../persistence/records';
 import type { DesignRepository } from '../persistence/repository';
 import { referencedAssetIds } from '../schema/assets';
 import type { DesignDocument } from '../schema/types';
-import { retryImage, useImage, type ImageState } from './image-cache';
+import { requestImage, retryImage, useImage, type ImageState } from './image-cache';
 import { prepareUpload, UploadError, type DecodedImage } from './uploads';
 
 /**
@@ -74,6 +74,20 @@ export function useAssetImage(assetId: string | null): ImageState | { status: 'm
   if (state.status === 'missing') return { status: 'missing' };
   if (state.status === 'resolving') return { status: 'loading' };
   return image;
+}
+
+/** Whether an uploaded image is done loading — shown, missing or failed (the preview waits for this). */
+export function assetSettled(assetId: string): boolean {
+  const state = resolve(assetId);
+  if (state.status === 'resolving') return false;
+  if (state.status === 'missing') return true;
+  return requestImage(state.url).status !== 'loading';
+}
+
+/** Called when an uploaded image's file is found or found missing. */
+export function subscribeAssets(listener: () => void): () => void {
+  listeners.add(listener);
+  return () => listeners.delete(listener);
 }
 
 /** Look again (the file may be back, or the decode may have been a hiccup). */

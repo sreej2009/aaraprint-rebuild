@@ -185,6 +185,9 @@ function insetPoints(points: number[], w: number, h: number, inset: number): num
 
 // -------------------------------------------------------------------- Guides
 
+/** A 1 screen-px line at any zoom (guides, placeholder frames). */
+export const hairline = { strokeWidth: 1, strokeScaleEnabled: false, perfectDrawEnabled: false, listening: false } as const;
+
 export interface GuideGeometry {
   bleed: Rect;
   trim: Rect;

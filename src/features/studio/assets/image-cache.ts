@@ -28,8 +28,17 @@ function browserLoader(url: string): Promise<HTMLImageElement> {
 
 let loader: Loader = browserLoader;
 
+const anyListeners = new Set<() => void>();
+
 function notify(url: string) {
   for (const listener of listeners.get(url) ?? []) listener();
+  for (const listener of anyListeners) listener();
+}
+
+/** Called whenever any image finishes loading or fails (the preview waits for its images). */
+export function subscribeImages(listener: () => void): () => void {
+  anyListeners.add(listener);
+  return () => anyListeners.delete(listener);
 }
 
 /** Start loading `url` (once); returns its current state. */

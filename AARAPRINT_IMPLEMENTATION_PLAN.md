@@ -1190,7 +1190,8 @@ I'll report after steps 2, 4 and 5 (or after each milestone, if you prefer). Eac
 | M11 Autosave, restore and version history | Done |
 | M12 Image uploads and image assets | Done |
 | M13 Templates | Done |
-| M14–M16 | Not started |
+| M14 Studio preview | Done |
+| M15–M16 | Not started |
 
 #### M1 findings
 
@@ -1334,7 +1335,7 @@ StudioState
 - Zoom placeholder (M5).
 - Side switcher with element counts.
 - Product, options and price on desktop.
-- Preview and Continue: focusable but `aria-disabled`, with "coming soon" descriptions (M15).
+- Preview and Continue: focusable but `aria-disabled`, with "coming soon" descriptions (M15). Preview works since M14; Continue is still "coming soon".
 
 **Workspace and panels**
 - The workspace draws the active side's real print area, fitted to the screen (`geometry/fit.ts`, which M5's stage reuses): bleed tint, trim, dashed safe area, round and rounded shapes. The footer shows side, size, DPI and a guide legend.
@@ -1388,7 +1389,7 @@ StudioState
 **Labels and layout**
 - Dimension lines show the finished width and height next to the sheet (screen-only).
 - The footer shows side, size, DPI and the guide legend.
-- Zoom sits in the top bar on tablet and larger, and in a floating pill on phones. Preview is hidden on tablets until M15 to give the design name room.
+- Zoom sits in the top bar on tablet and larger, and in a floating pill on phones. Preview was hidden on tablets until M14, which added it as an icon button on tablets and phones.
 
 **Reference:** `/design-system#canvas-demo` shows the real canvas with a sample card (every element type on both sides, each trim shape, zoom, and the guide-free export). It's also the fixture for the element-rendering tests, since the Studio itself can't add elements until M6.
 
@@ -1611,7 +1612,7 @@ StudioState
 - **The store:** refuses invalid geometry, and documents stay valid after copy, clear and undo.
 
 **Known limits**
-- Side thumbnails in the switcher come with the Preview work (M15). Linking sides to the "Sides printed" option and its price is Phase 4.
+- Side thumbnails are in the Preview (M14); the editor's side switcher keeps its item counts. Linking sides to the "Sides printed" option and its price is Phase 4.
 - Flaps, covers and pockets (more than two sides) are supported by the schema but not edited in Phase 3.
 - There's no shortcut for switching sides: the switcher is one Tab stop away and works with arrows and Space.
 - Touch was tested in Chrome's emulation, not on physical devices.
@@ -1961,3 +1962,98 @@ StudioState
 - **Approximate previews.** Text in previews follows line breaks but not automatic wrapping, and fonts appear once loaded.
 - **No graphics or photos yet.** No template uses M9 graphics (none are cleared) or photo areas.
 - **Placeholder text isn't flagged to customers yet.** Template text is marked as placeholder for the Phase 4 preflight; the Studio doesn't warn about unchanged sample text yet.
+
+#### M14 — Studio preview
+
+**Scope:**
+- A Preview of the current design as the finished piece, separate from editing. It shows front and back with thumbnails and has its own zoom and pan.
+- Proof checks and downloads (M15) and final hardening (M16) are not part of M14.
+- There are no product photo or 3D mockups, and no print validation.
+
+**Entry:**
+- **Preview** in the Studio top bar, on every layout. It shows a label on large desktops and is icon-only, still named "Preview", elsewhere.
+- It replaces the earlier "coming soon" placeholder. **Continue** stays "coming soon" (ordering is later).
+- No route or query parameter is added: Preview is a dialog over the Studio, so `?side=`, `?sample=1` and `?design=` are untouched.
+
+**One renderer** (`canvas/artwork.tsx`):
+- The artwork nodes are the same as the editor's: background, elements bottom to top, text, shapes, graphics, uploaded images and the M12 placeholders. They moved out of `canvas-stage.tsx` unchanged, so the editor and the preview draw from the same code and the same design-document data.
+- Hidden elements aren't drawn. Locked ones are. Order, rotation, opacity, fonts and text settings are exactly the editor's.
+- **The difference is the clip.** The editor clips to the bleed; the preview clips to the trim shape (rectangle, rounded rectangle or ellipse), so the customer sees the piece as cut.
+- No Konva stage JSON, no second document, no copy of the store.
+
+**Preview** (`preview/`):
+- **`preview-dialog.tsx`:** a full-screen modal on every layout.
+  - **Header:** "Preview" and the design name, the side thumbnails and zoom controls (in a bottom bar on phones), and Close.
+  - **Middle:** the artwork on a neutral backdrop with a soft shadow under the piece.
+  - **Footer:** "Front · 88.9 × 50.8 mm, trimmed · guides and bleed hidden".
+- **`preview-canvas.tsx`** (loaded with Konva as a separate chunk):
+  - **`PreviewCanvas`:** a read-only stage that listens to nothing, with only a shadow layer and an `artwork` layer.
+  - **What's absent:** guides, bleed band, trim or safe lines, selection frame, handles, hover, measurement labels, text editor, locked/hidden badges and layer UI never exist in the preview.
+- **Thumbnails** (`PreviewThumbnail`):
+  - One small stage per side (56 × 40 px), drawn by the same artwork nodes and redrawn only when that side changes.
+  - Thumbnails aren't exported images, and there are no hidden full-size stages.
+  - If a thumbnail fails, its tile stays neutral and the side can still be chosen.
+- **`renderer.ts`:** where the drawings come from. Tests without a canvas swap in stand-ins and a fixed size.
+- **`readiness.ts`:** "Preparing preview…" until the fonts the design uses have loaded or fallen back and every uploaded image and graphic has settled.
+  - Settled means drawn, missing or failed. It uses the same font loader, asset library and image cache as the editor, so nothing is decoded twice.
+  - It waits 8 s at most.
+- **Errors:** a drawing failure shows "Preview couldn't be generated. Your design is safe and unchanged." with **Try again** and **Close preview**. The Studio keeps running.
+
+**Read-only:**
+- The preview reads the design document in memory, so unsaved changes show straight away.
+- It never writes. No undo step, no dirty state, no autosave; the editor's selection, side, zoom and panels are as they were when it closes.
+- **Shortcuts:**
+  - While the preview is open it takes Ctrl/⌘ shortcut keys and Shift 1 first (window, capture phase), so the editor's window-wide shortcuts (undo, redo, duplicate, save, arrange, zoom) can't act behind it. Ctrl/⌘ + − 0 and Shift 1 zoom the preview instead.
+  - Plain keys pass, because the editor only uses them in its own regions.
+  - Zoom buttons at their limit stay focusable (`aria-disabled`), so focus never drops to the page.
+
+**Front and back:**
+- "Side to preview" is a radio group of thumbnails, each named by its side and its contents ("Front 7 items", "Back Empty").
+- Arrow keys and clicks switch sides. The preview starts on the side being edited, and switching never changes the editor's side. A chosen zoom level is kept.
+- A product with one side shows no side choice, and no back is invented.
+- **Empty states:** "No artwork on this side" and "Your design is empty", over the blank piece. No placeholder artwork is added.
+
+**Zoom and pan** (`preview-view.ts`, pure; separate from the editor's zoom store):
+- **Fit** shows the whole trimmed piece in the available space with padding (20 px phones, 32 px tablets, 56 px desktop). It follows window changes.
+- **Percentages** mean what they mean in the editor: 100 % is real size (one printed inch = 96 CSS px).
+- **Limits:** 25–400 %, widened to include Fit, since a banner fits at a few percent and a stamp at several hundred.
+- **Controls:** zoom out, a menu (Fit to screen, 50 %, Actual size 100 %, 200 %), zoom in, and Fit. Steps go through the editor's zoom stops plus Fit. Ctrl/⌘ + wheel or a trackpad pinch zooms around the pointer.
+- **Panning** works only when the piece is bigger than the space: drag with mouse, pen or one finger, scroll with the wheel, or use the arrow keys while the artwork region has focus. The piece stays centred along an axis where it fits, and its edges never move further in than the padding.
+
+**Accessibility:**
+- The dialog is named "Preview" and described ("How the front of "…" will look once printed and trimmed (88.9 × 50.8 mm). Guides, bleed and editing controls are hidden. Escape closes the preview.").
+- Focus moves into the dialog on open and is trapped there. Escape and "Close preview" close it, and focus returns to the Preview button.
+- The artwork is a labelled region ("Front side: 7 items, 88.9 × 50.8 mm."), focusable only while zoomed in.
+- Zoom changes are announced politely ("Zoom 200%"). Side state is the radio state, never colour alone. Tap targets are at least 44 px on touch.
+
+**Missing files:** an uploaded image this browser doesn't have keeps the M12 crossed frame in the preview too. It isn't removed, and it isn't flagged as a print problem (that's M15).
+
+**Testing:**
+- **Unit:** `preview/preview-view.test.ts` (7 tests): fit on the trim with padding, the 25–400 % range widened by Fit, steps, Fit following the space, panning only when bigger and never past the padding, and readiness (immediate for text and shapes, waits for a graphic, gives up after the time limit).
+- **Component:** `preview/preview-dialog.test.tsx` (8 tests):
+  - focus in, description and focus back on Escape, and the Close button;
+  - thumbnails and switching sides, with the editor keeping its side;
+  - one-sided products;
+  - empty design and empty side;
+  - zoom and presets with Ctrl + and Shift 1, editor zoom untouched;
+  - editing shortcuts blocked and no history recorded;
+  - a drawing failure with Try again.
+- **Browser:** `e2e/studio-preview.spec.ts` (11 tests: 8 desktop, 1 tablet, 1 phone, 1 across widths):
+  - entry, axe, focus and Escape;
+  - the same drawing as the editor (ids, order, rotation, opacity, text, background, a graphic at 40 % turned 30°, an uploaded photo, the sample's missing logo);
+  - no guides, handles or editor controls, and clipped at the trim (pixel check);
+  - front and back by click and arrow keys;
+  - Fit, zoom, the 400 % limit, drag, Ctrl −, presets, and editor zoom untouched;
+  - empty design and empty side;
+  - unsaved changes shown, no undo step, saving unaffected, reload restores;
+  - the full regression flow: upload, template, edit, preview both sides, keep editing, autosave, reload;
+  - tablet and phone layouts;
+  - 1440–360 px with no sideways scroll;
+  - no console errors.
+- **Screenshots:** `e2e/studio-visual.spec.ts` "preview" (`SCREENSHOTS=1`).
+
+**Known limits**
+- **A flat design view.** No product photos, mockups or 3D (Phase 5), and nothing about print quality (M15).
+- **One-sided products** are covered by component tests only: every catalogue product has a front and a back.
+- **Touch zoom uses the buttons.** One finger pans, but there's no pinch-zoom on touch screens; a trackpad pinch works on desktop.
+- **The error state** can't be triggered in a normal browser session; it's covered by component tests.

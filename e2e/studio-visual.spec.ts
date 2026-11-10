@@ -315,3 +315,35 @@ test('screenshot templates', async ({ page, hasTouch, isMobile }, info) => {
     await shot('template-not-for-product');
   }
 });
+
+/** M14: Preview — the front, the back, zoomed in, and an empty design. */
+test('screenshot preview', async ({ page, hasTouch, isMobile }, info) => {
+  const shot = (name: string) => page.screenshot({ path: `review-screens/${info.project.name}-studio-${name}.png` });
+  const settle = async () => {
+    await page.evaluate(() => document.fonts.ready);
+    await page.waitForFunction(() => !document.querySelector('[data-testid="preview-loading"]'));
+    await page.waitForTimeout(500);
+  };
+  await page.goto('/products/business-card-classic/design?sample=1');
+  await page.waitForLoadState('networkidle');
+  await page.waitForFunction(() => Boolean((window as unknown as { Konva?: { stages: unknown[] } }).Konva?.stages.length));
+  await page.getByTestId('preview-button').click();
+  const preview = page.getByRole('dialog', { name: 'Preview' });
+  await preview.waitFor();
+  await settle();
+  await shot('preview');
+  await preview.getByRole('radio', { name: /^Back/ }).click();
+  await settle();
+  await shot('preview-back');
+  await preview.getByRole('button', { name: 'Zoom in' }).click();
+  await settle();
+  await shot('preview-zoom');
+  if (!hasTouch && !isMobile) {
+    await page.goto('/products/business-card-classic/design');
+    await page.waitForLoadState('networkidle');
+    await page.getByTestId('preview-button').click();
+    await preview.waitFor();
+    await settle();
+    await shot('preview-empty');
+  }
+});

@@ -1,4 +1,4 @@
-import { ArrowLeft, ArrowRight, Eye, PanelRightOpen, Redo2, Undo2 } from 'lucide-react';
+import { ArrowLeft, ArrowRight, PanelRightOpen, Redo2, Undo2 } from 'lucide-react';
 import type { MouseEvent, ReactNode } from 'react';
 import { Link } from 'react-router';
 import { Button, IconButton, Separator, Tooltip } from '@/design-system';
@@ -6,6 +6,7 @@ import { formatINR } from '@/lib/format';
 import { cn } from '@/lib/cn';
 import { selectCanRedo, selectCanUndo, selectRedoLabel, selectUndoLabel, useStudio, useStudioActions } from '../store';
 import { ZoomControl } from '../canvas/zoom-control';
+import { PreviewButton } from '../preview/preview-dialog';
 import { SaveStatus } from './save-status';
 import { useStudioSession } from './session-context';
 import { SideMenu, SideSwitcher } from './side-controls';
@@ -49,13 +50,8 @@ export function TopBar({ title }: { title: string }) {
             onClick={() => setInspectorOpen(true)}
           />
         )}
-        {/* Tablets are tight once zoom is in the bar; Preview returns there with M15. */}
-        {(layout === 'laptop' || layout === 'desktop') && (
-          <ComingSoon hint="Preview and proof downloads are coming soon">
-            <Eye aria-hidden="true" />
-            <span className="max-xl:sr-only">Preview</span>
-          </ComingSoon>
-        )}
+        {/* The finished design, full screen (M14). Icon only where the bar is tight. */}
+        <PreviewButton iconOnly={layout === 'phone' || layout === 'tablet'} />
         <ComingSoon hint="Reviewing and ordering your design is coming soon" primary>
           <span>{phone ? 'Next' : 'Continue'}</span>
           <ArrowRight aria-hidden="true" className="max-md:hidden" />
