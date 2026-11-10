@@ -6,6 +6,7 @@ import { formatINR } from '@/lib/format';
 import { cn } from '@/lib/cn';
 import { selectCanRedo, selectCanUndo, selectRedoLabel, selectUndoLabel, useStudio, useStudioActions } from '../store';
 import { ZoomControl } from '../canvas/zoom-control';
+import { PrintCheckButton } from '../preflight/print-check-dialog';
 import { PreviewButton } from '../preview/preview-dialog';
 import { SaveStatus } from './save-status';
 import { useStudioSession } from './session-context';
@@ -20,16 +21,17 @@ export function TopBar({ title }: { title: string }) {
     <header className="flex h-13 shrink-0 items-center gap-1.5 border-b border-border bg-surface px-2 md:h-14 md:gap-2 md:px-3">
       <h1 className="sr-only">{title}</h1>
       <BackToProduct compact={layout !== 'desktop'} />
-      <Separator orientation="vertical" className="mx-1 h-6 max-md:hidden" />
+      {/* Tablets drop the dividers to give the design name room. */}
+      <Separator orientation="vertical" className="mx-1 h-6 max-lg:hidden" />
       <DesignTitle />
 
       <div className={cn('flex items-center gap-1 md:gap-2', phone ? 'ml-auto' : 'mx-auto')}>
         <HistoryButtons />
         {!phone && (
           <>
-            <Separator orientation="vertical" className="mx-1 h-6" />
+            <Separator orientation="vertical" className="mx-1 h-6 max-lg:hidden" />
             <ZoomControl />
-            <Separator orientation="vertical" className="mx-1 h-6" />
+            <Separator orientation="vertical" className="mx-1 h-6 max-lg:hidden" />
             <div className="flex items-center gap-0.5">
               <SideSwitcher size="sm" />
               <SideMenu />
@@ -52,8 +54,11 @@ export function TopBar({ title }: { title: string }) {
         )}
         {/* The finished design, full screen (M14). Icon only where the bar is tight. */}
         <PreviewButton iconOnly={layout === 'phone' || layout === 'tablet'} />
+        {/* Print check and proof download (M15): advice and a PNG proof, never blocking. */}
+        <PrintCheckButton iconOnly={layout === 'phone' || layout === 'tablet'} />
         <ComingSoon hint="Reviewing and ordering your design is coming soon" primary>
-          <span>{phone ? 'Next' : 'Continue'}</span>
+          {/* Icon only on tablets, so the design name keeps its room next to Preview and Print check. */}
+          <span className={cn(layout === 'tablet' && 'sr-only')}>{phone ? 'Next' : 'Continue'}</span>
           <ArrowRight aria-hidden="true" className="max-md:hidden" />
         </ComingSoon>
       </div>
@@ -77,7 +82,7 @@ function BackToProduct({ compact }: { compact: boolean }) {
 function DesignTitle() {
   const name = useStudio((s) => s.document.name);
   return (
-    <div className="flex min-w-0 flex-col leading-tight max-md:max-w-[38vw]">
+    <div className="flex min-w-16 flex-col leading-tight max-md:max-w-[38vw]">
       <p className="truncate text-body-sm font-semibold text-fg" title={name}>
         {name}
       </p>

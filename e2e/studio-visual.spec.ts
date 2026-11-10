@@ -347,3 +347,37 @@ test('screenshot preview', async ({ page, hasTouch, isMobile }, info) => {
     await shot('preview-empty');
   }
 });
+
+/** M15: Print check and proof — warnings (sample), the proof section, a design that passes, and an empty one. */
+test('screenshot print check', async ({ page, hasTouch, isMobile }, info) => {
+  const shot = (name: string) => page.screenshot({ path: `review-screens/${info.project.name}-studio-${name}.png` });
+  const openChecks = async () => {
+    await page.getByTestId('print-check-button').click();
+    await page.getByRole('dialog', { name: 'Print check and proof' }).waitFor();
+    await page.waitForTimeout(400);
+  };
+  const studio = async (path: string) => {
+    await page.goto(path);
+    await page.waitForLoadState('networkidle');
+    await page.waitForFunction(() => Boolean((window as unknown as { Konva?: { stages: unknown[] } }).Konva?.stages.length));
+    await page.waitForTimeout(500);
+  };
+  await studio('/products/business-card-classic/design?sample=1');
+  await openChecks();
+  await shot('print-check');
+  await page.getByTestId('download-proof').scrollIntoViewIfNeeded();
+  await page.waitForTimeout(200);
+  await shot('print-check-proof');
+  if (!hasTouch && !isMobile) {
+    await studio('/products/business-card-classic/design');
+    await openChecks();
+    await shot('print-check-empty');
+    await page.keyboard.press('Escape');
+    await page.getByRole('navigation', { name: 'Design tools' }).getByRole('button', { name: 'Text', exact: true }).click();
+    await page.getByRole('button', { name: 'Add heading' }).click();
+    await page.keyboard.type('Riya Sharma');
+    await page.keyboard.press('Control+Enter');
+    await openChecks();
+    await shot('print-check-good');
+  }
+});

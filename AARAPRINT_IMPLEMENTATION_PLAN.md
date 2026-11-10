@@ -1191,7 +1191,8 @@ I'll report after steps 2, 4 and 5 (or after each milestone, if you prefer). Eac
 | M12 Image uploads and image assets | Done |
 | M13 Templates | Done |
 | M14 Studio preview | Done |
-| M15–M16 | Not started |
+| M15 Studio proof and print checks | Done |
+| M16 | Not started |
 
 #### M1 findings
 
@@ -2057,3 +2058,102 @@ StudioState
 - **One-sided products** are covered by component tests only: every catalogue product has a front and a back.
 - **Touch zoom uses the buttons.** One finger pans, but there's no pinch-zoom on touch screens; a trackpad pinch works on desktop.
 - **The error state** can't be triggered in a normal browser session; it's covered by component tests.
+
+#### M15 — Studio proof and print checks
+
+**Scope:**
+- **Print check:** advice about the current design, per side, computed from the design document and the product's print geometry.
+- **PNG proof:** a picture of the design, unsaved changes included.
+- **What stays later:**
+  - Warnings never block anything: blocking preflight (with placeholder text) is Phase 4.
+  - Browser exports are proofs only; print-ready files are made server-side in Phase 6.
+  - Product mockups and on-product workspaces stay in Phases 4–5. There's no PDF proof (Phase 4).
+
+**Entry:**
+- **Print check** in the Studio top bar on every layout, next to Preview. It's labelled on large desktops and icon-only elsewhere.
+- **Its count** covers warnings in the artwork and settles 300 ms after editing pauses, so dragging and typing never run the checks on every move. The accessible name says it: "Print check 2 warnings", "Print check no warnings", "Print check design is empty".
+- **Tablet top bar** (768–1023 px): to fit Preview and Print check, it drops its thin dividers and shows Continue (still "coming soon") as an arrow icon, still named "Continue"; the design name keeps at least 64 px. Laptop, desktop and phone bars are unchanged.
+- **The dialog** "Print check and proof" uses the existing dialog: centred on larger screens, a bottom sheet on phones. Focus is trapped, Escape closes it, and focus returns to the button.
+
+**Checks** (`preflight/print-checks.ts`, pure; `evaluatePrintChecks({ document, imageState, graphicState })`):
+- **Inputs:** the visible elements of each side. Hidden layers are skipped, as they don't print. Nothing is stored in the design.
+- **Past the trim edge** (stronger warning, red icon): any rotated corner outside the trim shape. The rule is the editor's own (`placementFor`, M5/M7).
+  - The text says it'll be cut off, that this is expected for a background running into the bleed, and to keep anything important inside the safe zone.
+- **Outside the safe zone** (warning, amber icon): inside the trim but crossing the safe zone, with the distance to keep ("at least 2 mm from the edge").
+- **Low resolution image — N DPI** (warning): uploaded images under 150 DPI at their current size, with a recommendation. 150–299 DPI is a note ("Acceptable resolution"); 300 or more passes. These are the M12 bands (`effectiveDpi`, `resolutionLevel`). The image is never changed, upscaled or rejected.
+- **Image unavailable** (warning): the file isn't in this browser, or there's no record of it. The element and M12's crossed placeholder stay; Replace and Delete (M12) are the way out.
+- **Graphic unavailable** (warning): not in the approved M9 library, or the file failed. Nothing is substituted; the 33 graphics with unconfirmed rights stay withheld.
+- **Font unavailable** (warning): a text whose font isn't one of the Studio's.
+- **Empty:**
+  - "Your design is empty" when no side has artwork or a background colour. It shows in the dialog but isn't counted on the button.
+  - "No artwork on this side" (a note) for an empty side of a two-sided design. Whether an empty side is allowed isn't decided here.
+- **Passes**, listed per side: "Nothing is past the trim edge", "Everything is inside the safe zone", "Images are sharp enough to print (150 DPI or more)", "All images and graphics are available", "All fonts are available".
+- **Show** on an issue switches the editor to its side, selects the layer and puts focus on the canvas. It's the customer's choice to fix it; no edit is made for them.
+- **Updates:** checks use the M12 asset library and image cache states and are redone when an image settles.
+
+**Proof** (`preflight/proof-layout.ts`, `proof-texts.ts`, `proof-export.ts`, `proof-render.tsx`):
+- **Contents:** the chosen sides ("Front and back", "Front only", "Back only"; only sides with artwork), side by side, each whole with its bleed. Above each, its name, finished size and bleed. Then a light bleed tint outside the trim, and the trim line (dark over a light edge, so it shows on any colour).
+- **Footer:** design and product name, "Proof only — not a print-ready file. Colours on screen and in print can differ.", what the line and tint mean, the resolution (or how much it was scaled) and the print-check count.
+- **Drawn by the editor's own artwork nodes** (`canvas/artwork.tsx`, shared with the canvas and Preview) from the design document in memory: unsaved changes included, no second model, no stage JSON.
+  - Each side is redrawn with Konva `toCanvas` at proof resolution on a small off-screen stage, so vector shapes and text are sharp.
+  - Images are drawn from their decoded files, never upscaled beyond their placed size.
+  - The proof waits for fonts and images first (the M14 readiness check). A missing image shows its crossed placeholder; nothing crashes.
+- **Size formula** (print px; L = longest edge of the largest bleed box):
+  - margin = gap = round(0.06 L), label band = round(0.08 L), footer = round(0.12 L);
+  - width = 2 margin + Σ bleed widths + gap × (sides − 1);
+  - height = 2 margin + label band + tallest bleed height + footer;
+  - scale = min(1, √(16 000 000 / (width × height)), 16 384 / max(width, height)).
+- **Examples:**
+  - A business card, both sides: 2367 × 983 px at full 300 DPI; one side is 1216 × 983 px.
+  - The 30 MP canopy tent is scaled to stay within 16 MP, and the dialog and footer say so.
+- **File name:** `<design-name>-proof.png`, or `<design-name>-<side>-proof.png` for one side. The download uses a temporary object URL, released afterwards.
+- **Proof information in the dialog:** product, sides, finished size, resolution, bleed, safe zone, proof image size (full resolution or scaled, with percentage) and the warning count.
+- **Empty design:** "Your design is empty. Add something to it to make a proof." There's no blank proof.
+- **Read-only:** making a proof never edits the design or its history, and never changes the editor's side.
+
+**Not blocking:** editing, saving, autosave, undo/redo, sides, Preview, templates, image replacement and layers work exactly as before, whatever the checks say.
+
+**Accessibility:**
+- The summary is an `<output>`; issues carry a "Warning:" or "Note:" prefix for screen readers, and colour is never the only signal (icons and words).
+- "Show" buttons are named after their layer ("Show logo.png"); tap targets are at least 44 px on touch.
+- Axe finds no violations in the dialog.
+
+**Testing:**
+- **Unit:** `preflight/print-checks.test.ts` (12 tests):
+  - safe zone and trim, including rotated and round trims, hidden layers ignored, design unchanged;
+  - DPI bands with the image unchanged;
+  - unavailable images, graphics and fonts, and loading not counted as missing;
+  - empty design, empty side and background-only sides;
+  - the proof formula, the 16 MP canopy cap, the edge cap and rounded corners;
+  - file names;
+  - proof texts.
+- **Component:** `preflight/print-check-dialog.test.tsx` (8 tests):
+  - the button count;
+  - per-side lists, Escape and focus;
+  - Show selecting the layer with no edit made;
+  - empty design;
+  - proof facts and download from the current unsaved design, both sides and the back only, with no history change;
+  - failure and retry;
+  - only sides with artwork;
+  - phones.
+- **Browser:** `e2e/studio-proof.spec.ts` (11 tests: 8 desktop, 1 tablet, 1 phone, 1 across widths):
+  - a good design and axe;
+  - safe zone then trim warnings, Show, editing and undo;
+  - low resolution (85 DPI) next to a sharp image;
+  - an image lost from storage: unavailable, and the proof still downloads;
+  - per-side checks;
+  - real PNG proofs: sizes from the header, pixels read back to show the unsaved background colours, the tinted bleed and the white page;
+  - back-only proof;
+  - Preview still working;
+  - saving with warnings and the same checks after a reload;
+  - the canopy tent scaled to 16 MP;
+  - tablet and phone;
+  - 1440–360 px with no sideways scroll;
+  - no console errors.
+- **Screenshots:** `e2e/studio-visual.spec.ts` "print check" (`SCREENSHOTS=1`).
+
+**Known limits**
+- **Proof only.** A browser picture with no CMYK, ICC profile, crop marks or PDF; print-ready files are Phase 6.
+- **Advice, not blocking.** Blocking preflight, including unchanged template placeholder text, is Phase 4.
+- **Fonts are checked against the Studio's registry.** A Studio font that fails to download shows a fallback without a warning.
+- **Bounding boxes, not ink.** The safe-zone and trim checks use the element's box (rotated corners), not the drawn pixels: a circle's empty corners or a text box's unused width can trigger them, as in the editor.

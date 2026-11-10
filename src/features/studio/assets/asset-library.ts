@@ -84,6 +84,15 @@ export function assetSettled(assetId: string): boolean {
   return requestImage(state.url).status !== 'loading';
 }
 
+/** An uploaded image's file: drawn, missing (or failed to decode), or still loading (print checks). */
+export function assetAvailability(assetId: string): 'available' | 'missing' | 'loading' {
+  const state = resolve(assetId);
+  if (state.status === 'resolving') return 'loading';
+  if (state.status === 'missing') return 'missing';
+  const image = requestImage(state.url).status;
+  return image === 'loaded' ? 'available' : image === 'error' ? 'missing' : 'loading';
+}
+
 /** Called when an uploaded image's file is found or found missing. */
 export function subscribeAssets(listener: () => void): () => void {
   listeners.add(listener);
