@@ -134,6 +134,22 @@ describe('print check', () => {
     expect(screen.getByRole('button', { name: 'Undo' })).toBeDisabled(); // no edit was made
   });
 
+  it('editing shortcuts don’t reach the design while the dialog is open (M16)', async () => {
+    const user = renderStudio();
+    await user.click(screen.getByRole('button', { name: /^Star, star/ }));
+    await user.click(within(screen.getByTestId('selected-properties')).getByRole('button', { name: 'Delete' }));
+    await openChecks(user);
+    await user.keyboard('{Control>}z{/Control}');
+    await user.keyboard('{Control>}d{/Control}');
+    await user.keyboard('{Delete}');
+    await user.keyboard('{Escape}');
+    await waitFor(() => expect(screen.queryByRole('dialog')).not.toBeInTheDocument());
+    expect(screen.getByRole('list', { name: 'Layers' })).not.toHaveTextContent('Star');
+    // Once it's closed, Ctrl Z works again.
+    await user.keyboard('{Control>}z{/Control}');
+    expect(screen.getByRole('list', { name: 'Layers' })).toHaveTextContent('Star');
+  });
+
   it('an empty design says so, and has no proof to download', async () => {
     const user = renderStudio({ sample: false });
     await openChecks(user);

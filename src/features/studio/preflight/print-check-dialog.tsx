@@ -33,7 +33,7 @@ export function PrintCheckButton({ iconOnly }: { iconOnly: boolean }) {
       <DialogTrigger asChild>
         <Button variant="secondary" size="sm" aria-haspopup="dialog" data-testid="print-check-button" className={cn('relative', iconOnly && 'size-9 px-0')}>
           <Icon aria-hidden="true" className={cn(count > 0 && 'text-warning-strong')} />
-          <span className={cn(iconOnly ? 'sr-only' : 'max-xl:sr-only')}>Print check</span>{' '}
+          <span className={cn(iconOnly ? 'sr-only' : 'max-[1399px]:sr-only')}>Print check</span>{' '}
           {count > 0 ? (
             <span
               className={cn(

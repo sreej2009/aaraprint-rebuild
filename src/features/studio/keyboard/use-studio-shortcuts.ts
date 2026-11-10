@@ -10,6 +10,14 @@ export const STUDIO_KEYS_ATTRIBUTE = 'data-studio-keys';
 /** The canvas region itself (canvas-only shortcuts such as Enter to edit text). */
 const CANVAS_ATTRIBUTE = 'data-studio-canvas';
 
+/**
+ * A modal dialog is open (design-system dialogs and the Preview mark themselves): the editor behind
+ * it must not change — no undo, duplicate, arrange or save from the keyboard until it closes.
+ */
+export function modalDialogOpen(): boolean {
+  return typeof document !== 'undefined' && document.querySelector('[data-modal-dialog]') !== null;
+}
+
 function isTyping(target: EventTarget | null): boolean {
   return target instanceof HTMLElement && (target.isContentEditable || /^(INPUT|TEXTAREA|SELECT)$/.test(target.tagName));
 }
@@ -37,7 +45,7 @@ export interface StudioShortcutOptions {
 export function useStudioShortcuts(studio: StudioStore, interaction: InteractionStore, { allowBody = true }: StudioShortcutOptions = {}): void {
   useEffect(() => {
     const onKeyDown = (event: KeyboardEvent) => {
-      if (event.defaultPrevented || isTyping(event.target)) return;
+      if (event.defaultPrevented || isTyping(event.target) || modalDialogOpen()) return;
       const gesture = interaction.getState().gesture;
       if (gesture) {
         if (event.key === 'Escape') {

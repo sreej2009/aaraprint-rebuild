@@ -1,11 +1,14 @@
 import { render, screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { createMemoryRouter, RouterProvider, useLocation } from 'react-router';
-import { afterEach, describe, expect, it } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vitest';
 import { TooltipProvider } from '@/design-system';
 import { readProduct, readProfile } from '../testing/catalogue-fixtures';
 import { StudioApp, type StudioAppProps } from './studio-app';
 import { StudioNotFound, StudioUnsupported } from './studio-states';
+
+// Like the other full-Studio test files: rendering the whole Studio can take a few seconds on a busy machine.
+vi.setConfig({ testTimeout: 20_000 });
 
 const product = readProduct('business-card-classic');
 const profile = readProfile('business-card-classic');

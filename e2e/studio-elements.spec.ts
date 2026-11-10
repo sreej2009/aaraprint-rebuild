@@ -1,7 +1,7 @@
 import AxeBuilder from '@axe-core/playwright';
 import type { Page, TestInfo } from '@playwright/test';
 import type KonvaNamespace from 'konva';
-import { expect, test } from './fixtures';
+import { expect, test, settleAnimations } from './fixtures';
 
 /**
  * Selecting, moving, resizing and rotating elements (Phase 3 M6), on the sample card
@@ -404,7 +404,7 @@ test.describe('regressions', () => {
       await t.tap(await at(page, 905, 325));
       await expect(page.getByRole('toolbar', { name: 'Selected: Star' })).toBeVisible();
     }
-    await page.waitForTimeout(400);
+    await settleAnimations(page);
     const results = await new AxeBuilder({ page }).withTags(['wcag2a', 'wcag2aa', 'wcag21a', 'wcag21aa', 'wcag22aa', 'best-practice']).analyze();
     expect(results.violations.map((v) => `${v.id}: ${v.help} — ${v.nodes.map((n) => n.target.join(' ')).slice(0, 3).join(' | ')}`)).toEqual([]);
   });

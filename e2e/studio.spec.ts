@@ -1,6 +1,6 @@
 import AxeBuilder from '@axe-core/playwright';
 import type { Page, TestInfo } from '@playwright/test';
-import { expect, test } from './fixtures';
+import { expect, test, settleAnimations } from './fixtures';
 
 /** Design Studio page and layouts (Phase 3 M4). Runs on desktop, tablet (820 × 1180) and phone. */
 
@@ -180,7 +180,7 @@ test.describe('keyboard and accessibility', () => {
   test('no detectable WCAG 2.2 AA violations with panels and sheets open', async ({ page }, info) => {
     await page.goto(`${STUDIO}?tool=product`);
     await page.getByText('Classic Visiting Cards design').waitFor();
-    await page.waitForTimeout(300); // sheet / panel animation
+    await settleAnimations(page);
     expect(await axe(page)).toEqual([]);
     if (layoutOf(info) === 'mobile') {
       await page.keyboard.press('Escape');
@@ -188,7 +188,7 @@ test.describe('keyboard and accessibility', () => {
     } else {
       await page.getByRole('button', { name: layoutOf(info) === 'desktop' ? 'Help' : 'Layers and properties' }).click();
     }
-    await page.waitForTimeout(300);
+    await settleAnimations(page);
     expect(await axe(page)).toEqual([]);
   });
 });

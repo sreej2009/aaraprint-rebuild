@@ -37,6 +37,7 @@ export function DialogContent({ title, description, footer, size = 'md', classNa
     <DialogPrimitive.Portal>
       <DialogPrimitive.Overlay className={overlayClasses}>
         <DialogPrimitive.Content
+          data-modal-dialog=""
           className={cn(panelClasses, widths[size], className)}
           onCloseAutoFocus={onCloseAutoFocus}
           {...(description ? {} : { 'aria-describedby': undefined })}
@@ -82,7 +83,7 @@ export function ConfirmDialog({ open, onOpenChange, trigger, title, description,
       {trigger && <AlertDialogPrimitive.Trigger asChild>{trigger}</AlertDialogPrimitive.Trigger>}
       <AlertDialogPrimitive.Portal>
         <AlertDialogPrimitive.Overlay className={overlayClasses}>
-          <AlertDialogPrimitive.Content className={cn(panelClasses, widths.sm)}>
+          <AlertDialogPrimitive.Content data-modal-dialog="" className={cn(panelClasses, widths.sm)}>
             <div className="flex flex-col gap-2 px-5 pt-5 pb-4 sm:px-6 sm:pt-6">
               <AlertDialogPrimitive.Title className="font-display text-h3 font-semibold text-fg">{title}</AlertDialogPrimitive.Title>
               <AlertDialogPrimitive.Description className="text-body-sm text-fg-muted">{description}</AlertDialogPrimitive.Description>

@@ -1,7 +1,7 @@
 import AxeBuilder from '@axe-core/playwright';
 import type { Page, TestInfo } from '@playwright/test';
 import type KonvaNamespace from 'konva';
-import { expect, test } from './fixtures';
+import { expect, test, settleAnimations } from './fixtures';
 
 /**
  * Studio canvas (Phase 3 M5): the real Konva stage, inspected through the global `Konva` object
@@ -341,6 +341,9 @@ test.describe('rendering a design (sample card on /design-system)', () => {
 });
 
 test.describe('accessibility', () => {
+  // Full-page axe scans take seconds each; on a busy machine running all workers they need more than 30 s.
+  test.describe.configure({ timeout: 60_000 });
+
   test('canvas, zoom menu and announcements pass axe and are labelled', async ({ page }) => {
     await page.goto(STUDIO);
     await waitForStage(page);
@@ -353,7 +356,7 @@ test.describe('accessibility', () => {
     // The open menu is modal (the rest of the page is hidden from assistive tech), so check it on its own.
     await menuButton.click();
     await expect(page.getByRole('menuitemcheckbox', { name: /Show print guides/ })).toHaveAttribute('aria-checked', 'true');
-    await page.waitForTimeout(250);
+    await settleAnimations(page);
     expect(summary(await new AxeBuilder({ page }).include('[role="menu"]').withTags(tags).analyze())).toEqual([]);
     await page.keyboard.press('Escape');
     await expect(menuButton).toBeFocused();

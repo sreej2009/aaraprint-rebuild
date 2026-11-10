@@ -1192,7 +1192,7 @@ I'll report after steps 2, 4 and 5 (or after each milestone, if you prefer). Eac
 | M13 Templates | Done |
 | M14 Studio preview | Done |
 | M15 Studio proof and print checks | Done |
-| M16 | Not started |
+| M16 Final hardening | Done |
 
 #### M1 findings
 
@@ -2157,3 +2157,58 @@ StudioState
 - **Advice, not blocking.** Blocking preflight, including unchanged template placeholder text, is Phase 4.
 - **Fonts are checked against the Studio's registry.** A Studio font that fails to download shows a fallback without a warning.
 - **Bounding boxes, not ink.** The safe-zone and trim checks use the element's box (rotated corners), not the drawn pixels: a circle's empty corners or a text box's unused width can trigger them, as in the editor.
+
+#### M16 — Final Studio hardening
+
+**Scope:** making M1–M15 hold together. No new features. No Phase 4 work: product photos, mockups, 3D, on-product workspaces, blocking preflight, cloud saving and print-ready PDF/CMYK all stay future work.
+
+**Baseline** (before M16, at `434aa50`): lint and typecheck clean; 650 unit and component tests passed; 302 browser tests passed, 0 failed.
+
+**Bugs found and fixed:**
+- **Editor shortcuts reached through dialogs.** With the Print check dialog (and the design-system dialogs: version history, restore and clear confirmations, copy-side and template-replace questions) open, Ctrl/⌘ Z, Y, D, [ ], S and the zoom keys still acted on the design behind it. Only Preview isolated them (M14).
+  - Every modal dialog now carries `data-modal-dialog` (design-system `DialogContent` and `ConfirmDialog`, and the Preview).
+  - The editor's window-wide shortcut and zoom handlers do nothing while one is open (`modalDialogOpen()` in `keyboard/use-studio-shortcuts.ts`).
+  - Drawers and tool sheets aren't modal dialogs, so the layers list keeps its keys in the tablet drawer.
+- **Desktop top bar clipped Continue at 1280–1399 px.** With labelled Preview and Print check buttons, Continue was partly off screen.
+  - The two labels now show from 1400 px; below that the buttons are icons with the same names.
+  - The bar fits at every width from 1440 to 360 px (checked).
+- **Upload rows failed axe "label in name" (M12).** "Add image: logo.png, 400 × 400 px · 1 KB" didn't match the visible "logo.png" and "400 × 400 px · 1 KB", which had no space between them.
+  - The name is now exactly what the row shows, after "Add image:".
+
+**Tests made deterministic:**
+- **Three inspector tests** ("steps within 600 ms merge", the opacity slider steps, + and − on font size) assumed two clicks land within 600 ms of wall-clock time, and failed on a busy machine. They now freeze `Date` (timers still run), so the merge window no longer depends on machine speed.
+- **The Studio shell test file** now uses the same 20 s budget as every other full-Studio test file; it was the only one on the 5 s default.
+- **Fixed sleeps before axe scans** (`waitForTimeout(250–400)` after dialogs and sheets open) are replaced by `settleAnimations()` (`e2e/fixtures.ts`), which waits until no animation is running, ignoring endless spinners. Three sleeps remain on purpose:
+  - autosave must not happen (a negative check);
+  - the gap between a double-tap's two taps;
+  - Chrome's touch-release settling.
+- **The full-page axe scans** (`a11y.spec.ts`, Studio canvas accessibility) get 60 s instead of 30 s. Every past failure there was a timeout while all workers ran, never a violation, and they couldn't be reproduced alone (24 of 24 under load).
+
+**New cross-feature coverage** (`e2e/studio-flows.spec.ts`, 16 tests):
+- **A · product page to saved design:** text, shape, move and resize, undo and redo, Save now, reload.
+- **B · an image:** place, move, resize, DPI, save, reload.
+- **C · a file that goes missing:** placeholder after reload, Replace and Delete.
+- **D · front and back:** edited separately, saved and reloaded.
+- **E · copy front to back:** fresh ids, the back edits alone, undo returns to the front.
+- **F · a template:** search, apply, edit, save, reload.
+- **G · Preview:** unsaved changes shown, the editor's side, selection, zoom and canvas unchanged.
+- **H · Print check:** warning, Show, proof of the unsaved design (PNG header 1216 × 983), history unchanged.
+- **I · versions:** autosave, Save now, restore with confirmation, undo and redo of the restore, reload.
+- **J · locked and hidden layers:** Delete, arrows, position fields and reordering blocked until unlocked; hidden kept in Layers.
+- **Shortcut isolation:** typing in template search, number fields and layer names, and pressing keys behind the Print check dialog, never changes the design.
+- **Axe:** Templates panel, inspector and layers with a selection, Uploads with a file, Preview, Print check.
+- **Every product family** (14) opens on its flat print area, and Preview, Print check and a proof work: business card, round card, A5 flyer, poster, vinyl banner, mug, bottle, pen, polo, cap, umbrella, backpack, stamp, round mouse pad. Every planned proof stays within 16 MP; real proofs are downloaded for one product per mode (business card, mug, polo), so the run stays light enough not to slow other tests.
+- **Tablet critical flow** by touch: text, shape, image, back side, template, Preview, Print check, proof, autosave, reload. The design name keeps at least 56 px.
+- **Phone critical flow:** tool sheets, template, Preview, Print check, proof, no sideways scroll.
+- **Widths:** 1440, 1280, 1024, 820, 768, 600, 430, 390, 375 and 360 px. No sideways scroll, and the design name, Preview, Print check and Continue/Next are all on screen.
+
+**Audited, no change needed:**
+- **Persistence:** IndexedDB v1 → v2 upgrade (M12 test); designs and versions hold references only, never files, base64 or object URLs; stale-write and another-tab protection; save failures keep the Studio working; damaged or foreign designs get their own screens; missing files don't break drawing.
+- **Uploads:** checked by signature and decode, size checked before reading, names treated as text, ids generated.
+- **Rights:** graphics with unconfirmed rights stay withheld.
+- **Proofs:** made from the in-memory design with the shared renderer; trim shape, bleed and the 16 MP / 16 384 px cap hold; no guides or handles; no edits or history.
+- **Performance:** autosave is debounced; print-check counts settle after editing pauses; Preview and proof read the document without copying it into a second store.
+
+**Final results:** lint and typecheck clean; 651 unit and component tests passed; 319 browser tests passed, 0 failed, 0 flaky, with retries off (283 skipped, each because it's for a different device layout); production build passes.
+
+**Phase 3 status:** M1–M16 complete. Phase 4 has not started.

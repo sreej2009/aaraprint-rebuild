@@ -27,7 +27,7 @@ export function PreviewButton({ iconOnly }: { iconOnly: boolean }) {
       <DialogPrimitive.Trigger asChild>
         <Button variant="secondary" size="sm" aria-haspopup="dialog" className={cn(iconOnly && 'size-9 px-0')} data-testid="preview-button">
           <Eye aria-hidden="true" />
-          <span className={cn(iconOnly ? 'sr-only' : 'max-xl:sr-only')}>Preview</span>
+          <span className={cn(iconOnly ? 'sr-only' : 'max-[1399px]:sr-only')}>Preview</span>
         </Button>
       </DialogPrimitive.Trigger>
       {open && <PreviewDialog />}
@@ -50,6 +50,7 @@ function PreviewDialog() {
         ref={contentRef}
         aria-describedby="studio-preview-description"
         data-testid="studio-preview"
+        data-modal-dialog=""
         onOpenAutoFocus={(event) => {
           event.preventDefault();
           contentRef.current?.focus();

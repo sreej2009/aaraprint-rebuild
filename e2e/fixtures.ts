@@ -1,4 +1,4 @@
-import { test as base, expect } from '@playwright/test';
+import { test as base, expect, type Page } from '@playwright/test';
 
 /**
  * Pages are pre-rendered, so they are visible before React hydrates and clicks made in
@@ -18,3 +18,12 @@ export const test = base.extend({
 });
 
 export { expect };
+
+/**
+ * Wait until no CSS animation or transition is running (a dialog or sheet has finished opening),
+ * so checks such as axe never see half-faded text. Deterministic, unlike a fixed sleep.
+ */
+export async function settleAnimations(page: Page): Promise<void> {
+  // Endless ones (spinners) never finish, so they don't count.
+  await page.waitForFunction(() => document.getAnimations().every((a) => a.playState !== 'running' || a.effect?.getTiming().iterations === Infinity));
+}

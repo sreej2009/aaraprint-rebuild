@@ -147,7 +147,7 @@ function UploadRow({ item }: { item: AssetSummary }) {
         type="button"
         disabled={!surface}
         onClick={place}
-        aria-label={`Add image: ${item.name}, ${details}`}
+        aria-label={`Add image: ${item.name} ${details}`}
         className="flex min-w-0 flex-1 items-center gap-3 rounded-sm text-left hover:bg-surface-subtle disabled:opacity-50"
       >
         <span className="grid size-14 shrink-0 place-items-center overflow-hidden rounded-sm bg-surface-subtle">
@@ -156,7 +156,7 @@ function UploadRow({ item }: { item: AssetSummary }) {
         <span className="flex min-w-0 flex-col">
           <span className="truncate text-body-sm font-medium text-fg" title={item.name}>
             {item.name}
-          </span>
+          </span>{' '}
           <span className="text-caption text-fg-muted tabular-nums">{details}</span>
         </span>
       </button>

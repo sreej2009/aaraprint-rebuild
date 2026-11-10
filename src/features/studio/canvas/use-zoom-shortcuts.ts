@@ -1,4 +1,5 @@
 import { useEffect } from 'react';
+import { modalDialogOpen } from '../keyboard/use-studio-shortcuts';
 import type { ViewportStore } from './viewport-store';
 
 function isTyping(target: EventTarget | null): boolean {
@@ -12,7 +13,7 @@ function isTyping(target: EventTarget | null): boolean {
 export function useZoomShortcuts(store: ViewportStore): void {
   useEffect(() => {
     const onKeyDown = (event: KeyboardEvent) => {
-      if (event.defaultPrevented || event.altKey || isTyping(event.target)) return;
+      if (event.defaultPrevented || event.altKey || isTyping(event.target) || modalDialogOpen()) return;
       const { actions, showGuides } = store.getState();
       const mod = event.ctrlKey || event.metaKey;
       let handled = true;

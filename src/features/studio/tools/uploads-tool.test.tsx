@@ -102,7 +102,7 @@ describe('Uploads tool', () => {
     const panel = await openUploads(user);
     await user.upload(input(), png('team-photo.png'));
     const add = await within(panel).findByRole('button', {
-      name: 'Add image: team-photo.png, 1200 × 800 px · 1 KB',
+      name: 'Add image: team-photo.png 1200 × 800 px · 1 KB',
     });
     expect(repository.assets.size).toBe(1);
     expect(layerRows()).toHaveLength(0); // uploading alone doesn't touch the design

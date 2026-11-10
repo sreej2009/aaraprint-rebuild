@@ -174,7 +174,7 @@ test.describe('desktop: uploading and placing', () => {
     await openUploads(page);
     await expect(panel(page).getByText('No uploaded images yet.')).toBeVisible();
     await upload(page, 'team-photo.png', 'image/png', await makeImage(page, 'image/png', 1200, 800));
-    await expect(addButton(page, 'team-photo.png')).toHaveAttribute('aria-label', /team-photo\.png, 1200 × 800 px · \d+ KB$/);
+    await expect(addButton(page, 'team-photo.png')).toHaveAttribute('aria-label', /team-photo\.png 1200 × 800 px · \d+ KB$/);
     const thumb = addButton(page, 'team-photo.png').locator('img');
     await expect.poll(() => thumb.evaluate((img: HTMLImageElement) => img.complete && img.naturalWidth)).toBeGreaterThan(0);
     expect(await thumb.evaluate((img: HTMLImageElement) => Math.max(img.naturalWidth, img.naturalHeight))).toBeLessThanOrEqual(240);

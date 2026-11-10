@@ -29,7 +29,17 @@ function setWidth(width: number) {
 
 afterEach(() => {
   window.matchMedia = realMatchMedia;
+  vi.useRealTimers();
 });
+
+/**
+ * Edits with the same field merge into one undo step when they come within 600 ms. Tests of that
+ * freeze the clock (only Date; timers still run), so a slow machine can't split the steps.
+ */
+function freezeClock() {
+  vi.useFakeTimers({ toFake: ['Date'] });
+  vi.setSystemTime(new Date('2026-11-10T10:00:00.000Z'));
+}
 
 function renderStudio(width = 1440) {
   setWidth(width);
@@ -182,6 +192,7 @@ describe('properties', () => {
   });
 
   it('commits a typed value on Enter as one undo step; steps within 600 ms merge; same values add nothing', async () => {
+    freezeClock();
     const user = renderStudio();
     await selectLayer(user, 'Star');
     const x = field('X, from the left trim edge');
@@ -261,6 +272,7 @@ describe('properties', () => {
   });
 
   it('sets opacity from the field and the slider', async () => {
+    freezeClock();
     const user = renderStudio();
     await selectLayer(user, 'Star');
     const opacity = field('Opacity');

@@ -1,7 +1,7 @@
 import AxeBuilder from '@axe-core/playwright';
 import type { Page, TestInfo } from '@playwright/test';
 import type KonvaNamespace from 'konva';
-import { expect, test } from './fixtures';
+import { expect, test, settleAnimations } from './fixtures';
 
 /**
  * Inspector and layers panel (Phase 3 M7) against the real canvas, on the sample card
@@ -187,7 +187,7 @@ test.describe('tablet: inspector drawer', () => {
     await y.fill('30');
     await y.press('Enter');
     await expect.poll(async () => (await drawn(page, 'el_star'))!.y).toBeCloseTo(30 * MM, 1);
-    await page.waitForTimeout(300);
+    await settleAnimations(page);
     expect(await axe(page, '[role="dialog"]')).toEqual([]);
     await page.keyboard.press('Escape');
     await expect(drawer).toHaveCount(0);
@@ -224,7 +224,7 @@ test.describe('phone: inspector sheet', () => {
     await sheet.getByRole('textbox', { name: 'Layer name' }).press('Enter');
     await expect(sheet.getByRole('button', { name: 'Gold star, star' })).toBeVisible();
 
-    await page.waitForTimeout(300);
+    await settleAnimations(page);
     expect(await axe(page, '[role="dialog"]')).toEqual([]);
   });
 });
