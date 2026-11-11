@@ -15,7 +15,9 @@ import { ZoomAnnouncer, ZoomControl } from '../canvas/zoom-control';
 import { finishedSizeMm, printBoxes } from '../geometry/boxes';
 import { fitScale, workspacePadding } from '../geometry/fit';
 import { formatSize } from '../profile/describe';
-import { useProductView, useProductViewOffered } from '../product-view/use-product-view';
+import { ProductColourPicker } from '../product-view/colour-picker';
+import { COLOUR_UNAVAILABLE, colourUnavailable } from '../product-view/product-view';
+import { useProductColour, useProductColourOffered, useProductView, useProductViewOffered } from '../product-view/use-product-view';
 import { ProductViewToggle } from '../product-view/view-toggle';
 import type { SurfaceDesign } from '../schema/types';
 import { selectActiveSurface, useStudio, useStudioStoreApi } from '../store';
@@ -78,8 +80,14 @@ export function CanvasWorkspace({ zoomPill = false, onStage }: CanvasWorkspacePr
   const surfaces = useStudio((s) => s.document.surfaces);
   const wantProduct = useViewport((s) => s.productView);
   const offered = useProductViewOffered(profile, surfaces);
-  const product = useProductView(profile, surface, offered && wantProduct);
+  // The product colour (M3): the photo's fabric recoloured with its mask; the design never changes.
+  const { colours, colour, choose } = useProductColour(profile);
+  const colourOffered = useProductColourOffered(profile, surfaces);
+  const product = useProductView(profile, surface, offered && wantProduct, colourOffered ? colour : null);
   const onProduct = product.status === 'loading' || product.status === 'ready';
+  const notes = [product.status === 'unavailable' ? CANVAS_PRODUCT_UNAVAILABLE : null, onProduct && colourOffered && colourUnavailable(product.view, colour, product.tint) ? COLOUR_UNAVAILABLE : null].filter(
+    (note): note is string => note !== null,
+  );
   const content = useMemo(() => (print ? (onProduct && product.bounds ? product.bounds : printBoxes(print).bleed) : null), [print, onProduct, product.bounds]);
   // Phones edit text in a bottom sheet (room for the keyboard); larger screens edit in place.
   const sheetEditing = useContext(StudioUiContext)?.layout === 'phone';
@@ -129,6 +137,7 @@ export function CanvasWorkspace({ zoomPill = false, onStage }: CanvasWorkspacePr
       data-studio-keys=""
       data-studio-canvas=""
       data-view={onProduct ? 'product' : 'flat'}
+      data-tint={onProduct ? product.tint : undefined}
       className="relative flex h-full min-h-0 flex-col bg-surface-sunken focus-visible:-outline-offset-2 data-pointer-focus:outline-none"
     >
       <p id={CANVAS_HELP_ID} className="sr-only">
@@ -167,10 +176,18 @@ export function CanvasWorkspace({ zoomPill = false, onStage }: CanvasWorkspacePr
         {ready && !sheetEditing && <TextEditOverlay />}
         <SelectionToolbar />
         <EmptySideCard />
-        {product.status === 'unavailable' && (
-          <p className="pointer-events-none absolute inset-x-0 top-3 mx-auto w-fit max-w-[calc(100%-2rem)] rounded-full bg-surface/95 px-3 py-1 text-center text-body-sm text-fg-muted shadow-1" data-testid="canvas-product-unavailable">
-            {CANVAS_PRODUCT_UNAVAILABLE}
-          </p>
+        {notes.length > 0 && (
+          <div className="pointer-events-none absolute inset-x-0 top-3 flex flex-col items-center gap-2 px-4">
+            {notes.map((note) => (
+              <p
+                key={note}
+                className="w-fit max-w-full rounded-full bg-surface/95 px-3 py-1 text-center text-body-sm text-fg-muted shadow-1"
+                data-testid={note === CANVAS_PRODUCT_UNAVAILABLE ? 'canvas-product-unavailable' : 'canvas-colour-unavailable'}
+              >
+                {note}
+              </p>
+            ))}
+          </div>
         )}
         {zoomPill && (
           <div className="absolute right-3 bottom-3 rounded-full border border-border bg-surface/95 px-1 shadow-2 backdrop-blur">
@@ -193,6 +210,7 @@ export function CanvasWorkspace({ zoomPill = false, onStage }: CanvasWorkspacePr
             onChange={(next) => viewportStore.getState().actions.setProductView(next === 'product')}
           />
         )}
+        {onProduct && colourOffered && colours && colour && <ProductColourPicker colours={colours.options} value={colour.id} onChange={choose} testId="canvas-colours" />}
         <GuideLegend hasBleed={surface.print.bleedPx > 0} dimmed={!showGuides} />
       </footer>
     </section>

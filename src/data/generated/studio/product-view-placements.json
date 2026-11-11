@@ -324,5 +324,57 @@
       "mug": [510, 790, 330, 340],
       "flask": [561, 805, 310, 300]
     }
+  },
+  "umbrellaRainwearColours": {
+    "note": "Swatches are the product's own colour options that have a palette entry (matched by name, case-insensitive). No tint is drawn on a side whose photo is already that colour.",
+    "palette": {
+      "black": "#2b2b2d",
+      "navy": "#243052",
+      "red": "#b0262d",
+      "green": "#1f6a3d",
+      "grey": "#7d8188",
+      "blue": "#1f56b0",
+      "pink": "#e0679f",
+      "yellow": "#f6c933",
+      "safety yellow": "#dbec22",
+      "orange": "#ee6a1c"
+    },
+    "photoColours": {
+      "cap-rain-waterproof": ["Navy", "Navy"],
+      "jacket-waterproof-rain": ["Blue", "Blue"],
+      "raincoat-industrial-safety": ["Safety Yellow", "Safety Yellow"],
+      "raincoat-kids": ["Yellow", "Yellow"],
+      "rainsuit-safari": ["Khaki", "Khaki"],
+      "rainwear-bag-cover-waterproof": ["Black", "Black"],
+      "rainwear-kiara-kids-raincoat": ["Yellow", "Yellow"],
+      "rainwear-kiara-womens-long-raincoat": ["Navy", "Olive"],
+      "rainwear-lbw-safari-suit": ["Olive", "Olive"],
+      "rainwear-mirage-safari-suit": ["Khaki", "Khaki"],
+      "rainwear-rain-cap-freedom": ["Black", "Navy"],
+      "rainwear-rain-cap-waterproof": ["Charcoal", "Charcoal"],
+      "rainwear-raincare-safari-suit": ["Olive", "Olive"],
+      "rainwear-raincoat-industrial-safety": ["Safety Yellow", "Safety Yellow"],
+      "rainwear-raincoat-poncho": ["Olive", "Navy"],
+      "rainwear-rainsuit-standard": ["Black", "Black"],
+      "rainwear-skylark-safari-suit": ["Navy", "Navy"],
+      "rainwear-waterproof-jacket-foldable": ["Black", "Black"],
+      "rainwear-waterproof-jacket-scott": ["Black", "Olive"],
+      "rainwear-waterproof-jacket-standard": ["Royal Blue", "Black"],
+      "umbrella-golf": ["Black", "Black"],
+      "umbrella-golf-bulk": ["Black", "Black"],
+      "umbrella-golf-classic": ["Black", "Black"],
+      "umbrella-golf-promotional-basic": ["Black", "Black"],
+      "umbrella-photo-custom": ["White", "White"],
+      "umbrella-photo-print": ["White", "White"],
+      "umbrella-promotional": ["White", "Royal Blue"],
+      "umbrella-single-fold": ["Black", "Black"],
+      "umbrella-single-fold-bulk": ["Black", "Black"],
+      "umbrella-three-fold": ["Black", "Black"],
+      "umbrella-three-fold-bulk": ["Black", "Black"],
+      "umbrella-three-fold-sun": ["Yellow", "Yellow"],
+      "umbrella-two-fold": ["Yellow", "Yellow"],
+      "umbrella-two-fold-bulk": ["Black", "Navy"],
+      "umbrella-two-fold-sun": ["Yellow", "Yellow"]
+    }
   }
 }

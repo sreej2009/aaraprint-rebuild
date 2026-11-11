@@ -1,7 +1,7 @@
 import { hasMedia, mediaUrl } from '@/lib/media';
 import type { Point, Rect } from '../geometry/boxes';
 import type { Size } from '../geometry/fit';
-import type { ProductViewKind, StudioPlacement, StudioProfile } from '../profile/types';
+import type { ProductViewKind, StudioPlacement, StudioProductColour, StudioProfile } from '../profile/types';
 import type { PreviewSpace } from '../preview/preview-view';
 
 /**
@@ -42,6 +42,13 @@ export interface ProductView {
   url: string;
   photo: Size;
   placement: StudioPlacement;
+  /**
+   * The side's fabric mask (M3), only when its own rights are cleared, it is a library path, it is
+   * the photo's size and the media library is published. Otherwise null: the photo is shown as taken.
+   */
+  mask: { url: string } | null;
+  /** The colour the photo was taken in ("Black"), if known. */
+  photoColour: string | null;
 }
 
 export type ProductViewResult = { ok: true; view: ProductView } | { ok: false; reason: ProductViewUnavailable };
@@ -106,8 +113,85 @@ export function productViewFor(profile: StudioProfile, sideId: string, media: Me
   if (typeof mockup.ref !== 'string' || !SAFE_REF.test(mockup.ref) || mockup.ref.includes('..') || !positive(photo.width) || !positive(photo.height)) return { ok: false, reason: 'invalid' };
   if (!isValidPlacement(side.placement, photo)) return { ok: false, reason: 'invalid' };
   if (!media.hasMedia(mockup.ref)) return { ok: false, reason: 'no-media' };
-  return { ok: true, view: { kind: profile.productView!, sideId, url: media.mediaUrl(mockup.ref), photo, placement: side.placement } };
+  const mask = mockup.mask;
+  const maskOk =
+    mask !== null &&
+    typeof mask === 'object' &&
+    mask.rights === 'cleared' &&
+    typeof mask.ref === 'string' &&
+    SAFE_REF.test(mask.ref) &&
+    !mask.ref.includes('..') &&
+    mask.width === photo.width &&
+    mask.height === photo.height &&
+    media.hasMedia(mask.ref);
+  return {
+    ok: true,
+    view: {
+      kind: profile.productView!,
+      sideId,
+      url: media.mediaUrl(mockup.ref),
+      photo,
+      placement: side.placement,
+      mask: maskOk ? { url: media.mediaUrl(mask.ref) } : null,
+      photoColour: typeof side.photoColour === 'string' ? side.photoColour : null,
+    },
+  };
 }
+
+// ----------------------------------------------------------------- Colours (M3)
+
+/** Products whose photo can be recoloured: umbrellas and rainwear. Not drinkware, mugs, pens or apparel. */
+export const COLOUR_KINDS: readonly ProductViewKind[] = ['umbrella', 'rainwear'];
+
+export interface ProductColours {
+  options: StudioProductColour[];
+  defaultId: string;
+}
+
+const HEX = /^#[0-9a-f]{6}$/i;
+
+/** The product's colours, validated: real #rrggbb values, names and unique ids. Null when there are none. */
+export function productColoursOf(profile: StudioProfile): ProductColours | null {
+  if (!hasProductView(profile) || !COLOUR_KINDS.includes(profile.productView!)) return null;
+  const given = profile.productColours;
+  if (!given || !Array.isArray(given.options)) return null;
+  const seen = new Set<string>();
+  const options = given.options.filter((o) => {
+    const valid = o && typeof o.id === 'string' && o.id !== '' && !seen.has(o.id) && typeof o.label === 'string' && o.label.trim() !== '' && typeof o.hex === 'string' && HEX.test(o.hex);
+    if (valid) seen.add(o.id);
+    return valid;
+  });
+  if (!options.length) return null;
+  return { options, defaultId: options.some((o) => o.id === given.defaultId) ? given.defaultId : options[0]!.id };
+}
+
+/**
+ * The colour to show: the one chosen in this session; else the colour of the variant being designed
+ * (as the original); else the product's default colour.
+ */
+export function chooseColour(colours: ProductColours, chosenId: string | null, variantValueIds: readonly string[] = []): StudioProductColour {
+  return colours.options.find((o) => o.id === chosenId) ?? colours.options.find((o) => variantValueIds.includes(o.id)) ?? colours.options.find((o) => o.id === colours.defaultId)!;
+}
+
+const sameName = (a: string | null, b: string) => a !== null && a.trim().toLowerCase() === b.trim().toLowerCase();
+
+/**
+ * The tint for a side in a colour: its hex, or null when the side is shown as photographed — the
+ * photo is already that colour (as the original), or the side has no usable mask.
+ */
+export function tintFor(view: ProductView, colour: StudioProductColour | null): string | null {
+  if (!colour || !view.mask || sameName(view.photoColour, colour.label)) return null;
+  return colour.hex;
+}
+
+/** True when a colour is chosen that this side can't show (no usable mask, or the tint failed). */
+export function colourUnavailable(view: ProductView | null, colour: StudioProductColour | null, tint: 'none' | 'applied' | 'pending' | 'failed'): boolean {
+  if (!view || !colour || sameName(view.photoColour, colour.label)) return false;
+  return tint === 'failed' || view.mask === null;
+}
+
+/** Shown on a side that can't take the chosen colour; the photo is shown as taken. */
+export const COLOUR_UNAVAILABLE = 'Colour preview unavailable for this side.';
 
 /**
  * The space the Preview zooms and pans in on the product: the whole photo, with a "dpi" chosen so

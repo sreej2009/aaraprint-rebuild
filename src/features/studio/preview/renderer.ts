@@ -28,7 +28,8 @@ export interface PreviewThumbnailProps {
 /** On the product (Phase 4 M1): the photo, with the artwork drawn over it at `placed` (photo px). */
 export interface ProductCanvasProps {
   surface: SurfaceDesign;
-  photo: HTMLImageElement;
+  /** The photo as taken, or recoloured with its mask (M3). */
+  photo: HTMLImageElement | HTMLCanvasElement;
   photoSize: Size;
   placed: PlacedArtwork;
   width: number;

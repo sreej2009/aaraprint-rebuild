@@ -7,7 +7,8 @@
  *   ../recovered-additional, ../recovered          mockups, masks and 3D models (headers only)
  *   src/data/generated/studio/product-view-placements.json
  *                                                  where artwork sits on each mockup photo
- *                                                  (scripts/studio/extract-product-views.mjs)
+ *                                                  (scripts/studio/extract-product-views.mjs), and the
+ *                                                  umbrella and rainwear colour palette and photo colours
  *
  * Writes:
  *   public/api/v1/studio/<slug>.json               Studio profile (mock API, like the catalogue)
@@ -23,7 +24,7 @@ import fs from 'node:fs/promises';
 import path from 'node:path';
 import { readGlbInfo, readImageInfo } from '../../tooling/media-info.ts';
 import { resolveMediaFile } from '../../tooling/local-media.ts';
-import { ASSET_RIGHTS, familyFor, familyMockups, geometryOptionsFor, modeFor, productViewFor, RIGHTS_NOTES, sideLabels, sizeCheckFor, trimFor } from './studio-rules.mjs';
+import { ASSET_RIGHTS, familyFor, familyMockups, geometryOptionsFor, hasProductColours, modeFor, productViewFor, RIGHTS_NOTES, sideLabels, sizeCheckFor, trimFor } from './studio-rules.mjs';
 
 const ROOT = process.cwd();
 const rootsArg = process.argv.includes('--roots') ? process.argv[process.argv.indexOf('--roots') + 1] : null;
@@ -80,12 +81,21 @@ async function buildProfile(product, missing, placements) {
   const labels = sideLabels(family);
   const print = product.print;
   const fallback = familyMockups(family);
+  const colours = hasProductColours(family) ? productColoursFor(product, placements.umbrellaRainwearColours) : null;
+  const photoColours = colours ? placements.umbrellaRainwearColours.photoColours[product.slug] : null;
   const sides = [];
-  for (const id of ['front', 'back']) {
+  for (const [index, id] of ['front', 'back'].entries()) {
     const ref = print.mockups?.[id] ?? fallback?.[id] ?? null;
     const mockup = await mockupAsset(ref, missing, product.slug);
-    // Only products with an on-product preview carry placements (others stay as in Phase 3).
-    sides.push({ id, label: labels[id], mockup, ...(productView ? { placement: placementFor(mockup, placements) } : {}) });
+    // Only products with an on-product preview carry placements (others stay as in Phase 3); only
+    // those with colours say what colour each photo was taken in (M3).
+    sides.push({
+      id,
+      label: labels[id],
+      mockup,
+      ...(productView ? { placement: placementFor(mockup, placements) } : {}),
+      ...(colours ? { photoColour: photoColours?.[index] ?? null } : {}),
+    });
   }
   return {
     schemaVersion: 1,
@@ -95,6 +105,7 @@ async function buildProfile(product, missing, placements) {
     mode,
     family,
     ...(productView ? { productView } : {}),
+    ...(colours ? { productColours: colours } : {}),
     print: {
       widthPx: print.canvasWidthPx,
       heightPx: print.canvasHeightPx,
@@ -126,7 +137,7 @@ async function mockupAsset(ref, missing, slug) {
     format: info.format,
     width: info.width,
     height: info.height,
-    mask: mask ? { ref: maskRef, width: mask.width, height: mask.height } : null,
+    mask: mask ? { ref: maskRef, width: mask.width, height: mask.height, rights: ASSET_RIGHTS.mask.status } : null,
     rights: ASSET_RIGHTS.mockup.status,
   };
 }
@@ -145,6 +156,24 @@ function placementFor(mockup, placements) {
     return { centerX, centerY, maxWidth, maxHeight };
   }
   return null;
+}
+
+/**
+ * The product's own colour options that the original could show (Phase 4 M3): its colour option
+ * group's values with an entry in the original palette, matched by name. The default is the
+ * default variant's colour (as the original), else the first. Null when none match.
+ */
+function productColoursFor(product, register) {
+  const group = product.optionGroups?.find((g) => /colou?r/i.test(g.name) && g.values.length > 0);
+  if (!group) return null;
+  const options = group.values.flatMap((value) => {
+    const hex = register.palette[value.label.trim().toLowerCase()];
+    return hex ? [{ id: value.id, label: value.label.trim(), hex }] : [];
+  });
+  if (!options.length) return null;
+  const defaultVariant = product.variants?.find((v) => v.isDefault);
+  const defaultOption = options.find((o) => defaultVariant?.optionValueIds.includes(o.id)) ?? options[0];
+  return { options, defaultId: defaultOption.id };
 }
 
 async function modelAsset(product, family, missing) {
@@ -219,6 +248,8 @@ function buildMeta(profiles, skipped, missing) {
       byKind: count((p) => p.productView ?? 'none'),
       withPlacements: profiles.filter((p) => p.productView && p.sides.every((s) => s.placement)).length,
       withoutPlacements: profiles.filter((p) => p.productView && !p.sides.every((s) => s.placement)).map((p) => p.slug),
+      withColours: profiles.filter((p) => p.productColours).length,
+      withoutColours: profiles.filter((p) => hasProductColours(p.family) && !p.productColours).map((p) => p.slug),
     },
     sizeAudit: {
       checked: checks.length,

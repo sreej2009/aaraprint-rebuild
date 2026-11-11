@@ -44,6 +44,11 @@ export function productViewFor(family, mode) {
   return null;
 }
 
+/** Products whose photo can be recoloured with its fabric mask (Phase 4 M3). Not drinkware (yet). */
+export function hasProductColours(family) {
+  return family === 'umbrella' || family === 'rainwear';
+}
+
 /** Side labels. Polos keep the original's placement names. */
 export function sideLabels(family) {
   if (family === 'polo') return { front: 'Left chest', back: 'Upper back' };
@@ -137,6 +142,7 @@ export const RIGHTS_NOTES = {
 
 export const ASSET_RIGHTS = {
   mockup: { status: 'unconfirmed', source: 'Product mockups from the original site; several show brand-name products (Asset Inventory §9).' },
+  mask: { status: 'unconfirmed', source: 'Fabric masks next to the umbrella and rainwear mockups, from the original site (Asset Inventory §9).' },
   'polo-shirt.glb': { status: 'attribution-required', source: '"POLO SHIRT" by arvintriyoga, CC BY 4.0.', attribution: '"POLO SHIRT" by arvintriyoga, licensed under CC BY 4.0' },
   'shirt_baked.glb': { status: 'unconfirmed', source: 'Homepage 3D shirt from the original site; licence unknown (Asset Inventory §4).' },
 };

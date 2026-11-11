@@ -32,7 +32,7 @@ export interface CanvasStageProps {
    * (the whole photo in design px, so the print area lands on the original's placement). The photo
    * is null while it loads. A backdrop only: not an element, not selectable, never exported.
    */
-  product?: { photo: HTMLImageElement | null; bounds: Rect } | null;
+  product?: { photo: HTMLImageElement | HTMLCanvasElement | null; bounds: Rect } | null;
 }
 
 /**

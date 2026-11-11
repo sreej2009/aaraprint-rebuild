@@ -8,7 +8,9 @@ import { formatZoom, wheelZoomFactor } from '../geometry/viewport';
 import { formatSize } from '../profile/describe';
 import type { StudioProfile } from '../profile/types';
 import { productSpace } from '../product-view/product-view';
-import { useProductView, useProductViewOffered } from '../product-view/use-product-view';
+import { ProductColourPicker } from '../product-view/colour-picker';
+import { COLOUR_UNAVAILABLE, colourUnavailable } from '../product-view/product-view';
+import { useProductColour, useProductColourOffered, useProductView, useProductViewOffered } from '../product-view/use-product-view';
 import { ProductViewToggle, type ProductViewMode } from '../product-view/view-toggle';
 import type { DesignDocument, SurfaceDesign } from '../schema/types';
 import { useStudio, useStudioStoreApi } from '../store';
@@ -109,7 +111,10 @@ function PreviewBody({ document, surface, profile, view, onView, onSide, onRetry
    */
   const offered = useProductViewOffered(profile, document.surfaces);
   const wanted = offered && view === 'product';
-  const product = useProductView(profile, surface, wanted);
+  // The product colour (M3) is shared with the canvas: the same choice, the same tinted photo.
+  const { colours, colour, choose } = useProductColour(profile);
+  const colourOffered = useProductColourOffered(profile, document.surfaces);
+  const product = useProductView(profile, surface, wanted, colourOffered ? colour : null);
   const { view: productView, placed, photo } = product;
   const onProduct = product.status === 'loading' || product.status === 'ready';
   const print = surface.print;
@@ -221,8 +226,17 @@ function PreviewBody({ document, surface, profile, view, onView, onSide, onRetry
 
   const sideName = sided ? `${surface.label} side` : 'Design';
   const status = empty ? 'Your design is empty' : isBlank(surface) ? 'No artwork on this side' : null;
-  const notes = [status, wanted && !onProduct ? PRODUCT_VIEW_UNAVAILABLE : null].filter((n): n is string => n !== null);
-  const toggle = offered && <ProductViewToggle label="Preview view" testId="preview-view-toggle" value={view} onChange={switchView} />;
+  const notes = [
+    status,
+    wanted && !onProduct ? PRODUCT_VIEW_UNAVAILABLE : null,
+    onProduct && colourOffered && colourUnavailable(product.view, colour, product.tint) ? COLOUR_UNAVAILABLE : null,
+  ].filter((n): n is string => n !== null);
+  const toggle = offered && (
+    <>
+      <ProductViewToggle label="Preview view" testId="preview-view-toggle" value={view} onChange={switchView} />
+      {onProduct && colourOffered && colours && colour && <ProductColourPicker colours={colours.options} value={colour.id} onChange={choose} testId="preview-colours" />}
+    </>
+  );
 
   return (
     <div className="flex min-h-0 flex-1 flex-col">
@@ -256,6 +270,7 @@ function PreviewBody({ document, surface, profile, view, onView, onSide, onRetry
         data-testid="preview-area"
         data-zoom={zoom.mode}
         data-view={onProduct ? 'product' : 'flat'}
+        data-tint={onProduct ? product.tint : undefined}
         onKeyDown={onArtworkKey}
         onPointerDown={onPointerDown}
         onPointerMove={onPointerMove}
@@ -293,7 +308,7 @@ function PreviewBody({ document, surface, profile, view, onView, onSide, onRetry
                   <p
                     key={note}
                     className="w-fit rounded-full bg-surface/90 px-3 py-1 text-center text-body-sm text-fg-muted shadow-1"
-                    data-testid={note === PRODUCT_VIEW_UNAVAILABLE ? 'preview-product-unavailable' : 'preview-empty'}
+                    data-testid={note === PRODUCT_VIEW_UNAVAILABLE ? 'preview-product-unavailable' : note === COLOUR_UNAVAILABLE ? 'preview-colour-unavailable' : 'preview-empty'}
                   >
                     {note}
                   </p>

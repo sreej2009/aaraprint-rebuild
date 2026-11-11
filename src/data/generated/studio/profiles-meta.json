@@ -49,6 +49,10 @@
     "withPlacements": 83,
     "withoutPlacements": [
       "gift-water-bottle-steel"
+    ],
+    "withColours": 34,
+    "withoutColours": [
+      "umbrella-photo-print"
     ]
   },
   "sizeAudit": {
@@ -817,6 +821,10 @@
       "mockup": {
         "status": "unconfirmed",
         "source": "Product mockups from the original site; several show brand-name products (Asset Inventory §9)."
+      },
+      "mask": {
+        "status": "unconfirmed",
+        "source": "Fabric masks next to the umbrella and rainwear mockups, from the original site (Asset Inventory §9)."
       },
       "polo-shirt.glb": {
         "status": "attribution-required",

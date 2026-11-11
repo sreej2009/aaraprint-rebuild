@@ -9,7 +9,9 @@
  *   src/data/generated/studio/product-view-placements.json
  *     per mockup image, the box the artwork is fitted into on the photo:
  *     [centerX, centerY, maxWidth, maxHeight] in mockup pixels, for the drinkware and the
- *     umbrella and rainwear photo sets, plus the photo size each set was measured on.
+ *     umbrella and rainwear photo sets, plus the photo size each set was measured on;
+ *     and for umbrellas and rainwear (Phase 4 M3) the original's colour palette (name → hex) and
+ *     the colour each product's front and back photos were taken in.
  *
  * Numbers are copied exactly as found; nothing is estimated. The original's drinkware
  * fallbacks by bottle kind are recorded for reference but not used (every M1 product has its
@@ -77,6 +79,27 @@ function kindFallbacks(code) {
   return out;
 }
 
+/**
+ * The umbrella and rainwear colours: the palette `{black:"#2b2b2d",…}` the original used for
+ * swatches and tints, and each product's `[slug, name, kind, frontPhotoColour, backPhotoColour]`.
+ */
+function umbrellaRainwearColours(code) {
+  const start = code.indexOf('="/products/umbrellas-rainwear-2d/",');
+  if (start < 0) fail('umbrella and rainwear module not found');
+  const module = code.slice(start, code.indexOf('UMBRELLA_RAINWEAR_MOCKUP_SIZE', start));
+  const rows = [...module.matchAll(/\["([a-z0-9]+(?:-[a-z0-9]+)*)","[^"\\]+","([a-z-]+)","([A-Za-z ]+)","([A-Za-z ]+)"\]/g)];
+  if (!rows.length) fail('no umbrella and rainwear photo colours found');
+  const photoColours = Object.fromEntries(rows.map((m) => [m[1], [m[3], m[4]]]).sort(([a], [b]) => a.localeCompare(b)));
+  const literal = /\{black:"#[0-9a-f]{6}"(?:,(?:[a-z]+|"[a-z ]+"):"#[0-9a-f]{6}")*\}/.exec(module);
+  if (!literal) fail('umbrella and rainwear palette not found');
+  const palette = Object.fromEntries([...literal[0].matchAll(/(?:([a-z]+)|"([a-z ]+)"):"(#[0-9a-f]{6})"/g)].map((m) => [m[1] ?? m[2], m[3]]));
+  return {
+    note: "Swatches are the product's own colour options that have a palette entry (matched by name, case-insensitive). No tint is drawn on a side whose photo is already that colour.",
+    palette,
+    photoColours,
+  };
+}
+
 const code = await fs.readFile(SOURCE, 'utf8');
 const sets = {};
 for (const set of SETS) {
@@ -94,10 +117,13 @@ const register = {
   source: { chunk: CHUNK, note: 'Copied exactly from the original Studio. Entry: [centerX, centerY, maxWidth, maxHeight] in mockup px; the artwork is fitted inside (contain) and centred.' },
   sets,
   drinkwareKindFallbacks: { note: 'Recorded for reference; not used.', boxes: kindFallbacks(code) },
+  umbrellaRainwearColours: umbrellaRainwearColours(code),
 };
 await fs.mkdir(path.dirname(OUT), { recursive: true });
-// One box per line: `[561, 781, 270, 236]`.
-const json = JSON.stringify(register, null, 2).replace(/\[\s+([\d.,\s]+?)\s+\]/g, (_, inner) => `[${inner.trim().split(/,\s*/).join(', ')}]`);
+// One box per line: `[561, 781, 270, 236]`; photo colours too: `["White", "Royal Blue"]`.
+const json = JSON.stringify(register, null, 2)
+  .replace(/\[\s+([\d.,\s]+?)\s+\]/g, (_, inner) => `[${inner.trim().split(/,\s*/).join(', ')}]`)
+  .replace(/\[\s+("[^"]*"),\s+("[^"]*")\s+\]/g, '[$1, $2]');
 await fs.writeFile(OUT, `${json}\n`);
 console.log(
   `Product views: ${Object.entries(sets)

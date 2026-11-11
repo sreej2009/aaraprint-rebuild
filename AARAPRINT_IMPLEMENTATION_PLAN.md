@@ -2221,6 +2221,7 @@ StudioState
 |-----------|--------|
 | M1 Product view foundation | Done |
 | M2 On-product workspace | Done |
+| M3 Product colour and masked tint | Done |
 
 #### M1 — Product view foundation
 
@@ -2358,4 +2359,89 @@ StudioState
 
 **Not in M2:** product colours or tint, masks, perspective or umbrella panel shapes, 3D, pens, mugs, apparel, polos, bags, signs and gifts; snapping and multi-select. Real photos stay blocked until their rights are cleared.
 
-**Phase 4 status:** M1–M2 complete. M3 has not started.
+#### M3 — Product colour and masked tint
+
+**Scope:** the product photo in the On-the-product view (canvas and Preview) can be shown in the product's own colours, recoloured through its fabric mask.
+- **Supported:** umbrellas (15) and rainwear (20).
+- **Not supported:** drinkware, mugs, pens, apparel, polos, bags, signs and gifts.
+- The design, variant and price never change.
+
+**Colour data** (copied from the original, never guessed)
+- `extract-product-views.mjs` now also copies, as text, the original's umbrella and rainwear data into `product-view-placements.json`:
+  - the 10-colour palette (black `#2b2b2d`, navy `#243052`, red `#b0262d`, …);
+  - the colour each product's front and back photos were taken in (35 products).
+- `build-studio-profiles.mjs` adds three things:
+  - `productColours`: the product's own Colour option values that have a palette entry, matched by name as the original; the default is the default variant's colour;
+  - each side's `photoColour`;
+  - the mask's own `rights`, which are unconfirmed (new `ASSET_RIGHTS.mask`).
+- 34 products have colours (2–5 each). `umbrella-photo-print` has no colour option, so it gets no choice.
+- Only those 35 profiles changed.
+
+**Mask mapping and rights**
+- Each side's mask is the file beside its photo (`…-front-mask.png`, `…-back-mask.png`), already recorded by M1.
+- The mask is used only when:
+  - its own rights are `cleared` (`attribution-required` blocks too: masks carry no attribution line);
+  - it is a library path;
+  - it is the photo's exact size;
+  - the media library is published.
+- Otherwise the photo shows as taken.
+- The photo keeps the M1 gate; a blocked photo falls back to Flat as before.
+- Every recovered photo and mask is still unconfirmed, so customers see no change: no colour choice, and no mask is ever requested (checked in the browser).
+- No recovered file is copied into `public/` or the build (checked).
+
+**Tint** (`product-view/tint.ts`, pure; a clean version of the original's "natural tint", read as text)
+- **Fabric:** where the mask's red × alpha is at least 128, and the photo isn't transparent. Edges are softened with 5 × 5 binomial weights.
+- **Measuring:** the fabric's typical brightness (65th percentile) and its highlights (99th) are measured, and its brightness is smoothed with an edge-preserving 7-tap filter across, then down.
+- **Each fabric pixel:** colour × a shade factor from the smoothed brightness, plus fine detail, with the brightest highlights blending towards white (the original's "matte" finish). Light photos get the original's stronger relief (2.6).
+- **Result:** folds, seams and shadows stay, and a pixel at the typical brightness becomes exactly the chosen colour. Off the mask nothing changes, and alpha is never touched.
+- **When there is no tint:** the side's photo is already the chosen colour (as the original), or the side has no usable mask.
+- **Left out:** the original's mask-noise clean-up (the masks are clean black and white), and its "frame" of the photo drawn over the artwork (the artwork stays on top here).
+
+**Rendering, sharing and cache**
+- **One shared pipeline:** `useProductView` (shared since M2) takes the colour and returns the tinted photo, so the canvas and the Preview draw the same pixels.
+- **Draw order:** photo (tinted), artwork, guides, selection.
+- **Shared choice:** "Product colour" swatches sit next to the view choice in the canvas footer and the Preview.
+  - Each swatch is a radio with its colour's name, and the chosen one has a tick and a ring.
+  - Arrow keys choose; targets are 44 px on touch.
+  - Delete or Backspace on a swatch never reaches the selection.
+- **Viewport-store state:** the choice is view state like zoom: not in the design, undo, autosave or versions. A new session starts from the variant's colour.
+- **Cache** (`product-view/tint-renderer.ts`):
+  - decoded pixels per URL (6);
+  - the colour-independent preparation per photo + mask (4);
+  - tinted canvases per photo + mask + colour (12, oldest dropped; no object URLs).
+  - Work happens only when a photo, mask or colour is first needed, never on render or pointer moves.
+  - While a new colour is prepared, the photo's last tint stays on screen.
+  - The first colour on a photo takes about 0.1–0.4 s (measured locally); later switches to a colour already made are instant.
+  - A tint that fails (e.g. a CDN without CORS) shows the photo as taken, with "Colour preview unavailable for this side."
+
+**Tests**
+- **Unit:**
+  - `tint.test.ts` (12): fabric pixels become the colour; off-mask pixels and alpha are unchanged; edge feathering; mask and photo transparency; an empty mask; front and back masks; shadow, midtone and highlight keep their order; shade curve and light-photo relief.
+  - `colours.test.ts` (13): the original data; which 34 products; options and default; validation; choosing (session, then variant, then default); the mask gate (rights, size, path, media); when a side is tinted; the cache (once per photo + mask + colour, failures remembered).
+  - The M1 view test now also expects `mask: null` for the real (unconfirmed) mask.
+- **Component** (`shell/product-colour.test.tsx`, 10):
+  - the choice and its names;
+  - the variant's colour first;
+  - tinting with each side's own mask, reused when switching back;
+  - keyboard, including Delete on a swatch;
+  - no choice for real photos, unconfirmed masks or the photo-print umbrella;
+  - a side without a cleared mask, and a failed tint, with the note;
+  - no undo step, save or layer, and undo still undoes the edit;
+  - the Preview shares the choice and the tinted photo;
+  - tablet and phone footer.
+- **Browser** (`e2e/studio-colour.spec.ts`; stand-in fabric photo and masks in `e2e/product-fixtures.ts`):
+  - **A · Pixels:** midtone = the colour; shadow and highlight keep their order; off-mask pixels and the corner mark untouched; alpha kept; artwork pixels identical before and after; masks only loaded once needed.
+  - **B · Front and back:** each side uses its own mask.
+  - **C · G · Editing:** move, resize, rotate and add a shape on a coloured product; undo undoes the move, not the colour.
+  - **D · Preview:** the same pixels as the canvas, and the choice is shared.
+  - **E · Rights:** real photos and masks are never offered or requested.
+  - **F · Saving:** IndexedDB unchanged after colour changes and the autosave delay.
+  - **H · Proof:** byte-for-byte the same flat, on the product, and in Black, Red and Navy.
+  - Widths 1440 to 360 px; tablet touch; phone; axe on the canvas and the Preview.
+- **Manual smoke test** (real photos and masks marked cleared in a local browser session only, never committed): golf umbrella in Red (front) and Navy (back), two-fold umbrella in Green, waterproof jacket in Safety Yellow, rain cap in Black; the Preview matches.
+
+**Results:** lint and typecheck clean; 721 unit and component tests passed (64 files); 356 browser tests passed, 0 failed (351 skipped, each because it's for a different device layout); production build passes.
+
+**Not in M3:** drinkware, mug or pen colours; apparel and polos; perspective, umbrella panels and 3D; the original's frame over the artwork; changing the variant from the swatches (that belongs with the Phase 4 options panel). Real photos and masks stay blocked until their rights are cleared.
+
+**Phase 4 status:** M1–M3 complete. M4 has not started.

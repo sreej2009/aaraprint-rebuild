@@ -58,7 +58,8 @@ export interface StudioMockup {
   format: 'png' | 'webp' | 'gif';
   width: number;
   height: number;
-  mask: { ref: string; width: number; height: number } | null;
+  /** Fabric mask (umbrellas, rainwear): white where the product's colour is. Rights recorded since M3. */
+  mask: { ref: string; width: number; height: number; rights?: RightsStatus } | null;
   rights: RightsStatus;
 }
 
@@ -80,6 +81,17 @@ export interface StudioSide {
   mockup: StudioMockup | null;
   /** Only on products with an on-product preview; null when the photo has no placement. */
   placement?: StudioPlacement | null;
+  /** The colour this side's photo was taken in, e.g. "Black" (products with colours, M3). */
+  photoColour?: string | null;
+}
+
+/** A product colour the on-product view can show (Phase 4 M3): one of the product's own colour options. */
+export interface StudioProductColour {
+  /** The catalogue option value id. */
+  id: string;
+  label: string;
+  /** #rrggbb, from the original palette. */
+  hex: string;
 }
 
 /** Products whose Preview can show the design on a product photo (Phase 4 M1). */
@@ -112,6 +124,8 @@ export interface StudioProfile {
   family: StudioFamily;
   /** Set when the Preview can show the design on the product (Phase 4 M1). */
   productView?: ProductViewKind;
+  /** Colours the product photo can be shown in (umbrellas and rainwear, Phase 4 M3). */
+  productColours?: { options: StudioProductColour[]; defaultId: string };
   print: StudioPrintSpec;
   trim: StudioTrim;
   sides: StudioSide[];

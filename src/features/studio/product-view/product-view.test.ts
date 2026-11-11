@@ -137,6 +137,9 @@ describe('the rights gate and fallbacks', () => {
         url: '/media/studio-fixtures/front.png',
         photo: { width: 1122, height: 1402 },
         placement: { centerX: 563, centerY: 374, maxWidth: 170, maxHeight: 227 },
+        // The real fabric mask's rights are unconfirmed: never used (M3).
+        mask: null,
+        photoColour: 'Black',
       },
     });
     expect(back.ok && back.view.placement).toEqual({ centerX: 559, centerY: 308, maxWidth: 182, maxHeight: 243 });
