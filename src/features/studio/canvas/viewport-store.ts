@@ -34,6 +34,11 @@ export interface ViewportState {
   mode: 'fit' | 'manual';
   viewport: Viewport;
   showGuides: boolean;
+  /**
+   * Edit on the product photo instead of the flat sheet (Phase 4 M2), where the product allows it.
+   * View state like zoom: never saved, never undone; a new Studio session starts flat.
+   */
+  productView: boolean;
   /** The side on screen, and the views of the others, as they were left. */
   surfaceId: string | null;
   saved: Readonly<Record<string, SavedView>>;
@@ -68,6 +73,7 @@ export interface ViewportActions {
   /** Set directly (pinch gestures); clamped. */
   setViewport(viewport: Viewport): void;
   setShowGuides(show: boolean): void;
+  setProductView(on: boolean): void;
 }
 
 export type ViewportStore = StoreApi<ViewportState>;
@@ -211,6 +217,10 @@ export function createViewportStore(initial: { showGuides?: boolean } = {}): Vie
         writeGuidesPreference(show);
         set({ showGuides: show });
       },
+
+      setProductView(on) {
+        set({ productView: on });
+      },
     };
 
     return {
@@ -220,6 +230,7 @@ export function createViewportStore(initial: { showGuides?: boolean } = {}): Vie
       mode: 'fit',
       viewport: { scale: 1, x: 0, y: 0 },
       showGuides: initial.showGuides ?? readGuidesPreference(),
+      productView: false,
       surfaceId: null,
       saved: {},
       actions,

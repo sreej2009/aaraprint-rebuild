@@ -2220,6 +2220,7 @@ StudioState
 | Milestone | Status |
 |-----------|--------|
 | M1 Product view foundation | Done |
+| M2 On-product workspace | Done |
 
 #### M1 — Product view foundation
 
@@ -2281,4 +2282,80 @@ StudioState
 
 **Not in M1:** editing on the product, colour tint or recolouring, masks, perspective or umbrella panel shapes, 3D, pens, mugs, apparel, polos, bags, signs and gifts.
 
-**Phase 4 status:** M1 complete. M2 has not started.
+#### M2 — On-product workspace
+
+**Scope:** the M1 product photo moves from Preview-only into the Studio's editing canvas, for the same products (umbrellas, rainwear, wrap-printed drinkware). Customers edit their artwork with the product behind it. The design is unchanged: print px, trim origin, one document.
+
+**How it works**
+- **One transform:** the editor already maps design px straight to the screen (the viewport).
+  - On the product, the photo is drawn in design space, around the print area: `productBounds` = the whole photo in print px, from the M1 placement (`productToDesign` of its corners).
+  - Artwork, guides, selection, handles, size labels and the text editor keep using the same design-px viewport, so they can't drift from the photo.
+  - No editing code changed.
+- **Coordinate spaces** (`product-view/product-view.ts`):
+  - design (print px): saved;
+  - product (photo px): the original boxes;
+  - screen (CSS px).
+  - `designToProduct` and `productToDesign` convert between design and product; tests round-trip design → product → screen → product → design.
+- **Mockup layer:** the photo is a Konva image in the canvas's workspace layer, behind the artwork and guides.
+  - That layer is never exported and never listens.
+  - Picking uses the design's geometry, so the photo can't be selected, moved, deleted or listed: pressing on it deselects, and dragging it pans, as on empty canvas.
+  - An empty background lets the product show through (`Artwork blank="none"`); a background colour fills the print area as before.
+  - Hiding guides hides only the guides.
+- **Fit, zoom and pan:** the viewport's content box becomes the photo's bounds, so Fit shows the whole product, and pan limits cover the photo.
+  - Zoom keeps its controls, steps, presets and shortcuts; 100 % is still the artwork at real size.
+  - Each side fits its own photo.
+  - Switching Flat ↔ On the product fits again.
+- **Shared with the Preview:**
+  - `useProductView` / `useProductViewOffered`: the same rights gate, placement and image cache, so only the shown side's photo loads, and only once asked for;
+  - `ProductViewToggle`: the same choice;
+  - the Preview now uses them too, unchanged in behaviour.
+- **The choice:**
+  - "Canvas view: Flat / On the product" in the canvas footer, on every layout (44 px targets on touch). Delete, Backspace and arrow keys pressed on it never reach the selection.
+  - It is view state in the viewport store, like zoom: not in the design, not undoable, not autosaved. A new session starts Flat.
+- **Fallbacks:** unsupported products, blocked or missing photos, a missing or invalid placement, and no media library (Pages) show no choice; the Studio is exactly as in Phase 3. A photo that fails to load keeps the flat sheet, with "On-product view unavailable for this product."
+- **Proof and persistence:**
+  - Proofs render the design (byte-for-byte the same file from either view).
+  - Saved designs and versions hold no photo, placement, view or viewport (checked in IndexedDB).
+  - Edits made on the product undo, redo, autosave and version exactly like flat edits.
+
+**Tests**
+- **Unit** (`product-view.test.ts`, 3 new): the photo's bounds in design px; placement centre, scale and proportions, front and back; the design → product → screen → product → design round trip.
+- **Store level** (`product-workspace.test.tsx`, 6), with the real viewport store, gestures, selection overlay and shortcuts:
+  - Fit shows the whole photo, with the trim at the placement;
+  - zoom 100 %, pan and Fit;
+  - per-side photos;
+  - a drag moves an element by screen distance ÷ zoom in print px, as one undo step;
+  - arrow nudges are 0.5 mm;
+  - the photo isn't pickable (press deselects, drag pans, the design is untouched).
+- **Studio** (`shell/product-workspace.test.tsx`, 7):
+  - no choice for a business card or for real (unconfirmed) photos;
+  - Flat first, then On the product with front and back, and back to Flat;
+  - keyboard, including Delete on the choice;
+  - fallbacks with the note;
+  - no undo step, layer or save from switching;
+  - inspector edits on the product undo normally;
+  - the same proof;
+  - footer placement on tablet and phone.
+- **Browser** (`e2e/studio-workspace.spec.ts`, cleared stand-in from `e2e/product-fixtures.ts`, now shared with the M1 spec):
+  - **Pixels:** photo mark, artwork exactly in the print area, nothing outside it, the photo intact around it; Fit shows the whole photo; hidden guides keep the photo.
+  - **A and D:** select, move, resize and rotate on the product, then undo and redo.
+  - **B and C:** add text, a shape and an uploaded image; Layers holds only the design.
+  - **E:** autosave and reload; IndexedDB holds no photo or view; the next session starts Flat.
+  - **Switching views:** writes nothing and adds no undo step.
+  - **F:** the proof is identical from either view.
+  - **G:** front and back photos; editing the back leaves the front alone.
+  - **H:** real photos are never offered or requested; a failed photo keeps a working flat editor.
+  - **Zoom:** 100 %, wheel pan and Fit.
+  - **Axe:** Flat and On the product.
+  - **I:** every width from 1440 to 360 px: the photo fits, the choice is on screen, artwork picks, and nothing scrolls sideways.
+  - **Tablet:** touch select and drag, 44 px targets, axe.
+  - **Phone:** footer choice, the photo draws, axe.
+- **Manual smoke test** (real photos marked cleared in a local browser session only, never committed): umbrella front and back, rain cap and aluminium bottle at 1440 px, the umbrella at 820 and 390 px, and back to Flat.
+
+**Timeouts:** the M1 fallbacks test (six full Studio loads) and the M2 save-and-reload test now get 60 s instead of 30 s. Measured: 17 s and 12 s alone, over 30 s when run next to other Studio tests. They pass in every serial run.
+
+**Results:** lint and typecheck clean; 686 unit and component tests passed (61 files); 342 browser tests passed, 0 failed (329 skipped, each because it's for a different device layout); production build passes.
+
+**Not in M2:** product colours or tint, masks, perspective or umbrella panel shapes, 3D, pens, mugs, apparel, polos, bags, signs and gifts; snapping and multi-select. Real photos stay blocked until their rights are cleared.
+
+**Phase 4 status:** M1–M2 complete. M3 has not started.

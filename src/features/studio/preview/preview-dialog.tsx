@@ -1,14 +1,15 @@
 import { ChevronDown, Eye, Maximize, X, ZoomIn, ZoomOut } from 'lucide-react';
 import { Dialog as DialogPrimitive, RadioGroup as RadioGroupPrimitive } from 'radix-ui';
 import { Component, Suspense, useCallback, useEffect, useMemo, useRef, useState, type KeyboardEvent, type PointerEvent, type ReactNode } from 'react';
-import { Button, DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger, IconButton, SegmentedControl, Spinner } from '@/design-system';
+import { Button, DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger, IconButton, Spinner } from '@/design-system';
 import { cn } from '@/lib/cn';
 import { finishedSizeMm } from '../geometry/boxes';
 import { formatZoom, wheelZoomFactor } from '../geometry/viewport';
-import { useImage } from '../assets/image-cache';
 import { formatSize } from '../profile/describe';
 import type { StudioProfile } from '../profile/types';
-import { placeArtwork, productSpace, productViewFor } from '../product-view/product-view';
+import { productSpace } from '../product-view/product-view';
+import { useProductView, useProductViewOffered } from '../product-view/use-product-view';
+import { ProductViewToggle, type ProductViewMode } from '../product-view/view-toggle';
 import type { DesignDocument, SurfaceDesign } from '../schema/types';
 import { useStudio, useStudioStoreApi } from '../store';
 import { useStudioSession } from '../shell/session-context';
@@ -73,7 +74,7 @@ function PreviewDialog() {
 /** Editor shortcut keys (with Ctrl/⌘) whose browser default must not run either (bookmark, save page…). */
 const EDITOR_KEYS = new Set(['z', 'y', 'd', 's', '[', ']', '{', '}', ';']);
 
-type PreviewMode = 'flat' | 'product';
+type PreviewMode = ProductViewMode;
 
 /** Shown when "On the product" is chosen but this side's photo can't be shown. */
 export const PRODUCT_VIEW_UNAVAILABLE = 'On-product preview unavailable for this product.';
@@ -106,18 +107,15 @@ function PreviewBody({ document, surface, profile, view, onView, onSide, onRetry
    * the original's placement, and the media library is published. The photo is a backdrop: the
    * design isn't changed, saved or exported with it. Only the photo for the side shown is loaded.
    */
-  const sideIds = document.surfaces.map((s) => s.id).join();
-  const offered = useMemo(() => sideIds.split(',').some((id) => productViewFor(profile, id).ok), [profile, sideIds]);
+  const offered = useProductViewOffered(profile, document.surfaces);
   const wanted = offered && view === 'product';
-  const product = useMemo(() => (wanted ? productViewFor(profile, surface.id) : null), [wanted, profile, surface.id]);
-  const productView = product?.ok ? product.view : null;
-  const photo = useImage(productView?.url ?? null);
-  const onProduct = productView !== null && photo?.status !== 'error';
+  const product = useProductView(profile, surface, wanted);
+  const { view: productView, placed, photo } = product;
+  const onProduct = product.status === 'loading' || product.status === 'ready';
   const print = surface.print;
-  const placed = useMemo(() => (productView ? placeArtwork(productView.placement, { width: print.widthPx, height: print.heightPx }) : null), [productView, print]);
   // Zoom and pan work the same on the product: over the whole photo, 100 % = the artwork's real size.
   const space = useMemo(() => (onProduct && productView && placed ? productSpace(productView, placed, print) : print), [onProduct, productView, placed, print]);
-  const shown = ready && (!onProduct || photo?.status === 'loaded');
+  const shown = ready && product.status !== 'loading';
   const sized = available.width > 0 && available.height > 0;
   const viewport = useMemo(() => (sized ? viewportFor(zoom, available, space) : { scale: 0, x: 0, y: 0 }), [sized, zoom, available, space]);
   const fitPercent = sized ? percentOf(previewFit(available, space), space) : 100;
@@ -224,7 +222,7 @@ function PreviewBody({ document, surface, profile, view, onView, onSide, onRetry
   const sideName = sided ? `${surface.label} side` : 'Design';
   const status = empty ? 'Your design is empty' : isBlank(surface) ? 'No artwork on this side' : null;
   const notes = [status, wanted && !onProduct ? PRODUCT_VIEW_UNAVAILABLE : null].filter((n): n is string => n !== null);
-  const toggle = offered && <ViewToggle value={view} onChange={switchView} />;
+  const toggle = offered && <ProductViewToggle label="Preview view" testId="preview-view-toggle" value={view} onChange={switchView} />;
 
   return (
     <div className="flex min-h-0 flex-1 flex-col">
@@ -276,11 +274,9 @@ function PreviewBody({ document, surface, profile, view, onView, onSide, onRetry
                     {!onProduct ? (
                       <Canvas surface={surface} width={available.width} height={available.height} viewport={viewport} />
                     ) : (
-                      photo?.status === 'loaded' &&
+                      photo &&
                       productView &&
-                      placed && (
-                        <ProductCanvas surface={surface} photo={photo.image} photoSize={productView.photo} placed={placed} width={available.width} height={available.height} viewport={viewport} />
-                      )
+                      placed && <ProductCanvas surface={surface} photo={photo} photoSize={productView.photo} placed={placed} width={available.width} height={available.height} viewport={viewport} />
                     )}
                   </div>
                 </Suspense>
@@ -388,27 +384,6 @@ function visibleCount(surface: SurfaceDesign): number {
 }
 
 // ------------------------------------------------------------------- View
-
-const VIEW_OPTIONS = [
-  { value: 'flat', label: 'Flat' },
-  { value: 'product', label: 'On the product' },
-];
-
-/** Flat or on the product photo. Shown only for products whose photo can be shown (Phase 4 M1). */
-function ViewToggle({ value, onChange }: { value: PreviewMode; onChange(view: PreviewMode): void }) {
-  return (
-    <div data-testid="preview-view-toggle" className="shrink-0">
-      <SegmentedControl
-        label="Preview view"
-        size="sm"
-        options={VIEW_OPTIONS}
-        value={value}
-        onValueChange={(next) => onChange(next === 'product' ? 'product' : 'flat')}
-        className="pointer-coarse:*:h-11"
-      />
-    </div>
-  );
-}
 
 // ------------------------------------------------------------------- Zoom
 

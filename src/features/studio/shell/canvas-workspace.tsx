@@ -15,10 +15,13 @@ import { ZoomAnnouncer, ZoomControl } from '../canvas/zoom-control';
 import { finishedSizeMm, printBoxes } from '../geometry/boxes';
 import { fitScale, workspacePadding } from '../geometry/fit';
 import { formatSize } from '../profile/describe';
+import { useProductView, useProductViewOffered } from '../product-view/use-product-view';
+import { ProductViewToggle } from '../product-view/view-toggle';
 import type { SurfaceDesign } from '../schema/types';
 import { selectActiveSurface, useStudio, useStudioStoreApi } from '../store';
 import { CANVAS_HELP_ID, CANVAS_REGION_ID } from './dom-ids';
 import { EmptySideCard } from './empty-side';
+import { StudioSessionContext } from './session-context';
 import { TextEditSheet } from './text-edit-sheet';
 import { StudioUiContext } from './ui-context';
 import { useElementSize } from './use-element-size';
@@ -63,6 +66,21 @@ export function CanvasWorkspace({ zoomPill = false, onStage }: CanvasWorkspacePr
   const moving = useInteraction((s) => s.gesture?.kind === 'move');
   const cursor = moving || (hovering && panCursor === null) ? 'move' : panCursor;
   const print = surface?.print;
+
+  /*
+   * On the product (Phase 4 M2): the product photo behind the artwork, for products and sides whose
+   * photo may be shown (rights cleared, original placement, media published — the M1 gate). The
+   * design stays in print px: the photo is placed around the print area in design space, and Fit
+   * shows the whole photo. Every editing tool works as on the flat sheet. The choice is view state
+   * (viewport store): never saved, never undone. Unsupported products stay exactly as before.
+   */
+  const profile = useContext(StudioSessionContext)?.profile ?? null;
+  const surfaces = useStudio((s) => s.document.surfaces);
+  const wantProduct = useViewport((s) => s.productView);
+  const offered = useProductViewOffered(profile, surfaces);
+  const product = useProductView(profile, surface, offered && wantProduct);
+  const onProduct = product.status === 'loading' || product.status === 'ready';
+  const content = useMemo(() => (print ? (onProduct && product.bounds ? product.bounds : printBoxes(print).bleed) : null), [print, onProduct, product.bounds]);
   // Phones edit text in a bottom sheet (room for the keyboard); larger screens edit in place.
   const sheetEditing = useContext(StudioUiContext)?.layout === 'phone';
   const editing = useEditingText();
@@ -91,9 +109,10 @@ export function CanvasWorkspace({ zoomPill = false, onStage }: CanvasWorkspacePr
 
   const surfaceId = surface?.id;
   useEffect(() => {
-    // Each side keeps its own zoom and pan; a side seen for the first time (or resized) fits.
-    if (print && surfaceId) viewportStore.getState().actions.showSurface(surfaceId, printBoxes(print).bleed, print.dpi);
-  }, [viewportStore, print, surfaceId]);
+    // Each side keeps its own zoom and pan; a side seen for the first time (or resized) fits. On the
+    // product, Fit shows the whole photo; switching between flat and product fits again.
+    if (print && surfaceId && content) viewportStore.getState().actions.showSurface(surfaceId, content, print.dpi);
+  }, [viewportStore, print, surfaceId, content]);
 
   if (!surface) return null;
   const finished = finishedSizeMm(surface.print);
@@ -102,13 +121,14 @@ export function CanvasWorkspace({ zoomPill = false, onStage }: CanvasWorkspacePr
     <section
       ref={regionRef}
       id={CANVAS_REGION_ID}
-      aria-label={`Design canvas: ${surface.label}, ${sizeText}`}
+      aria-label={`Design canvas: ${surface.label}, ${sizeText}${onProduct ? ', on the product' : ''}`}
       aria-roledescription="design canvas"
       aria-describedby={CANVAS_HELP_ID}
       // oxlint-disable-next-line jsx-a11y/no-noninteractive-tabindex -- the canvas is a focusable region (Plan §18.7): arrow keys and Delete act on the selection
       tabIndex={0}
       data-studio-keys=""
       data-studio-canvas=""
+      data-view={onProduct ? 'product' : 'flat'}
       className="relative flex h-full min-h-0 flex-col bg-surface-sunken focus-visible:-outline-offset-2 data-pointer-focus:outline-none"
     >
       <p id={CANVAS_HELP_ID} className="sr-only">
@@ -137,6 +157,7 @@ export function CanvasWorkspace({ zoomPill = false, onStage }: CanvasWorkspacePr
                 showGuides={showGuides}
                 editingId={editing && !sheetEditing ? editing.id : null}
                 onStage={onStage}
+                product={onProduct && product.bounds ? { photo: product.photo, bounds: product.bounds } : null}
               />
             </div>
           </Suspense>
@@ -146,6 +167,11 @@ export function CanvasWorkspace({ zoomPill = false, onStage }: CanvasWorkspacePr
         {ready && !sheetEditing && <TextEditOverlay />}
         <SelectionToolbar />
         <EmptySideCard />
+        {product.status === 'unavailable' && (
+          <p className="pointer-events-none absolute inset-x-0 top-3 mx-auto w-fit max-w-[calc(100%-2rem)] rounded-full bg-surface/95 px-3 py-1 text-center text-body-sm text-fg-muted shadow-1" data-testid="canvas-product-unavailable">
+            {CANVAS_PRODUCT_UNAVAILABLE}
+          </p>
+        )}
         {zoomPill && (
           <div className="absolute right-3 bottom-3 rounded-full border border-border bg-surface/95 px-1 shadow-2 backdrop-blur">
             <ZoomControl />
@@ -157,13 +183,24 @@ export function CanvasWorkspace({ zoomPill = false, onStage }: CanvasWorkspacePr
       {sheetEditing && <TextEditSheet />}
       <footer className="flex flex-wrap items-center justify-between gap-x-4 gap-y-1 border-t border-border bg-surface px-3 py-2 text-caption text-fg-muted md:px-4">
         <p>
-          <span className="font-semibold text-fg">{surface.label}</span> · {sizeText} · {surface.print.dpi} DPI
+          <span className="font-semibold text-fg">{surface.label}</span> · {sizeText} · {surface.print.dpi} DPI{onProduct && ' · on a product photo'}
         </p>
+        {offered && (
+          <ProductViewToggle
+            label="Canvas view"
+            testId="canvas-view-toggle"
+            value={wantProduct ? 'product' : 'flat'}
+            onChange={(next) => viewportStore.getState().actions.setProductView(next === 'product')}
+          />
+        )}
         <GuideLegend hasBleed={surface.print.bleedPx > 0} dimmed={!showGuides} />
       </footer>
     </section>
   );
 }
+
+/** Shown when "On the product" is chosen but this side's photo can't be shown: the flat sheet stays. */
+export const CANVAS_PRODUCT_UNAVAILABLE = 'On-product view unavailable for this product.';
 
 function GuideLegend({ hasBleed, dimmed }: { hasBleed: boolean; dimmed: boolean }) {
   const items = [

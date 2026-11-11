@@ -1,12 +1,20 @@
 import { hasMedia, mediaUrl } from '@/lib/media';
+import type { Point, Rect } from '../geometry/boxes';
 import type { Size } from '../geometry/fit';
 import type { ProductViewKind, StudioPlacement, StudioProfile } from '../profile/types';
 import type { PreviewSpace } from '../preview/preview-view';
 
 /**
- * The "On the product" preview (Phase 4 M1): which products and sides can show the design on a
- * product photo, and where the artwork goes on it. Pure and read-only — a visual layer over the
- * Preview. The design stays print-space data: nothing here is saved, exported or undone.
+ * The "On the product" view (Phase 4 M1 Preview, M2 editing workspace): which products and sides
+ * can show the design on a product photo, and where the artwork goes on it. Pure and read-only — a
+ * visual layer. The design stays print-space data: nothing here is saved, exported or undone.
+ *
+ * Three coordinate spaces, kept apart:
+ *   design  — print px, trim origin (the saved design; never changes meaning here)
+ *   product — the photo's px (the original's placement boxes)
+ *   screen  — CSS px (the editor's or Preview's viewport)
+ * design → product is `designToProduct` (the placement: scale, then offset); the photo shown in
+ * design space is `productBounds`. Editors keep working in design space throughout.
  *
  * A photo is only ever shown when its rights are cleared, it has the original's placement for that
  * exact photo, and the media library is published. Otherwise the Preview stays flat.
@@ -107,4 +115,23 @@ export function productViewFor(profile: StudioProfile, sideId: string, media: Me
  */
 export function productSpace(view: ProductView, placed: PlacedArtwork, print: Pick<PreviewSpace, 'dpi'>): PreviewSpace {
   return { widthPx: view.photo.width, heightPx: view.photo.height, dpi: print.dpi * placed.scale };
+}
+
+/** A design point (print px) on the photo (photo px). */
+export function designToProduct(point: Point, placed: PlacedArtwork): Point {
+  return { x: placed.x + point.x * placed.scale, y: placed.y + point.y * placed.scale };
+}
+
+/** A photo point (photo px) in design space (print px): the inverse of `designToProduct`. */
+export function productToDesign(point: Point, placed: PlacedArtwork): Point {
+  return { x: (point.x - placed.x) / placed.scale, y: (point.y - placed.y) / placed.scale };
+}
+
+/**
+ * The whole photo in design space (print px): where the editor draws it behind the artwork, and
+ * what Fit shows on the product (M2). The print area sits inside it at the original's place.
+ */
+export function productBounds(view: ProductView, placed: PlacedArtwork): Rect {
+  const origin = productToDesign({ x: 0, y: 0 }, placed);
+  return { x: origin.x, y: origin.y, width: view.photo.width / placed.scale, height: view.photo.height / placed.scale };
 }

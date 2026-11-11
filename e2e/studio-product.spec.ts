@@ -1,9 +1,9 @@
 import AxeBuilder from '@axe-core/playwright';
-import type { Download, Page, Route } from '@playwright/test';
+import type { Download, Page } from '@playwright/test';
 import { readFileSync } from 'node:fs';
-import { deflateSync, crc32 } from 'node:zlib';
 import type KonvaNamespace from 'konva';
 import { expect, test } from './fixtures';
+import { BOXES, clearedStandIn, INDIGO, MARK_RGB, near, PHOTO_RGB, placed } from './product-fixtures';
 
 /**
  * "On the product" in the Preview (Phase 4 M1). Every real product photo's rights are unconfirmed,
@@ -19,39 +19,6 @@ declare global {
 
 const UMBRELLA = '/products/umbrella-golf/design';
 const TAGS = ['wcag2a', 'wcag2aa', 'wcag21a', 'wcag21aa', 'wcag22aa', 'best-practice'];
-/** The original's boxes for the golf umbrella photos: [centerX, centerY, maxWidth, maxHeight]. */
-const BOXES = { front: [563, 374, 170, 227], back: [559, 308, 182, 243] } as const;
-/** The umbrella's print area. */
-const PRINT = { width: 1800, height: 2400 };
-const PHOTO = { width: 1122, height: 1402 };
-const PHOTO_RGB = [200, 214, 192];
-const MARK_RGB = [32, 32, 32];
-const INDIGO = [0x2f, 0x2a, 0x7a];
-
-/** A plain PNG: the photo colour, with a dark 100 × 100 px mark in its top-left corner. */
-function fixturePhoto(): Buffer {
-  const { width, height } = PHOTO;
-  const raw = Buffer.alloc((width * 3 + 1) * height);
-  for (let y = 0; y < height; y++) {
-    const row = y * (width * 3 + 1);
-    for (let x = 0; x < width; x++) raw.set(x < 100 && y < 100 ? MARK_RGB : PHOTO_RGB, row + 1 + x * 3);
-  }
-  const chunk = (type: string, data: Buffer) => {
-    const head = Buffer.alloc(8);
-    head.writeUInt32BE(data.length, 0);
-    head.write(type, 4, 'latin1');
-    const crc = Buffer.alloc(4);
-    crc.writeUInt32BE(crc32(Buffer.concat([head.subarray(4), data])) >>> 0, 0);
-    return Buffer.concat([head, data, crc]);
-  };
-  const ihdr = Buffer.alloc(13);
-  ihdr.writeUInt32BE(width, 0);
-  ihdr.writeUInt32BE(height, 4);
-  ihdr.set([8, 2, 0, 0, 0], 8);
-  return Buffer.concat([Buffer.from([137, 80, 78, 71, 13, 10, 26, 10]), chunk('IHDR', ihdr), chunk('IDAT', deflateSync(raw)), chunk('IEND', Buffer.alloc(0))]);
-}
-const PHOTO_PNG = fixturePhoto();
-
 let errors: string[] = [];
 let mediaRequests: string[] = [];
 test.beforeEach(({ page }) => {
@@ -69,19 +36,6 @@ test.beforeEach(({ page }) => {
 test.afterEach(() => {
   expect(errors, 'console errors').toEqual([]);
 });
-
-/** Serve `slug`'s real profile with its photos swapped for cleared stand-ins (placements untouched). */
-async function clearedStandIn(page: Page, slug = 'umbrella-golf', { photo = 'ok' as 'ok' | 'missing' } = {}) {
-  await page.route(`**/api/v1/studio/${slug}.json`, async (route: Route) => {
-    const response = await route.fetch();
-    const profile = await response.json();
-    for (const side of profile.sides) {
-      if (side.mockup) side.mockup = { ...side.mockup, ref: `studio-fixtures/${slug}-${side.id}.png`, format: 'png', rights: 'cleared' };
-    }
-    await route.fulfill({ response, json: profile });
-  });
-  await page.route('**/media/studio-fixtures/**', (route) => (photo === 'ok' ? route.fulfill({ status: 200, contentType: 'image/png', body: PHOTO_PNG }) : route.fulfill({ status: 404, body: '' })));
-}
 
 async function open(page: Page, url = UMBRELLA) {
   await page.goto(url);
@@ -136,14 +90,6 @@ async function productStage(page: Page, points: [number, number][] = []) {
     };
   }, points);
 }
-
-/** Where the original places the artwork on a photo: fitted inside the box, centred. */
-function placed([cx, cy, w, h]: readonly number[]) {
-  const scale = Math.min(w! / PRINT.width, h! / PRINT.height);
-  return { x: cx! - (PRINT.width * scale) / 2, y: cy! - (PRINT.height * scale) / 2, width: PRINT.width * scale, height: PRINT.height * scale, scale };
-}
-
-const near = (rgba: number[], rgb: number[]) => rgba[3] === 255 && rgb.every((c, i) => Math.abs(rgba[i]! - c) <= 3);
 
 async function setBackground(page: Page, name: string) {
   await page.getByRole('navigation', { name: 'Design tools' }).getByRole('button', { name: 'Background' }).click();
@@ -253,6 +199,7 @@ test.describe('desktop: on the product', () => {
   });
 
   test('2 · fallbacks: a photo that can’t load stays flat with a note; other products show no choice', async ({ page }) => {
+    test.setTimeout(60_000); // six full Studio loads: about 17 s alone, over 30 s while other Studio tests run
     await clearedStandIn(page, 'umbrella-golf', { photo: 'missing' });
     await open(page);
     await openPreview(page);

@@ -5,7 +5,7 @@ import { describe, expect, it } from 'vitest';
 import { zoomPercent } from '../geometry/viewport';
 import type { StudioMockup, StudioProfile } from '../profile/types';
 import { readProfile } from '../testing/catalogue-fixtures';
-import { hasProductView, isValidPlacement, placeArtwork, productSpace, productViewFor, type MediaAccess } from './product-view';
+import { designToProduct, hasProductView, isValidPlacement, placeArtwork, productBounds, productSpace, productToDesign, productViewFor, type MediaAccess } from './product-view';
 
 /**
  * The "On the product" preview's data (Phase 4 M1): the original placements as extracted, which
@@ -194,5 +194,72 @@ describe('the rights gate and fallbacks', () => {
         library,
       ),
     ).toEqual({ ok: false, reason: 'invalid' });
+  });
+});
+
+describe('the editing workspace on the product (M2): design ↔ product ↔ screen', () => {
+  const view = (slug: string, side: 'front' | 'back') => {
+    const result = productViewFor(cleared(slug), side, library);
+    if (!result.ok) throw new Error(result.reason);
+    return result.view;
+  };
+
+  it('puts the whole photo around the print area in design px (golf umbrella front)', () => {
+    const front = view('umbrella-golf', 'front');
+    const placed = placeArtwork(front.placement, { width: 1800, height: 2400 });
+    const bounds = productBounds(front, placed);
+    const s = 170 / 1800;
+    expect(bounds.x).toBeCloseTo(-478 / s, 6);
+    expect(bounds.y).toBeCloseTo(-(374 - (2400 * s) / 2) / s, 6);
+    expect(bounds.width).toBeCloseTo(1122 / s, 6);
+    expect(bounds.height).toBeCloseTo(1402 / s, 6);
+    // The print area (0, 0)–(1800, 2400) lies inside, and the photo keeps its proportions.
+    expect(bounds.x).toBeLessThan(0);
+    expect(bounds.y).toBeLessThan(0);
+    expect(bounds.x + bounds.width).toBeGreaterThan(1800);
+    expect(bounds.y + bounds.height).toBeGreaterThan(2400);
+    expect(bounds.width / bounds.height).toBeCloseTo(1122 / 1402, 10);
+  });
+
+  it('maps the print area onto the box: centre, scale and proportions, front and back', () => {
+    for (const [side, box] of [
+      ['front', [563, 374, 170, 227]],
+      ['back', [559, 308, 182, 243]],
+    ] as const) {
+      const placed = placeArtwork(view('umbrella-golf', side).placement, { width: 1800, height: 2400 });
+      const centre = designToProduct({ x: 900, y: 1200 }, placed);
+      expect(centre.x).toBeCloseTo(box[0], 9);
+      expect(centre.y).toBeCloseTo(box[1], 9);
+      const topLeft = designToProduct({ x: 0, y: 0 }, placed);
+      const bottomRight = designToProduct({ x: 1800, y: 2400 }, placed);
+      const width = bottomRight.x - topLeft.x;
+      const height = bottomRight.y - topLeft.y;
+      expect(width).toBeLessThanOrEqual(box[2] + 1e-9);
+      expect(height).toBeLessThanOrEqual(box[3] + 1e-9);
+      expect(width / height).toBeCloseTo(1800 / 2400, 10); // not stretched
+    }
+  });
+
+  it('round-trips design → product → screen → product → design', () => {
+    const bottle = view('drinkware-bottle-aluminium', 'back');
+    const placed = placeArtwork(bottle.placement, { width: 2250, height: 2100 });
+    // A product-space view (the whole photo at some zoom and pan) and the editor's design-space view
+    // it amounts to: one transform, so artwork and photo can never drift apart.
+    const productView = { scale: 0.61, x: 37.5, y: -12.25 };
+    const designView = { scale: productView.scale * placed.scale, x: productView.x + placed.x * productView.scale, y: productView.y + placed.y * productView.scale };
+    for (const point of [
+      { x: 0, y: 0 },
+      { x: 2250, y: 2100 },
+      { x: 1125.5, y: 17.25 },
+      { x: -300, y: 4000 },
+    ]) {
+      const onPhoto = designToProduct(point, placed);
+      const onScreen = { x: productView.x + onPhoto.x * productView.scale, y: productView.y + onPhoto.y * productView.scale };
+      expect(onScreen.x).toBeCloseTo(designView.x + point.x * designView.scale, 9);
+      expect(onScreen.y).toBeCloseTo(designView.y + point.y * designView.scale, 9);
+      const back = productToDesign({ x: (onScreen.x - productView.x) / productView.scale, y: (onScreen.y - productView.y) / productView.scale }, placed);
+      expect(back.x).toBeCloseTo(point.x, 9);
+      expect(back.y).toBeCloseTo(point.y, 9);
+    }
   });
 });

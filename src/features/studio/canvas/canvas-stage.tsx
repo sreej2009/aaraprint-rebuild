@@ -1,7 +1,8 @@
 import Konva from 'konva';
 import { useEffect, useMemo, useRef } from 'react';
-import { Layer, Shape, Stage } from 'react-konva';
+import { Image as KonvaImage, Layer, Shape, Stage } from 'react-konva';
 import { colorTokens } from '@/design-system/tokens';
+import type { Rect } from '../geometry/boxes';
 import { appendPath, tracePath } from '../geometry/shapes';
 import type { Viewport } from '../geometry/viewport';
 import type { SurfaceDesign } from '../schema/types';
@@ -26,16 +27,23 @@ export interface CanvasStageProps {
   editingId?: string | null;
   /** Called with the Konva stage once mounted (exports, tests); null on unmount. */
   onStage?: (stage: Konva.Stage | null) => void;
+  /**
+   * Editing on the product (Phase 4 M2): the product photo, drawn behind the artwork at `bounds`
+   * (the whole photo in design px, so the print area lands on the original's placement). The photo
+   * is null while it loads. A backdrop only: not an element, not selectable, never exported.
+   */
+  product?: { photo: HTMLImageElement | null; bounds: Rect } | null;
 }
 
 /**
  * The Design Studio canvas (React Konva). Three layers, bottom to top:
- * 1. workspace — the sheet's shadow; never exported, never interactive;
+ * 1. workspace — the sheet's shadow, or on the product (M2) the product photo; never exported,
+ *    never interactive;
  * 2. artwork   — background and elements, clipped to the bleed outline: the printable content;
  * 3. guides    — bleed band, trim line and safe-zone line; never exported, never interactive.
  * Design units are print px; the stage transform (viewport) maps them to the screen.
  */
-export default function CanvasStage({ surface, width, height, viewport, showGuides, editingId = null, onStage }: CanvasStageProps) {
+export default function CanvasStage({ surface, width, height, viewport, showGuides, editingId = null, onStage, product = null }: CanvasStageProps) {
   const stageRef = useRef<Konva.Stage>(null);
   const guides = useMemo(() => guideGeometry(surface.print), [surface.print]);
   const s = viewport.scale;
@@ -50,22 +58,27 @@ export default function CanvasStage({ surface, width, height, viewport, showGuid
     // and the HTML selection overlay, so Konva keeps no hit graph.
     <Stage ref={stageRef} width={width} height={height} scaleX={s} scaleY={s} x={viewport.x} y={viewport.y} listening={false} className="studio-stage">
       <Layer name={WORKSPACE_LAYER} listening={false}>
-        <Shape
-          sceneFunc={(ctx, shape) => {
-            tracePath(ctx, guides.bleedShape, guides.bleed);
-            ctx.fillStrokeShape(shape);
-          }}
-          fill={colorTokens.surface}
-          shadowColor={colorTokens['surface-inverse']}
-          shadowOpacity={0.14}
-          shadowBlur={24 / s}
-          shadowOffsetY={6 / s}
-          perfectDrawEnabled={false}
-        />
+        {product ? (
+          product.photo && <KonvaImage name="product-mockup" image={product.photo} {...product.bounds} listening={false} perfectDrawEnabled={false} />
+        ) : (
+          <Shape
+            sceneFunc={(ctx, shape) => {
+              tracePath(ctx, guides.bleedShape, guides.bleed);
+              ctx.fillStrokeShape(shape);
+            }}
+            fill={colorTokens.surface}
+            shadowColor={colorTokens['surface-inverse']}
+            shadowOpacity={0.14}
+            shadowBlur={24 / s}
+            shadowOffsetY={6 / s}
+            perfectDrawEnabled={false}
+          />
+        )}
       </Layer>
 
       <Layer name={ARTWORK_LAYER} listening={false}>
-        <Artwork surface={surface} clip="bleed" editingId={editingId} />
+        {/* On the product, an empty background lets the product show through (as in the Preview). */}
+        <Artwork surface={surface} clip="bleed" editingId={editingId} blank={product ? 'none' : 'paper'} />
       </Layer>
 
       <Layer name={GUIDES_LAYER} listening={false} visible={showGuides}>
