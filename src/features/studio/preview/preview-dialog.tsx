@@ -337,7 +337,7 @@ function PreviewBody({ document, surface, profile, view, onView, onSide, onRetry
         <p className={cn('text-caption text-fg-muted', phone && 'w-full')}>
           <span className="font-semibold text-fg">{sided ? surface.label : 'Design'}</span> ·{' '}
           {onProduct
-            ? `on the product · ${formatSize(size.width, size.height)} print on a product photo, colours approximate`
+            ? `on the product · ${formatSize(size.width, size.height)} print on a ${import.meta.env.DEV && profile.devFixtures ? 'stand-in photo (development only)' : 'product photo, colours approximate'}`
             : `${formatSize(size.width, size.height)}, trimmed · guides and bleed hidden`}
         </p>
       </footer>

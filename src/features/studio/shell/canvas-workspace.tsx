@@ -202,7 +202,7 @@ export function CanvasWorkspace({ zoomPill = false, onStage }: CanvasWorkspacePr
       {sheetEditing && <TextEditSheet />}
       <footer className="flex flex-wrap items-center justify-between gap-x-4 gap-y-1 border-t border-border bg-surface px-3 py-2 text-caption text-fg-muted md:px-4">
         <p>
-          <span className="font-semibold text-fg">{surface.label}</span> · {sizeText} · {surface.print.dpi} DPI{onProduct && ' · on a product photo'}
+          <span className="font-semibold text-fg">{surface.label}</span> · {sizeText} · {surface.print.dpi} DPI{onProduct && (import.meta.env.DEV && profile?.devFixtures ? ' · on a stand-in photo (development only)' : ' · on a product photo')}
         </p>
         {offered && (
           <ProductViewToggle

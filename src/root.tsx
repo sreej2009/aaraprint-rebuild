@@ -1,10 +1,11 @@
 import interLatinUrl from '@fontsource-variable/inter/files/inter-latin-wght-normal.woff2?url';
 import manropeLatinUrl from '@fontsource-variable/manrope/files/manrope-latin-wght-normal.woff2?url';
 import { House, RefreshCcw } from 'lucide-react';
-import type { ReactNode } from 'react';
-import { isRouteErrorResponse, Link, Links, Meta, Outlet, Scripts, ScrollRestoration } from 'react-router';
+import { useEffect, type ReactNode } from 'react';
+import { isRouteErrorResponse, Link, Links, Meta, Outlet, Scripts, ScrollRestoration, useLocation } from 'react-router';
 import { BrandLogo, Button, EmptyState, Spinner, Toaster, TooltipProvider } from '@/design-system';
 import { seo } from '@/lib/seo';
+import { fixturesRequested } from '@/features/studio/product-view/dev-fixtures';
 import type { Route } from './+types/root';
 import '@/styles/app.css';
 
@@ -39,6 +40,17 @@ export function Layout({ children }: { children: ReactNode }) {
 }
 
 export default function App() {
+  const { search } = useLocation();
+  useEffect(() => {
+    // Development only: remember `?product-view-fixtures=1|0` from any page, so "Start designing"
+    // keeps the Studio's stand-in photos on (studio/product-view/dev-fixtures.ts).
+    if (!import.meta.env.DEV) return;
+    try {
+      fixturesRequested(new URL(window.location.href), window.sessionStorage);
+    } catch {
+      /* storage blocked: the URL parameter still works on the design page itself */
+    }
+  }, [search]);
   return (
     <TooltipProvider>
       <Outlet />

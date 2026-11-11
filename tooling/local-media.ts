@@ -1,6 +1,7 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import type { Connect, Plugin } from 'vite';
+import { FIXTURE_PREFIX, productViewFixture } from './product-view-fixtures.ts';
 
 /**
  * Serves product media in development and `vite preview` from the recovered asset folders,
@@ -11,6 +12,9 @@ import type { Connect, Plugin } from 'vite';
  * Production serves the same refs from object storage / a CDN (`VITE_MEDIA_BASE_URL`).
  * Roots default to ../recovered-additional then ../recovered and can be overridden with
  * AARAPRINT_MEDIA_ROOTS (path-delimiter separated).
+ *
+ * In development only (`configureServer`, not `vite preview`), /media/dev-fixtures/product-view/…
+ * serves generated stand-in product photos for the Studio's product view (product-view-fixtures.ts).
  */
 export function localMedia(options: { base?: string; roots?: string[] } = {}): Plugin {
   const base = options.base ?? '/media/';
@@ -18,7 +22,8 @@ export function localMedia(options: { base?: string; roots?: string[] } = {}): P
     .filter(Boolean)
     .map((root) => path.resolve(root));
 
-  const middleware: Connect.NextHandleFunction = (req, res, next) => {
+  const studioDir = path.resolve('public/api/v1/studio');
+  const handler = (fixtures: boolean): Connect.NextHandleFunction => (req, res, next) => {
     if (!req.url?.startsWith(base) || (req.method !== 'GET' && req.method !== 'HEAD')) return next();
     let ref: string;
     try {
@@ -26,6 +31,19 @@ export function localMedia(options: { base?: string; roots?: string[] } = {}): P
     } catch {
       res.statusCode = 400;
       res.end('Bad request');
+      return;
+    }
+    if (ref.startsWith(FIXTURE_PREFIX)) {
+      const stand = fixtures ? productViewFixture(ref, studioDir) : null;
+      if (!stand) {
+        res.statusCode = 404;
+        res.end('Not found');
+        return;
+      }
+      res.setHeader('Content-Type', 'image/png');
+      res.setHeader('Content-Length', String(stand.length));
+      res.setHeader('Cache-Control', 'no-store');
+      res.end(req.method === 'HEAD' ? undefined : stand);
       return;
     }
     const file = resolveMediaFile(ref, roots);
@@ -47,10 +65,10 @@ export function localMedia(options: { base?: string; roots?: string[] } = {}): P
   return {
     name: 'aaraprint:local-media',
     configureServer(server) {
-      server.middlewares.use(middleware);
+      server.middlewares.use(handler(true));
     },
     configurePreviewServer(server) {
-      server.middlewares.use(middleware);
+      server.middlewares.use(handler(false));
     },
   };
 }

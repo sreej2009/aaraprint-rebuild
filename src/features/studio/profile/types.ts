@@ -136,6 +136,8 @@ export interface StudioProfile {
   family: StudioFamily;
   /** Set when the Preview can show the design on the product (Phase 4 M1). */
   productView?: ProductViewKind;
+  /** Development only: the photos are generated stand-ins (product-view/dev-fixtures.ts). Never in real profiles. */
+  devFixtures?: true;
   /** Colours the product photo can be shown in (umbrellas and rainwear, Phase 4 M3). */
   productColours?: { options: StudioProductColour[]; defaultId: string };
   print: StudioPrintSpec;

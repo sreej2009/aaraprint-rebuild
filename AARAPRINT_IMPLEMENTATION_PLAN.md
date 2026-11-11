@@ -2519,4 +2519,38 @@ StudioState
 
 **Not in M4:** pen and mug colours, drinkware colour, apparel, polos, bags, signs, gifts, perspective, umbrella panels, cylinder warping and 3D; the options and price panel.
 
-**Phase 4 status:** M1–M4 complete. M5 has not started.
+#### Corrective fix — product view not visible in the running app
+
+**Reported:** opening Custom Photo Umbrella or Customized Pen, the Studio and Preview showed only the flat print area, with no "On the product" choice.
+
+**Reproduced on the real routes** (product page → Start designing → Studio → Preview): exactly as reported.
+
+**Root cause:** two things together.
+1. Every recovered product photo and mask has `unconfirmed` rights. So `productViewFor` returns `rights` for every side of every product, and the choice is (correctly) not offered. Production behaves as designed and stays that way.
+2. The only way to give the product view a cleared photo was Playwright swapping the profile inside the automated tests. So nobody could see or check the feature in the running app, and it looked missing.
+
+When the same real routes were served with the photos marked cleared, the choice appeared and the umbrella and pen photos rendered correctly. No rendering, registry, frame, Preview or colour code was at fault (colour is optional: a photo without a usable mask still shows).
+
+**Fix** (no architecture change, no new product-view system, real rights untouched):
+- **Switch:** in development only (`npm run dev`), `?product-view-fixtures=1` on any page (remembered for the tab; `=0` turns it off) swaps the Studio profile's photo and mask refs for generated stand-ins marked cleared (`product-view/dev-fixtures.ts`).
+  - Sizes, placements and frames are unchanged, so the rights gate, placement, editing, Preview and tint run exactly as on cleared photos.
+  - The swap runs in the Studio loader behind `import.meta.env.DEV`; the app root remembers the switch, so "Start designing" keeps it.
+- **Stand-in images:** the dev media server draws them on request (`tooling/product-view-fixtures.ts`, served only by `vite dev`, not `vite preview`). Each has the real photo's size, a neutral product shape (umbrella dome, garment, bottle, pen barrel, mug bodies on the paired photo's halves) around the real print box, and orange stripes in the corner. Masks are white over the product.
+- **Note on screen:** "on a stand-in photo (development only)" appears in the canvas and Preview footers.
+- **Real photos:** never requested in this mode.
+- **Production builds:** contain none of it (checked: no stand-in path, switch or caption in `build/`).
+
+**Tests**
+- **Unit:** `dev-fixtures.test.ts` (4): the switch (URL, tab memory, blocked storage); the swap keeps sizes, placements and frames, adds cleared masks, keeps mug sides paired, and leaves missing photos missing.
+- **Generator:** `tooling/product-view-fixtures.test.ts` (4): pen, umbrella (and mask) and mug stand-ins at the real sizes around the real print boxes; nothing served for other paths, unknown names or traversal.
+- **Browser** (`e2e/studio-userflow.spec.ts`), starting on the product page and clicking Start designing, as a customer does:
+  - **Umbrella and pen:** the choice; On the product with pixel checks (photo behind, artwork exactly over the print area, nothing outside); front and back; the Preview at the back's placement; back in the Studio with the artwork unchanged; axe on both.
+  - **Rights:** the real routes stay flat with no choice in the Studio or Preview, and the Studio requests no product photo.
+  - **Touch:** tablet and phone by touch, with axe.
+- **Manual check:** on `npm run dev`, from each product page with the switch: umbrella flat, On the product, text added, colour Green (tinted through M3), back, Preview; pen the same without colour.
+
+**Results:** lint and typecheck clean; 750 unit and component tests passed (68 files); 372 browser tests passed, 0 failed (380 skipped, each because it's for a different device layout); production build passes.
+
+**Found, not changed (needs a decision):** product pages (Phase 2) show the same recovered photos in their galleries. The pen and umbrella pages request `/media/products/pens-2d/…` and `/media/products/umbrellas-rainwear-2d/…`. These are catalogue images, outside the Studio's rights gate.
+
+**Phase 4 status:** M1–M4 complete, with the product-view corrective fix. M5 has not started.

@@ -22,6 +22,11 @@ npm run test:e2e       # Playwright + axe against the preview server (run `npm r
 
 Useful pages: `/`, `/categories/view-all`, any `/categories/<slug>`, `/products/<slug>`, `/products/<slug>/design` (Design Studio, in progress: canvas, selection, inspector, layers, text, shapes and graphics; add `?sample=1` to start from a sample card), `/search?q=mug`, `/privacy`, and `/design-system` (tokens, components and the Studio canvas demo).
 
+**Seeing the Studio's product view locally.** Every recovered product photo and mask has unconfirmed usage rights, so the Studio and Preview show the flat print area and offer no "On the product" choice. That is correct, and production stays that way. To check the product view (umbrellas, rainwear, wrap drinkware, pens, mugs) with generated stand-in photos, run `npm run dev` and open a product with `?product-view-fixtures=1`, e.g. `/products/umbrella-photo-custom?product-view-fixtures=1`, then **Start designing**:
+- The choice appears in the canvas footer, and the footer says "on a stand-in photo (development only)".
+- The setting is remembered for the browser tab; `?product-view-fixtures=0` turns it off.
+- Real photos are never used, and production builds leave this out.
+
 ## Stack
 
 | Concern | Choice |
