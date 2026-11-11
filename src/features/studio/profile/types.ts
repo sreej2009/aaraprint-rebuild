@@ -62,11 +62,28 @@ export interface StudioMockup {
   rights: RightsStatus;
 }
 
+/**
+ * Where the artwork sits on a side's mockup photo, in the photo's pixels (Phase 4 M1): it is
+ * fitted inside this box, keeping its proportions, and centred. Copied from the original Studio
+ * (scripts/studio/extract-product-views.mjs); never estimated.
+ */
+export interface StudioPlacement {
+  centerX: number;
+  centerY: number;
+  maxWidth: number;
+  maxHeight: number;
+}
+
 export interface StudioSide {
   id: SideId;
   label: string;
   mockup: StudioMockup | null;
+  /** Only on products with an on-product preview; null when the photo has no placement. */
+  placement?: StudioPlacement | null;
 }
+
+/** Products whose Preview can show the design on a product photo (Phase 4 M1). */
+export type ProductViewKind = 'umbrella' | 'rainwear' | 'drinkware-wrap';
 
 export interface StudioModel3d {
   ref: string;
@@ -93,6 +110,8 @@ export interface StudioProfile {
   name: string;
   mode: StudioMode;
   family: StudioFamily;
+  /** Set when the Preview can show the design on the product (Phase 4 M1). */
+  productView?: ProductViewKind;
   print: StudioPrintSpec;
   trim: StudioTrim;
   sides: StudioSide[];

@@ -39,6 +39,18 @@
   ],
   "withMockups": 320,
   "with3dModel": 44,
+  "productViews": {
+    "byKind": {
+      "drinkware-wrap": 49,
+      "none": 448,
+      "rainwear": 20,
+      "umbrella": 15
+    },
+    "withPlacements": 83,
+    "withoutPlacements": [
+      "gift-water-bottle-steel"
+    ]
+  },
   "sizeAudit": {
     "checked": 14,
     "mismatches": [

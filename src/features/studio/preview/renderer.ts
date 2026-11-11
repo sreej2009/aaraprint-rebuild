@@ -2,6 +2,7 @@ import { lazy, type ComponentType } from 'react';
 import type Konva from 'konva';
 import type { Size } from '../geometry/fit';
 import type { Viewport } from '../geometry/viewport';
+import type { PlacedArtwork } from '../product-view/product-view';
 import type { SurfaceDesign } from '../schema/types';
 
 /**
@@ -24,8 +25,20 @@ export interface PreviewThumbnailProps {
   height: number;
 }
 
+/** On the product (Phase 4 M1): the photo, with the artwork drawn over it at `placed` (photo px). */
+export interface ProductCanvasProps {
+  surface: SurfaceDesign;
+  photo: HTMLImageElement;
+  photoSize: Size;
+  placed: PlacedArtwork;
+  width: number;
+  height: number;
+  viewport: Viewport;
+}
+
 export interface PreviewRenderer {
   Canvas: ComponentType<PreviewCanvasProps>;
+  ProductCanvas: ComponentType<ProductCanvasProps>;
   Thumbnail: ComponentType<PreviewThumbnailProps>;
   /** The space the preview gets, when it can't be measured (tests). */
   size: Size | null;
@@ -33,6 +46,7 @@ export interface PreviewRenderer {
 
 const browser: PreviewRenderer = {
   Canvas: lazy(() => import('./preview-canvas').then((m) => ({ default: m.PreviewCanvas }))),
+  ProductCanvas: lazy(() => import('./preview-canvas').then((m) => ({ default: m.ProductPreviewCanvas }))),
   Thumbnail: lazy(() => import('./preview-canvas').then((m) => ({ default: m.PreviewThumbnail }))),
   size: null,
 };

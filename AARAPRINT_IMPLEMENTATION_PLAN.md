@@ -785,7 +785,7 @@ Labels such as the guide legend, the DPI badge and the empty-canvas card are HTM
 **Why the editing surface stays a clean sheet**
 - Most mockups contain sample artwork.
 - Placement on signs and gifts depends on per-product face profiles hard-coded in the original.
-- Compositing artwork onto mockups is mode work for Phase 4/5, reusing the numbers in §18.1.
+- Compositing artwork onto mockups is mode work for Phase 4/5, reusing the numbers in §18.1. Phase 4 M1 (§19) adds the first of these, as a Preview view only.
 
 **Serving and optimisation**
 - Served through `/media` (dev and preview) or `VITE_MEDIA_BASE_URL`. Recovered folders are never written to.
@@ -2212,3 +2212,73 @@ StudioState
 **Final results:** lint and typecheck clean; 651 unit and component tests passed; 319 browser tests passed, 0 failed, 0 flaky, with retries off (283 skipped, each because it's for a different device layout); production build passes.
 
 **Phase 3 status:** M1–M16 complete. Phase 4 has not started.
+
+---
+
+## 19. Phase 4 — progress
+
+| Milestone | Status |
+|-----------|--------|
+| M1 Product view foundation | Done |
+
+#### M1 — Product view foundation
+
+**Scope:** an "On the product" view inside the existing Preview, for umbrellas (15 products), rainwear (20) and wrap-printed drinkware (49). It is a visual layer only. The design stays print-space data, and editing, proof, save, autosave and undo are unchanged. Flat-printed drinkware, pens, mugs, apparel, polos, bags, signs and gifts are later milestones.
+
+**Placement data**
+- `scripts/studio/extract-product-views.mjs` reads the original Studio chunk as text (strict patterns; nothing is executed) and writes `src/data/generated/studio/product-view-placements.json`:
+  - 290 boxes (220 drinkware, 70 umbrella and rainwear), each `[centerX, centerY, maxWidth, maxHeight]` in pixels of a 1122 × 1402 photo;
+  - numbers copied exactly; the script fails on conflicting duplicates or a box off its photo;
+  - the original's drinkware fallbacks by bottle kind are recorded but unused: every M1 product has its own boxes.
+- `build-studio-profiles.mjs` adds `productView` (`umbrella`, `rainwear` or `drinkware-wrap`) and a per-side `placement` to those 84 profiles only. The box is matched by the photo's file name, and only when the photo is 1122 × 1402; no box is guessed. 83 products have boxes for both sides. `gift-water-bottle-steel` has no photo, so it has none. The other 448 profiles are byte-for-byte unchanged.
+- **Placement maths** (the original's): the artwork's finished size is fitted inside the box, keeping its proportions, and centred on it. It is a flat rectangle, with no warp or perspective.
+
+**Rights and fallbacks** (`src/features/studio/product-view/product-view.ts`)
+- A photo is shown only when its rights are `cleared`, it has a valid box, its path is a plain library path, and the media library is published.
+- Every recovered photo is still `unconfirmed`, so customers see no change today: the choice doesn't appear and no photo is requested.
+- Rights are not changed to make the feature appear. `attribution-required` also blocks, because mockups carry no attribution line yet.
+- Anything else falls back to the Phase 3 flat preview:
+  - not an M1 product, no photo, blocked rights, or a missing or invalid box: the choice isn't offered;
+  - on GitHub Pages (`VITE_MEDIA_BASE_URL=none`), the same;
+  - a photo that fails to load: flat, with the note "On-product preview unavailable for this product."
+
+**In the Preview**
+- **The choice:** a "Flat / On the product" choice appears only when a side can be shown. It starts on Flat, which is exactly the Phase 3 preview. It sits in the header on laptops and desktops, and in the bottom bar on tablets and phones (44 px targets on touch).
+- **Drawing:** the photo, with the same artwork nodes as the editor drawn over it at the box (clipped to the trim). An empty background stays transparent, so the product shows through (`Artwork blank="none"`; the editor, flat Preview and proof are unchanged).
+- **Zoom and pan:** the same controls, over the whole photo. 100 % still means the artwork at real printed size.
+- **Loading:** only the shown side's photo is loaded, and only once On the product is chosen.
+- **Nothing is kept:** the photo isn't selectable and isn't in the design, saved records, versions, proof, undo history or autosave. Switching views or sides records nothing.
+
+**Tests**
+- **Unit** (`product-view.test.ts`, 12):
+  - the 290 extracted boxes;
+  - which 84 profiles get a product view, and that every side carries its photo's exact box;
+  - placement maths on real boxes (golf umbrella, rain cap, aluminium bottle);
+  - 100 % = real size;
+  - rights: real photos blocked; a cleared fixture allowed; missing, unknown and attribution-required rights blocked;
+  - unsupported, missing photo or side, no media, missing or invalid boxes, unsafe paths.
+- **Component** (`preview-dialog.test.tsx`, 6 new):
+  - no choice for a business card or a real umbrella;
+  - Flat selected first;
+  - On the product with the original box, front and back;
+  - keyboard, with zoom at 100 %;
+  - fallbacks with the note;
+  - no undo steps;
+  - header and bottom-bar placement.
+- **Browser** (`e2e/studio-product.spec.ts`): the real umbrella profile is served with its photos swapped for a generated 1122 × 1402 PNG marked cleared, by the test only and never in the catalogue.
+  1. Pixels: the photo's mark is drawn the right way round, the background colour fills exactly the box, and nothing is drawn outside it. A blank back lets the product show through. Front and back.
+  2. A photo that fails to load stays flat with the note; mugs, polos, bags, flat drinkware and cards show no choice.
+  3. The real umbrella, rain cap and bottle photos are never offered or requested.
+  4. The saved design, its fingerprint and versions are identical after using the view, and hold no photo, box or image data.
+  5. The proof is byte-for-byte the same file before and after.
+  6. Widths 1440, 1280, 1024, 820, 768, 600, 430, 390, 375 and 360 px: the choice, zoom and close fit; there is no sideways scroll; the photo draws.
+  - Zoom: 100 %, arrow-key panning and Fit.
+  - Axe: Flat and On the product on desktop, tablet (touch) and phone.
+
+**Results:** lint and typecheck clean; 670 unit and component tests passed (59 files); 329 browser tests passed, 0 failed (303 skipped, each because it's for a different device layout); production build passes.
+
+**Also fixed (found by the full run):** M16's dialog guard also counted a dialog that was still fading out after Confirm or Cancel. So a shortcut pressed straight after one, such as Ctrl Z after "Clear back", was ignored. Closing dialogs (`data-state="closed"`) no longer count in `modalDialogOpen()`. A unit test covers it, and the front/back browser test passes again. The M16 axe test in `studio-flows.spec.ts` (four scans) now gets the same 60 s budget as the other full-page axe tests. With M1's tests added, it was timing out under full load; it never found a violation.
+
+**Not in M1:** editing on the product, colour tint or recolouring, masks, perspective or umbrella panel shapes, 3D, pens, mugs, apparel, polos, bags, signs and gifts.
+
+**Phase 4 status:** M1 complete. M2 has not started.

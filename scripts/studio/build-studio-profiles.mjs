@@ -5,6 +5,9 @@
  * Reads (read-only):
  *   public/api/v1/catalogue/products/<slug>.json   catalogue products (print config, options)
  *   ../recovered-additional, ../recovered          mockups, masks and 3D models (headers only)
+ *   src/data/generated/studio/product-view-placements.json
+ *                                                  where artwork sits on each mockup photo
+ *                                                  (scripts/studio/extract-product-views.mjs)
  *
  * Writes:
  *   public/api/v1/studio/<slug>.json               Studio profile (mock API, like the catalogue)
@@ -20,7 +23,7 @@ import fs from 'node:fs/promises';
 import path from 'node:path';
 import { readGlbInfo, readImageInfo } from '../../tooling/media-info.ts';
 import { resolveMediaFile } from '../../tooling/local-media.ts';
-import { ASSET_RIGHTS, familyFor, familyMockups, geometryOptionsFor, modeFor, RIGHTS_NOTES, sideLabels, sizeCheckFor, trimFor } from './studio-rules.mjs';
+import { ASSET_RIGHTS, familyFor, familyMockups, geometryOptionsFor, modeFor, productViewFor, RIGHTS_NOTES, sideLabels, sizeCheckFor, trimFor } from './studio-rules.mjs';
 
 const ROOT = process.cwd();
 const rootsArg = process.argv.includes('--roots') ? process.argv[process.argv.indexOf('--roots') + 1] : null;
@@ -28,6 +31,7 @@ const MEDIA_ROOTS = (rootsArg?.split(path.delimiter) ?? ['../recovered-additiona
 const CATALOGUE = path.join(ROOT, 'public', 'api', 'v1', 'catalogue', 'products');
 const OUT_PUBLIC = path.join(ROOT, 'public', 'api', 'v1', 'studio');
 const OUT_META = path.join(ROOT, 'src', 'data', 'generated', 'studio', 'profiles-meta.json');
+const PLACEMENTS = path.join(ROOT, 'src', 'data', 'generated', 'studio', 'product-view-placements.json');
 
 const POLO_MODEL = 'models/polo-shirt.glb';
 const HEADER_BYTES = 64;
@@ -36,6 +40,7 @@ async function main() {
   for (const root of MEDIA_ROOTS) {
     if (!(await exists(root))) throw new Error(`Media root not found: ${root}`);
   }
+  const placements = JSON.parse(await fs.readFile(PLACEMENTS, 'utf8'));
   const files = (await fs.readdir(CATALOGUE)).filter((f) => f.endsWith('.json')).sort();
   const products = await Promise.all(files.map(async (f) => JSON.parse(await fs.readFile(path.join(CATALOGUE, f), 'utf8'))));
 
@@ -47,7 +52,7 @@ async function main() {
       skipped.push(product.slug);
       continue;
     }
-    profiles.push(await buildProfile(product, missing));
+    profiles.push(await buildProfile(product, missing, placements));
   }
 
   await fs.rm(OUT_PUBLIC, { recursive: true, force: true });
@@ -68,23 +73,28 @@ async function main() {
   }
 }
 
-async function buildProfile(product, missing) {
+async function buildProfile(product, missing, placements) {
   const family = familyFor(product);
+  const mode = modeFor(product);
+  const productView = productViewFor(family, mode);
   const labels = sideLabels(family);
   const print = product.print;
   const fallback = familyMockups(family);
   const sides = [];
   for (const id of ['front', 'back']) {
     const ref = print.mockups?.[id] ?? fallback?.[id] ?? null;
-    sides.push({ id, label: labels[id], mockup: await mockupAsset(ref, missing, product.slug) });
+    const mockup = await mockupAsset(ref, missing, product.slug);
+    // Only products with an on-product preview carry placements (others stay as in Phase 3).
+    sides.push({ id, label: labels[id], mockup, ...(productView ? { placement: placementFor(mockup, placements) } : {}) });
   }
   return {
     schemaVersion: 1,
     slug: product.slug,
     productId: product.id,
     name: product.name,
-    mode: modeFor(product),
+    mode,
     family,
+    ...(productView ? { productView } : {}),
     print: {
       widthPx: print.canvasWidthPx,
       heightPx: print.canvasHeightPx,
@@ -119,6 +129,22 @@ async function mockupAsset(ref, missing, slug) {
     mask: mask ? { ref: maskRef, width: mask.width, height: mask.height } : null,
     rights: ASSET_RIGHTS.mockup.status,
   };
+}
+
+/**
+ * The original's box for this exact photo, or null. Matched by file name within the photo set,
+ * and only when the photo is the size the box was measured on. No fallbacks are guessed.
+ */
+function placementFor(mockup, placements) {
+  if (!mockup) return null;
+  for (const set of Object.values(placements.sets)) {
+    if (!mockup.ref.startsWith(set.folder) || !mockup.ref.endsWith(set.extension)) continue;
+    const box = set.entries[mockup.ref.slice(set.folder.length, -set.extension.length)];
+    if (!box || mockup.width !== set.mockupSize.width || mockup.height !== set.mockupSize.height) return null;
+    const [centerX, centerY, maxWidth, maxHeight] = box;
+    return { centerX, centerY, maxWidth, maxHeight };
+  }
+  return null;
 }
 
 async function modelAsset(product, family, missing) {
@@ -189,6 +215,11 @@ function buildMeta(profiles, skipped, missing) {
     trimOverrides: profiles.filter((p) => p.trim.source === 'product-override').map((p) => ({ slug: p.slug, shape: p.trim.shape, note: p.trim.note })),
     withMockups: profiles.filter((p) => p.sides.some((s) => s.mockup)).length,
     with3dModel: profiles.filter((p) => p.model3d).length,
+    productViews: {
+      byKind: count((p) => p.productView ?? 'none'),
+      withPlacements: profiles.filter((p) => p.productView && p.sides.every((s) => s.placement)).length,
+      withoutPlacements: profiles.filter((p) => p.productView && !p.sides.every((s) => s.placement)).map((p) => p.slug),
+    },
     sizeAudit: {
       checked: checks.length,
       mismatches: checks

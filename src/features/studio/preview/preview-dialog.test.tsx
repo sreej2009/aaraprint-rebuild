@@ -4,8 +4,9 @@ import { createMemoryRouter, RouterProvider } from 'react-router';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { TooltipProvider } from '@/design-system';
 import { setGraphicsLibraryForTests } from '../assets/graphics';
+import { setImageLoaderForTests } from '../assets/image-cache';
 import type { StudioProfile } from '../profile/types';
-import { setPreviewRendererForTests, type PreviewCanvasProps, type PreviewThumbnailProps } from './renderer';
+import { setPreviewRendererForTests, type PreviewCanvasProps, type PreviewThumbnailProps, type ProductCanvasProps } from './renderer';
 import { StudioApp } from '../shell/studio-app';
 import { readProduct, readProfile } from '../testing/catalogue-fixtures';
 
@@ -26,6 +27,16 @@ const stubRenderer = {
       <div data-testid="preview-canvas" data-side={surface.id} data-scale={viewport.scale.toFixed(4)} data-x={viewport.x.toFixed(1)} data-elements={surface.elements.filter((e) => !e.hidden).length} />
     );
   },
+  ProductCanvas: ({ surface, viewport, placed, photo, photoSize }: ProductCanvasProps) => (
+    <div
+      data-testid="product-canvas"
+      data-side={surface.id}
+      data-scale={viewport.scale.toFixed(4)}
+      data-placed={[placed.x, placed.y, placed.width, placed.height].map((n) => n.toFixed(1)).join()}
+      data-photo={photo.dataset.url}
+      data-photo-size={`${photoSize.width}x${photoSize.height}`}
+    />
+  ),
   Thumbnail: ({ surface }: PreviewThumbnailProps) => <div data-testid="thumbnail-drawing" data-side={surface.id} />,
   size: { width: 1000, height: 600 },
 };
@@ -54,7 +65,7 @@ afterEach(() => {
   setGraphicsLibraryForTests(null);
 });
 
-function renderStudio({ sample = true, profile = cardProfile as StudioProfile, width = 1440 } = {}) {
+function renderStudio({ sample = true, profile = cardProfile as StudioProfile, width = 1440, studioProduct = product } = {}) {
   setWidth(width);
   const router = createMemoryRouter(
     [
@@ -62,12 +73,12 @@ function renderStudio({ sample = true, profile = cardProfile as StudioProfile, w
         path: '/products/:slug/design',
         element: (
           <TooltipProvider>
-            <StudioApp product={product} profile={profile} variantId={null} initialSurface={null} initialTool={null} sample={sample} />
+            <StudioApp product={studioProduct} profile={profile} variantId={null} initialSurface={null} initialTool={null} sample={sample} />
           </TooltipProvider>
         ),
       },
     ],
-    { initialEntries: ['/products/business-card-classic/design'] },
+    { initialEntries: [`/products/${studioProduct.slug}/design`] },
   );
   render(<RouterProvider router={router} />);
   return userEvent.setup();
@@ -226,5 +237,152 @@ describe('when drawing fails', () => {
     await waitFor(() => expect(screen.queryByRole('dialog')).not.toBeInTheDocument());
     expect(layerCount()).toBe(8);
     error.mockRestore();
+  });
+});
+
+describe('on the product (Phase 4 M1)', () => {
+  const umbrella = readProduct('umbrella-golf');
+  const umbrellaProfile = readProfile('umbrella-golf');
+  /** The real profile with its photos swapped for cleared stand-ins (same size and placements). */
+  const cleared = (change: (side: StudioProfile['sides'][number]) => Partial<StudioProfile['sides'][number]> = () => ({})): StudioProfile => ({
+    ...umbrellaProfile,
+    sides: umbrellaProfile.sides.map((side) => ({ ...side, mockup: { ...side.mockup!, ref: `studio-fixtures/umbrella-${side.id}.png`, format: 'png', rights: 'cleared' }, ...change(side) })),
+  });
+  const photos = { requested: [] as string[], failing: new Set<string>() };
+
+  beforeEach(() => {
+    photos.requested = [];
+    photos.failing.clear();
+    setImageLoaderForTests(async (url) => {
+      photos.requested.push(url);
+      if (photos.failing.has(url)) throw new Error('not found');
+      const image = new Image();
+      image.dataset.url = url;
+      return image;
+    });
+  });
+  afterEach(() => setImageLoaderForTests(null));
+
+  const viewChoice = () => within(dialog()).queryByRole('radiogroup', { name: 'Preview view' });
+  const option = (name: 'Flat' | 'On the product') => within(viewChoice()!).getByRole('radio', { name });
+  const productDrawing = () => within(dialog()).getByTestId('product-canvas');
+  const fixturePhotos = () => photos.requested.filter((url) => url.includes('studio-fixtures'));
+
+  it('is not offered for a business card, or for an umbrella whose photos aren’t cleared: Preview stays flat', async () => {
+    let user = renderStudio();
+    await openPreview(user);
+    expect(viewChoice()).not.toBeInTheDocument();
+    expect(within(dialog()).getByTestId('preview-area')).toHaveAttribute('data-view', 'flat');
+    await user.keyboard('{Escape}');
+
+    document.body.innerHTML = '';
+    user = renderStudio({ studioProduct: umbrella, profile: umbrellaProfile });
+    await openPreview(user);
+    expect(viewChoice()).not.toBeInTheDocument();
+    expect(within(dialog()).queryByTestId('preview-product-unavailable')).not.toBeInTheDocument();
+    // The unconfirmed photos are never even requested.
+    expect(photos.requested.filter((url) => url.includes('umbrellas-rainwear-2d'))).toEqual([]);
+  });
+
+  it('starts Flat; On the product shows the photo with the artwork in its place, front and back', async () => {
+    const user = renderStudio({ studioProduct: umbrella, profile: cleared() });
+    await openPreview(user);
+    expect(option('Flat')).toHaveAttribute('aria-checked', 'true');
+    expect(option('On the product')).toHaveAttribute('aria-checked', 'false');
+    expect(within(dialog()).getByTestId('preview-area')).toHaveAttribute('data-view', 'flat');
+    // Nothing is loaded until it's asked for.
+    expect(fixturePhotos()).toEqual([]);
+
+    await user.click(option('On the product'));
+    expect(option('On the product')).toHaveAttribute('aria-checked', 'true');
+    await waitFor(() => expect(productDrawing()).toHaveAttribute('data-side', 'front'));
+    expect(within(dialog()).queryByTestId('preview-canvas')).not.toBeInTheDocument();
+    expect(within(dialog()).getByTestId('preview-area')).toHaveAttribute('data-view', 'product');
+    // 1800 × 2400 px fitted into the original's 170 × 227 box at (563, 374).
+    expect(productDrawing()).toHaveAttribute('data-placed', '478.0,260.7,170.0,226.7');
+    expect(productDrawing()).toHaveAttribute('data-photo', '/media/studio-fixtures/umbrella-front.png');
+    expect(productDrawing()).toHaveAttribute('data-photo-size', '1122x1402');
+    expect(fixturePhotos()).toEqual(['/media/studio-fixtures/umbrella-front.png']);
+    expect(dialog()).toHaveAccessibleDescription(/^How the front of “.+” will look on the product \(.+ print\), shown on a product photo; colours and fit are approximate\./);
+    expect(within(dialog()).getByRole('region', { name: /^Front side on the product: \d+ items?, / })).toBeInTheDocument();
+
+    await user.click(within(dialog()).getByRole('radio', { name: /^Back/ }));
+    await waitFor(() => expect(productDrawing()).toHaveAttribute('data-side', 'back'));
+    expect(productDrawing()).toHaveAttribute('data-placed', '468.0,186.7,182.0,242.7');
+    expect(fixturePhotos()).toEqual(['/media/studio-fixtures/umbrella-front.png', '/media/studio-fixtures/umbrella-back.png']);
+
+    await user.click(option('Flat'));
+    expect(drawing()).toHaveAttribute('data-side', 'back');
+    expect(within(dialog()).queryByTestId('product-canvas')).not.toBeInTheDocument();
+    expect(dialog()).toHaveAccessibleDescription(/will look once printed and trimmed/);
+  });
+
+  it('works from the keyboard and zooms like the flat preview (100 % = real size)', async () => {
+    const user = renderStudio({ studioProduct: umbrella, profile: cleared() });
+    await openPreview(user);
+    option('Flat').focus();
+    await user.keyboard('{ArrowRight}');
+    expect(option('On the product')).toHaveFocus();
+    await user.keyboard(' ');
+    await waitFor(() => expect(productDrawing()).toBeInTheDocument());
+    expect(within(dialog()).getByTestId('preview-area')).toHaveAttribute('data-zoom', 'fit');
+    await user.click(within(dialog()).getByRole('button', { name: /, zoom options$/ }));
+    await user.click(await screen.findByRole('menuitem', { name: /^Actual size \(100%\)/ }));
+    // One printed inch is 96 CSS px: the photo is drawn at 96 / (300 dpi × 170/1800) per photo px.
+    expect(Number(productDrawing().dataset.scale)).toBeCloseTo(96 / (300 * (170 / 1800)), 3);
+    await user.keyboard('{Shift>}!{/Shift}');
+    expect(within(dialog()).getByTestId('preview-area')).toHaveAttribute('data-zoom', 'fit');
+    // Back to Flat starts fitted on the piece again.
+    await user.click(option('Flat'));
+    expect(within(dialog()).getByTestId('preview-area')).toHaveAttribute('data-zoom', 'fit');
+  });
+
+  it('falls back to flat, with a note, when the photo can’t be loaded or a side has no placement', async () => {
+    photos.failing.add('/media/studio-fixtures/umbrella-front.png');
+    const user = renderStudio({ studioProduct: umbrella, profile: cleared((side) => (side.id === 'back' ? { placement: null } : {})) });
+    await openPreview(user);
+    await user.click(option('On the product'));
+    expect(await within(dialog()).findByTestId('preview-product-unavailable')).toHaveTextContent('On-product preview unavailable for this product.');
+    expect(drawing()).toHaveAttribute('data-side', 'front');
+    expect(within(dialog()).getByTestId('preview-area')).toHaveAttribute('data-view', 'flat');
+    expect(dialog()).toHaveAccessibleDescription(/will look once printed and trimmed/);
+    // The back has no placement: flat too, and its photo is never requested.
+    await user.click(within(dialog()).getByRole('radio', { name: /^Back/ }));
+    expect(drawing()).toHaveAttribute('data-side', 'back');
+    expect(within(dialog()).getByTestId('preview-product-unavailable')).toBeInTheDocument();
+    expect(fixturePhotos()).toEqual(['/media/studio-fixtures/umbrella-front.png']);
+    await user.click(option('Flat'));
+    expect(within(dialog()).queryByTestId('preview-product-unavailable')).not.toBeInTheDocument();
+  });
+
+  it('changes nothing in the design: no undo steps, same layers after closing', async () => {
+    const user = renderStudio({ studioProduct: umbrella, profile: cleared() });
+    const layers = layerCount();
+    expect(screen.getByRole('button', { name: 'Undo' })).toBeDisabled();
+    await openPreview(user);
+    await user.click(option('On the product'));
+    await waitFor(() => expect(productDrawing()).toBeInTheDocument());
+    await user.click(within(dialog()).getByRole('button', { name: 'Zoom in' }));
+    await user.keyboard('{Control>}z{/Control}');
+    await user.click(within(dialog()).getByRole('radio', { name: /^Back/ }));
+    await user.keyboard('{Escape}');
+    await waitFor(() => expect(screen.queryByRole('dialog')).not.toBeInTheDocument());
+    expect(layerCount()).toBe(layers);
+    expect(screen.getByRole('button', { name: 'Undo' })).toBeDisabled();
+  });
+
+  it('sits in the header on desktop and in the bottom bar on tablets and phones', async () => {
+    for (const [width, place] of [
+      [1440, 'HEADER'],
+      [820, 'FOOTER'],
+      [390, 'FOOTER'],
+    ] as const) {
+      document.body.innerHTML = '';
+      const user = renderStudio({ studioProduct: umbrella, profile: cleared(), width });
+      await openPreview(user);
+      expect(viewChoice()!.closest('header, footer')!.tagName).toBe(place);
+      await user.keyboard('{Escape}');
+      await waitFor(() => expect(screen.queryByRole('dialog')).not.toBeInTheDocument());
+    }
   });
 });

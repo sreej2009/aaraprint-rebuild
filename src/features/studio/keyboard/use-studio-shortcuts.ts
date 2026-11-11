@@ -13,9 +13,11 @@ const CANVAS_ATTRIBUTE = 'data-studio-canvas';
 /**
  * A modal dialog is open (design-system dialogs and the Preview mark themselves): the editor behind
  * it must not change — no undo, duplicate, arrange or save from the keyboard until it closes.
+ * A dialog fading out after Confirm or Cancel (`data-state="closed"`) no longer counts, so a key
+ * pressed straight after it (Ctrl Z after "Clear back") reaches the editor.
  */
 export function modalDialogOpen(): boolean {
-  return typeof document !== 'undefined' && document.querySelector('[data-modal-dialog]') !== null;
+  return typeof document !== 'undefined' && document.querySelector('[data-modal-dialog]:not([data-state="closed"])') !== null;
 }
 
 function isTyping(target: EventTarget | null): boolean {

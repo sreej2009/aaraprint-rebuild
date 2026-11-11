@@ -34,6 +34,16 @@ export function modeFor(product) {
   return mode;
 }
 
+/**
+ * Products that get the "On the product" preview (Phase 4 M1): umbrellas, rainwear and wrap-printed
+ * drinkware. Flat-printed drinkware, pens, mugs, apparel, bags, signs and gifts don't, yet.
+ */
+export function productViewFor(family, mode) {
+  if (family === 'umbrella' || family === 'rainwear') return family;
+  if (family === 'drinkware' && mode === 'wrap') return 'drinkware-wrap';
+  return null;
+}
+
 /** Side labels. Polos keep the original's placement names. */
 export function sideLabels(family) {
   if (family === 'polo') return { front: 'Left chest', back: 'Upper back' };

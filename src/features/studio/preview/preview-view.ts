@@ -16,8 +16,14 @@ export const PREVIEW_PRESETS = [50, 100, 200] as const;
 
 export type PreviewZoom = { mode: 'fit' } | { mode: 'manual'; viewport: Viewport };
 
+/**
+ * What the preview zooms over: the finished piece (a side's print), or on the product the whole
+ * photo, with a dpi that keeps 100 % at the artwork's real size (Phase 4 M1).
+ */
+export type PreviewSpace = Pick<SurfacePrint, 'widthPx' | 'heightPx' | 'dpi'>;
+
 /** The finished piece in design px. */
-export function trimRect(print: SurfacePrint): Rect {
+export function trimRect(print: PreviewSpace): Rect {
   return { x: 0, y: 0, width: print.widthPx, height: print.heightPx };
 }
 
@@ -28,7 +34,7 @@ export function previewPadding(width: number): number {
   return 56;
 }
 
-export function previewFit(available: Size, print: SurfacePrint): Viewport {
+export function previewFit(available: Size, print: PreviewSpace): Viewport {
   return fitViewport(available, trimRect(print), previewPadding(available.width));
 }
 
@@ -42,16 +48,16 @@ export function previewLimits(fitPercent: number): PreviewLimits {
   return { minPercent: Math.min(PREVIEW_MIN_PERCENT, fitPercent), maxPercent: Math.max(PREVIEW_MAX_PERCENT, fitPercent) };
 }
 
-export function viewportFor(zoom: PreviewZoom, available: Size, print: SurfacePrint): Viewport {
+export function viewportFor(zoom: PreviewZoom, available: Size, print: PreviewSpace): Viewport {
   return zoom.mode === 'fit' ? previewFit(available, print) : clampPreviewPan(zoom.viewport, available, print);
 }
 
-export function percentOf(viewport: Viewport, print: SurfacePrint): number {
+export function percentOf(viewport: Viewport, print: PreviewSpace): number {
   return zoomPercent(viewport.scale, print.dpi);
 }
 
 /** True when the piece is bigger than the space, so it can be moved around. */
-export function canPan(viewport: Viewport, available: Size, print: SurfacePrint): boolean {
+export function canPan(viewport: Viewport, available: Size, print: PreviewSpace): boolean {
   return print.widthPx * viewport.scale > available.width + 0.5 || print.heightPx * viewport.scale > available.height + 0.5;
 }
 
@@ -59,7 +65,7 @@ export function canPan(viewport: Viewport, available: Size, print: SurfacePrint)
  * Keep the piece in view: centred along an axis where it fits, otherwise its edges may go no
  * further in than the padding (no panning the artwork off the screen).
  */
-export function clampPreviewPan(viewport: Viewport, available: Size, print: SurfacePrint): Viewport {
+export function clampPreviewPan(viewport: Viewport, available: Size, print: PreviewSpace): Viewport {
   const margin = previewPadding(available.width);
   const axis = (offset: number, length: number, space: number) => {
     if (length <= space) return (space - length) / 2;
@@ -73,7 +79,7 @@ export function clampPreviewPan(viewport: Viewport, available: Size, print: Surf
 }
 
 /** Zoom to `percent` (kept within the limits) around the middle of the space, or `anchor`. */
-export function zoomToPercent(current: Viewport, percent: number, available: Size, print: SurfacePrint, anchor?: { x: number; y: number }): Viewport {
+export function zoomToPercent(current: Viewport, percent: number, available: Size, print: PreviewSpace, anchor?: { x: number; y: number }): Viewport {
   const limits = previewLimits(percentOf(previewFit(available, print), print));
   const clamped = Math.min(limits.maxPercent, Math.max(limits.minPercent, percent));
   const scale = scaleForPercent(clamped, print.dpi);
@@ -89,6 +95,6 @@ export function stepPreviewPercent(percent: number, direction: 1 | -1, fitPercen
   return Math.min(limits.maxPercent, Math.max(limits.minPercent, next ?? (direction > 0 ? limits.maxPercent : limits.minPercent)));
 }
 
-export function panBy(viewport: Viewport, dx: number, dy: number, available: Size, print: SurfacePrint): Viewport {
+export function panBy(viewport: Viewport, dx: number, dy: number, available: Size, print: PreviewSpace): Viewport {
   return clampPreviewPan({ ...viewport, x: viewport.x + dx, y: viewport.y + dy }, available, print);
 }

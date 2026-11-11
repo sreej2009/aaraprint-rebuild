@@ -1,13 +1,17 @@
 import { ChevronDown, Eye, Maximize, X, ZoomIn, ZoomOut } from 'lucide-react';
 import { Dialog as DialogPrimitive, RadioGroup as RadioGroupPrimitive } from 'radix-ui';
 import { Component, Suspense, useCallback, useEffect, useMemo, useRef, useState, type KeyboardEvent, type PointerEvent, type ReactNode } from 'react';
-import { Button, DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger, IconButton, Spinner } from '@/design-system';
+import { Button, DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger, IconButton, SegmentedControl, Spinner } from '@/design-system';
 import { cn } from '@/lib/cn';
 import { finishedSizeMm } from '../geometry/boxes';
 import { formatZoom, wheelZoomFactor } from '../geometry/viewport';
+import { useImage } from '../assets/image-cache';
 import { formatSize } from '../profile/describe';
+import type { StudioProfile } from '../profile/types';
+import { placeArtwork, productSpace, productViewFor } from '../product-view/product-view';
 import type { DesignDocument, SurfaceDesign } from '../schema/types';
 import { useStudio, useStudioStoreApi } from '../store';
+import { useStudioSession } from '../shell/session-context';
 import { useStudioUi } from '../shell/ui-context';
 import { useElementSize } from '../shell/use-element-size';
 import { canPan, panBy, percentOf, PREVIEW_PRESETS, previewFit, previewLimits, stepPreviewPercent, viewportFor, zoomToPercent, type PreviewZoom } from './preview-view';
@@ -37,7 +41,10 @@ export function PreviewButton({ iconOnly }: { iconOnly: boolean }) {
 
 function PreviewDialog() {
   const document = useStudio((s) => s.document);
+  const { profile } = useStudioSession();
   const studio = useStudioStoreApi();
+  // Flat (the finished piece, as in Phase 3) or on the product photo (Phase 4 M1); kept on retry.
+  const [view, setView] = useState<PreviewMode>('flat');
   // Starts on the side being edited; switching here never changes the editor's side.
   const [sideId, setSideId] = useState(() => studio.getState().editor.activeSurfaceId);
   const surface = document.surfaces.find((s) => s.id === sideId) ?? document.surfaces[0]!;
@@ -57,7 +64,7 @@ function PreviewDialog() {
         }}
         className="fixed inset-0 z-50 flex flex-col bg-surface-sunken outline-none data-[state=open]:animate-fade-in"
       >
-        <PreviewBody key={attempt} document={document} surface={surface} onSide={setSideId} onRetry={() => setAttempt((n) => n + 1)} />
+        <PreviewBody key={attempt} document={document} surface={surface} profile={profile} view={view} onView={setView} onSide={setSideId} onRetry={() => setAttempt((n) => n + 1)} />
       </DialogPrimitive.Content>
     </DialogPrimitive.Portal>
   );
@@ -66,30 +73,57 @@ function PreviewDialog() {
 /** Editor shortcut keys (with Ctrl/⌘) whose browser default must not run either (bookmark, save page…). */
 const EDITOR_KEYS = new Set(['z', 'y', 'd', 's', '[', ']', '{', '}', ';']);
 
+type PreviewMode = 'flat' | 'product';
+
+/** Shown when "On the product" is chosen but this side's photo can't be shown. */
+export const PRODUCT_VIEW_UNAVAILABLE = 'On-product preview unavailable for this product.';
+
 interface BodyProps {
   document: DesignDocument;
   surface: SurfaceDesign;
+  profile: StudioProfile;
+  view: PreviewMode;
+  onView(view: PreviewMode): void;
   onSide(id: string): void;
   onRetry(): void;
 }
 
-function PreviewBody({ document, surface, onSide, onRetry }: BodyProps) {
+function PreviewBody({ document, surface, profile, view, onView, onSide, onRetry }: BodyProps) {
   const ready = usePreviewReady(document.surfaces);
-  // Phones keep the header short: sides and zoom move to the bottom bar.
-  const phone = useStudioUi().layout === 'phone';
+  // Phones keep the header short: sides and zoom move to the bottom bar (and the view toggle on tablets too).
+  const layout = useStudioUi().layout;
+  const phone = layout === 'phone';
+  const roomy = layout === 'laptop' || layout === 'desktop';
   const areaRef = useRef<HTMLElement>(null);
-  const { Canvas, size: fixedSize } = previewRenderer();
+  const { Canvas, ProductCanvas, size: fixedSize } = previewRenderer();
   const measured = useElementSize(areaRef);
   const available = fixedSize ?? measured;
   const [zoom, setZoom] = useState<PreviewZoom>({ mode: 'fit' });
   const [failed, setFailed] = useState(false);
+
+  /*
+   * On the product (Phase 4 M1): offered only when a side has a photo whose rights are cleared, with
+   * the original's placement, and the media library is published. The photo is a backdrop: the
+   * design isn't changed, saved or exported with it. Only the photo for the side shown is loaded.
+   */
+  const sideIds = document.surfaces.map((s) => s.id).join();
+  const offered = useMemo(() => sideIds.split(',').some((id) => productViewFor(profile, id).ok), [profile, sideIds]);
+  const wanted = offered && view === 'product';
+  const product = useMemo(() => (wanted ? productViewFor(profile, surface.id) : null), [wanted, profile, surface.id]);
+  const productView = product?.ok ? product.view : null;
+  const photo = useImage(productView?.url ?? null);
+  const onProduct = productView !== null && photo?.status !== 'error';
   const print = surface.print;
+  const placed = useMemo(() => (productView ? placeArtwork(productView.placement, { width: print.widthPx, height: print.heightPx }) : null), [productView, print]);
+  // Zoom and pan work the same on the product: over the whole photo, 100 % = the artwork's real size.
+  const space = useMemo(() => (onProduct && productView && placed ? productSpace(productView, placed, print) : print), [onProduct, productView, placed, print]);
+  const shown = ready && (!onProduct || photo?.status === 'loaded');
   const sized = available.width > 0 && available.height > 0;
-  const viewport = useMemo(() => (sized ? viewportFor(zoom, available, print) : { scale: 0, x: 0, y: 0 }), [sized, zoom, available, print]);
-  const fitPercent = sized ? percentOf(previewFit(available, print), print) : 100;
-  const percent = sized ? percentOf(viewport, print) : 100;
+  const viewport = useMemo(() => (sized ? viewportFor(zoom, available, space) : { scale: 0, x: 0, y: 0 }), [sized, zoom, available, space]);
+  const fitPercent = sized ? percentOf(previewFit(available, space), space) : 100;
+  const percent = sized ? percentOf(viewport, space) : 100;
   const limits = previewLimits(fitPercent);
-  const pannable = sized && canPan(viewport, available, print);
+  const pannable = sized && canPan(viewport, available, space);
   const sided = document.surfaces.length > 1;
   const empty = document.surfaces.every(isBlank);
   const size = finishedSizeMm(print);
@@ -97,16 +131,23 @@ function PreviewBody({ document, surface, onSide, onRetry }: BodyProps) {
   const zoomTo = useCallback(
     (next: number | 'fit', anchor?: { x: number; y: number }) => {
       if (next === 'fit') setZoom({ mode: 'fit' });
-      else setZoom((z) => ({ mode: 'manual', viewport: zoomToPercent(viewportFor(z, available, print), next, available, print, anchor) }));
+      else setZoom((z) => ({ mode: 'manual', viewport: zoomToPercent(viewportFor(z, available, space), next, available, space, anchor) }));
     },
-    [available, print],
+    [available, space],
   );
   const step = useCallback((direction: 1 | -1) => zoomTo(stepPreviewPercent(percent, direction, fitPercent)), [zoomTo, percent, fitPercent]);
 
-  // Switching sides keeps a chosen zoom level (the sides share a size); Fit stays Fit.
+  // Switching sides keeps a chosen zoom level (the sides share a size); Fit stays Fit. On the
+  // product each side has its own photo, so it starts fitted.
   const switchSide = (id: string) => {
     onSide(id);
-    if (zoom.mode === 'manual') setZoom({ mode: 'manual', viewport: zoomToPercent({ scale: 0, x: 0, y: 0 }, percent, available, print) });
+    if (wanted) setZoom({ mode: 'fit' });
+    else if (zoom.mode === 'manual') setZoom({ mode: 'manual', viewport: zoomToPercent({ scale: 0, x: 0, y: 0 }, percent, available, print) });
+  };
+  // Flat and on the product show different things, so each starts fitted.
+  const switchView = (next: PreviewMode) => {
+    onView(next);
+    setZoom({ mode: 'fit' });
   };
 
   // Ctrl/⌘ + wheel or a trackpad pinch zooms around the pointer; a plain wheel moves a zoomed piece.
@@ -120,12 +161,12 @@ function PreviewBody({ document, surface, onSide, onRetry }: BodyProps) {
         zoomTo(percent * wheelZoomFactor(event.deltaY, event.deltaMode), { x: event.clientX - rect.left, y: event.clientY - rect.top });
       } else if (pannable) {
         event.preventDefault();
-        setZoom({ mode: 'manual', viewport: panBy(viewport, -event.deltaX, -event.deltaY, available, print) });
+        setZoom({ mode: 'manual', viewport: panBy(viewport, -event.deltaX, -event.deltaY, available, space) });
       }
     };
     area.addEventListener('wheel', onWheel, { passive: false });
     return () => area.removeEventListener('wheel', onWheel);
-  }, [sized, pannable, percent, viewport, available, print, zoomTo]);
+  }, [sized, pannable, percent, viewport, available, space, zoomTo]);
 
   // Dragging (mouse, pen or one finger) moves the piece once it's bigger than the screen.
   const drag = useRef<{ id: number; x: number; y: number } | null>(null);
@@ -138,7 +179,7 @@ function PreviewBody({ document, surface, onSide, onRetry }: BodyProps) {
     const start = drag.current;
     if (!start || start.id !== event.pointerId) return;
     drag.current = { id: start.id, x: event.clientX, y: event.clientY };
-    setZoom({ mode: 'manual', viewport: panBy(viewport, event.clientX - start.x, event.clientY - start.y, available, print) });
+    setZoom({ mode: 'manual', viewport: panBy(viewport, event.clientX - start.x, event.clientY - start.y, available, space) });
   };
   const endDrag = () => {
     drag.current = null;
@@ -177,11 +218,13 @@ function PreviewBody({ document, surface, onSide, onRetry }: BodyProps) {
     const move = moves[event.key];
     if (!move) return;
     event.preventDefault();
-    setZoom({ mode: 'manual', viewport: panBy(viewport, move[0], move[1], available, print) });
+    setZoom({ mode: 'manual', viewport: panBy(viewport, move[0], move[1], available, space) });
   };
 
   const sideName = sided ? `${surface.label} side` : 'Design';
   const status = empty ? 'Your design is empty' : isBlank(surface) ? 'No artwork on this side' : null;
+  const notes = [status, wanted && !onProduct ? PRODUCT_VIEW_UNAVAILABLE : null].filter((n): n is string => n !== null);
+  const toggle = offered && <ViewToggle value={view} onChange={switchView} />;
 
   return (
     <div className="flex min-h-0 flex-1 flex-col">
@@ -193,24 +236,28 @@ function PreviewBody({ document, surface, onSide, onRetry }: BodyProps) {
           </p>
         </div>
         {!phone && sided && <SidePicker document={document} active={surface.id} onSelect={switchSide} />}
+        {roomy && toggle}
         {!phone && <ZoomControls percent={percent} limits={limits} fit={zoom.mode === 'fit'} onStep={step} onZoom={zoomTo} />}
         <DialogPrimitive.Close asChild>
           <IconButton label="Close preview" icon={<X />} size="sm" tooltip={false} className="pointer-coarse:size-11" />
         </DialogPrimitive.Close>
       </header>
       <DialogPrimitive.Description id="studio-preview-description" className="sr-only">
-        {`How ${sided ? `the ${surface.label.toLowerCase()} of ` : ''}“${document.name}” will look once printed and trimmed (${formatSize(size.width, size.height)}). Guides, bleed and editing controls are hidden. Escape closes the preview.`}
+        {onProduct
+          ? `How ${sided ? `the ${surface.label.toLowerCase()} of ` : ''}“${document.name}” will look on the product (${formatSize(size.width, size.height)} print), shown on a product photo; colours and fit are approximate. Guides, bleed and editing controls are hidden. Escape closes the preview.`
+          : `How ${sided ? `the ${surface.label.toLowerCase()} of ` : ''}“${document.name}” will look once printed and trimmed (${formatSize(size.width, size.height)}). Guides, bleed and editing controls are hidden. Escape closes the preview.`}
       </DialogPrimitive.Description>
 
       {/* oxlint-disable-next-line jsx-a11y/no-noninteractive-element-interactions -- the artwork region: focusable only while zoomed in, so arrow keys (and drags) move around; every action also has a button */}
       <section
         ref={areaRef}
         aria-roledescription="preview"
-        aria-label={`${sideName}: ${status ?? `${visibleCount(surface)} ${visibleCount(surface) === 1 ? 'item' : 'items'}`}, ${formatSize(size.width, size.height)}.${pannable ? ' Arrow keys move around.' : ''}`}
+        aria-label={`${sideName}${onProduct ? ' on the product' : ''}: ${status ?? `${visibleCount(surface)} ${visibleCount(surface) === 1 ? 'item' : 'items'}`}, ${formatSize(size.width, size.height)}.${pannable ? ' Arrow keys move around.' : ''}`}
         // oxlint-disable-next-line jsx-a11y/no-noninteractive-tabindex -- focusable only while zoomed in, so arrow keys can move around
         tabIndex={pannable ? 0 : -1}
         data-testid="preview-area"
         data-zoom={zoom.mode}
+        data-view={onProduct ? 'product' : 'flat'}
         onKeyDown={onArtworkKey}
         onPointerDown={onPointerDown}
         onPointerMove={onPointerMove}
@@ -225,21 +272,37 @@ function PreviewBody({ document, surface, onSide, onRetry }: BodyProps) {
             {sized && (
               <PreviewBoundary onError={() => setFailed(true)}>
                 <Suspense fallback={null}>
-                  <div aria-hidden="true" className={cn('absolute inset-0 transition-opacity', ready ? 'opacity-100' : 'opacity-0')}>
-                    <Canvas surface={surface} width={available.width} height={available.height} viewport={viewport} />
+                  <div aria-hidden="true" className={cn('absolute inset-0 transition-opacity', shown ? 'opacity-100' : 'opacity-0')}>
+                    {!onProduct ? (
+                      <Canvas surface={surface} width={available.width} height={available.height} viewport={viewport} />
+                    ) : (
+                      photo?.status === 'loaded' &&
+                      productView &&
+                      placed && (
+                        <ProductCanvas surface={surface} photo={photo.image} photoSize={productView.photo} placed={placed} width={available.width} height={available.height} viewport={viewport} />
+                      )
+                    )}
                   </div>
                 </Suspense>
               </PreviewBoundary>
             )}
-            {!ready && (
+            {!shown && (
               <output className="absolute inset-0 flex items-center justify-center gap-3 text-body-sm text-fg-muted" data-testid="preview-loading">
                 <Spinner size="sm" /> Preparing preview…
               </output>
             )}
-            {ready && status && (
-              <p className="pointer-events-none absolute inset-x-0 top-4 mx-auto w-fit rounded-full bg-surface/90 px-3 py-1 text-body-sm text-fg-muted shadow-1" data-testid="preview-empty">
-                {status}
-              </p>
+            {shown && notes.length > 0 && (
+              <div className="pointer-events-none absolute inset-x-0 top-4 flex flex-col items-center gap-2 px-3">
+                {notes.map((note) => (
+                  <p
+                    key={note}
+                    className="w-fit rounded-full bg-surface/90 px-3 py-1 text-center text-body-sm text-fg-muted shadow-1"
+                    data-testid={note === PRODUCT_VIEW_UNAVAILABLE ? 'preview-product-unavailable' : 'preview-empty'}
+                  >
+                    {note}
+                  </p>
+                ))}
+              </div>
             )}
           </>
         )}
@@ -248,8 +311,12 @@ function PreviewBody({ document, surface, onSide, onRetry }: BodyProps) {
       <footer className="flex shrink-0 flex-wrap items-center justify-between gap-x-4 gap-y-2 border-t border-border bg-surface px-3 py-2 md:px-4">
         {phone && sided && <SidePicker document={document} active={surface.id} onSelect={switchSide} />}
         {phone && <ZoomControls percent={percent} limits={limits} fit={zoom.mode === 'fit'} onStep={step} onZoom={zoomTo} />}
+        {!roomy && toggle}
         <p className={cn('text-caption text-fg-muted', phone && 'w-full')}>
-          <span className="font-semibold text-fg">{sided ? surface.label : 'Design'}</span> · {formatSize(size.width, size.height)}, trimmed · guides and bleed hidden
+          <span className="font-semibold text-fg">{sided ? surface.label : 'Design'}</span> ·{' '}
+          {onProduct
+            ? `on the product · ${formatSize(size.width, size.height)} print on a product photo, colours approximate`
+            : `${formatSize(size.width, size.height)}, trimmed · guides and bleed hidden`}
         </p>
       </footer>
       <ZoomAnnouncer percent={percent} fit={zoom.mode === 'fit'} />
@@ -318,6 +385,29 @@ function SidePicker({ document, active, onSelect, className }: { document: Desig
 
 function visibleCount(surface: SurfaceDesign): number {
   return surface.elements.filter((e) => !e.hidden).length;
+}
+
+// ------------------------------------------------------------------- View
+
+const VIEW_OPTIONS = [
+  { value: 'flat', label: 'Flat' },
+  { value: 'product', label: 'On the product' },
+];
+
+/** Flat or on the product photo. Shown only for products whose photo can be shown (Phase 4 M1). */
+function ViewToggle({ value, onChange }: { value: PreviewMode; onChange(view: PreviewMode): void }) {
+  return (
+    <div data-testid="preview-view-toggle" className="shrink-0">
+      <SegmentedControl
+        label="Preview view"
+        size="sm"
+        options={VIEW_OPTIONS}
+        value={value}
+        onValueChange={(next) => onChange(next === 'product' ? 'product' : 'flat')}
+        className="pointer-coarse:*:h-11"
+      />
+    </div>
+  );
 }
 
 // ------------------------------------------------------------------- Zoom

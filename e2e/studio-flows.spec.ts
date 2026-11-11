@@ -415,6 +415,7 @@ test.describe('desktop flows', () => {
   });
 
   test('axe: panels, inspector, layers, preview and print check have no violations', async ({ page }) => {
+    test.setTimeout(60_000); // four axe scans: the same budget as the other full-page axe tests
     await open(page, `${CARD}?sample=1`);
     const scan = async (include?: string) => {
       const builder = new AxeBuilder({ page }).withTags(TAGS);

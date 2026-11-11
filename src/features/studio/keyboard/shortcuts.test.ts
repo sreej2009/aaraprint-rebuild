@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { commandForKey, type KeyLike } from './shortcuts';
+import { modalDialogOpen } from './use-studio-shortcuts';
 
 const press = (key: string, mods: Partial<KeyLike> = {}) => commandForKey({ key, shiftKey: false, ctrlKey: false, metaKey: false, altKey: false, ...mods });
 
@@ -30,5 +31,21 @@ describe('editing shortcuts', () => {
     expect(press('ArrowUp', { altKey: true })).toBeNull(); // layer reordering, M7
     expect(press('Delete', { shiftKey: true })).toBeNull();
     expect(press('=', { ctrlKey: true })).toBeNull(); // zoom: use-zoom-shortcuts
+  });
+});
+
+describe('modal dialogs hold the editor shortcuts', () => {
+  it('while open, but not while fading out after Confirm or Cancel', () => {
+    expect(modalDialogOpen()).toBe(false);
+    const dialog = document.createElement('div');
+    dialog.setAttribute('data-modal-dialog', '');
+    dialog.setAttribute('data-state', 'open');
+    document.body.append(dialog);
+    expect(modalDialogOpen()).toBe(true);
+    dialog.setAttribute('data-state', 'closed');
+    expect(modalDialogOpen()).toBe(false);
+    dialog.removeAttribute('data-state'); // dialogs without a state (always open while mounted)
+    expect(modalDialogOpen()).toBe(true);
+    dialog.remove();
   });
 });

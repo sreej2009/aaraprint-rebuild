@@ -15,13 +15,26 @@ import { drawingFor, elementFrame, guideGeometry, hairline, type Drawing } from 
  * the bleed can be checked) and the preview (clipped to the trim, as the finished piece looks).
  * Nothing editor-only lives here: no guides, handles, hover or selection.
  */
-export function Artwork({ surface, clip, editingId = null }: { surface: SurfaceDesign; clip: 'bleed' | 'trim'; editingId?: string | null }) {
+export function Artwork({
+  surface,
+  clip,
+  editingId = null,
+  blank = 'paper',
+}: {
+  surface: SurfaceDesign;
+  clip: 'bleed' | 'trim';
+  editingId?: string | null;
+  /** Without a background colour: white paper, or (on a product photo) nothing, so the product shows. */
+  blank?: 'paper' | 'none';
+}) {
   const guides = useMemo(() => guideGeometry(surface.print), [surface.print]);
   const fontsVersion = useFontsVersionFor(surface.elements);
   const outline = clip === 'bleed' ? { shape: guides.bleedShape, rect: guides.bleed } : { shape: guides.trimShape, rect: guides.trim };
   return (
     <Group name="artwork-clip" clipFunc={(ctx) => tracePath(ctx, outline.shape, outline.rect)}>
-      <Rect name="background" {...guides.bleed} fill={surface.background.color ?? colorTokens.surface} listening={false} perfectDrawEnabled={false} />
+      {(surface.background.color !== null || blank === 'paper') && (
+        <Rect name="background" {...guides.bleed} fill={surface.background.color ?? colorTokens.surface} listening={false} perfectDrawEnabled={false} />
+      )}
       {surface.elements
         .filter((element) => !element.hidden && element.id !== editingId)
         .map((element) => (

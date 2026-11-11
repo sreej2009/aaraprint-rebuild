@@ -1,6 +1,6 @@
 import type Konva from 'konva';
 import { memo, useEffect, useMemo, useRef } from 'react';
-import { Layer, Shape, Stage } from 'react-konva';
+import { Group, Image as KonvaImage, Layer, Shape, Stage } from 'react-konva';
 import { colorTokens } from '@/design-system/tokens';
 import { Artwork } from '../canvas/artwork';
 import { guideGeometry } from '../canvas/drawing';
@@ -9,7 +9,7 @@ import { fitViewport } from '../geometry/viewport';
 import { tracePath } from '../geometry/shapes';
 import type { SurfaceDesign } from '../schema/types';
 import { trimRect } from './preview-view';
-import type { PreviewCanvasProps, PreviewThumbnailProps } from './renderer';
+import type { PreviewCanvasProps, PreviewThumbnailProps, ProductCanvasProps } from './renderer';
 
 /**
  * The preview's drawing (Plan M14), read-only and built from the design document with the same
@@ -30,6 +30,26 @@ export function PreviewCanvas({ surface, width, height, viewport, onStage }: Pre
       </Layer>
       <Layer name={ARTWORK_LAYER} listening={false}>
         <Artwork surface={surface} clip="trim" />
+      </Layer>
+    </Stage>
+  );
+}
+
+/**
+ * On the product (Phase 4 M1): the product photo with the artwork over it, drawn by the same
+ * artwork nodes and clipped to the trim like the flat preview. The photo is a backdrop only — it
+ * is never selectable, exported, saved or part of the design; nothing here listens for input.
+ */
+export function ProductPreviewCanvas({ surface, photo, photoSize, placed, width, height, viewport }: ProductCanvasProps) {
+  return (
+    <Stage width={width} height={height} scaleX={viewport.scale} scaleY={viewport.scale} x={viewport.x} y={viewport.y} listening={false} className="studio-preview-stage studio-product-stage">
+      <Layer name="product-photo" listening={false}>
+        <KonvaImage image={photo} width={photoSize.width} height={photoSize.height} listening={false} perfectDrawEnabled={false} />
+      </Layer>
+      <Layer name="product-artwork" listening={false}>
+        <Group x={placed.x} y={placed.y} scaleX={placed.scale} scaleY={placed.scale}>
+          <Artwork surface={surface} clip="trim" blank="none" />
+        </Group>
       </Layer>
     </Stage>
   );
