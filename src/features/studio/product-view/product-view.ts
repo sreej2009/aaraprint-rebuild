@@ -20,7 +20,7 @@ import type { PreviewSpace } from '../preview/preview-view';
  * exact photo, and the media library is published. Otherwise the Preview stays flat.
  */
 
-export const PRODUCT_VIEW_KINDS: readonly ProductViewKind[] = ['umbrella', 'rainwear', 'drinkware-wrap'];
+export const PRODUCT_VIEW_KINDS: readonly ProductViewKind[] = ['umbrella', 'rainwear', 'drinkware-wrap', 'pen', 'mug'];
 
 export type ProductViewUnavailable =
   /** Not an umbrella, rainwear or wrap-printed drinkware product. */
@@ -40,7 +40,10 @@ export interface ProductView {
   kind: ProductViewKind;
   sideId: string;
   url: string;
+  /** The frame the placement is measured in ("photo px"): the photo itself, or a pen or mug frame (M4). */
   photo: Size;
+  /** Where the photo is drawn in the frame, and which part of it (photo image px; null = all of it). */
+  draw: { crop: Rect | null; at: Rect };
   placement: StudioPlacement;
   /**
    * The side's fabric mask (M3), only when its own rights are cleared, it is a library path, it is
@@ -109,8 +112,11 @@ export function productViewFor(profile: StudioProfile, sideId: string, media: Me
   // Cleared only: mockups carry no attribution line to show, and unconfirmed or unrecorded rights block.
   if (mockup.rights !== 'cleared') return { ok: false, reason: 'rights' };
   if (side.placement === undefined || side.placement === null) return { ok: false, reason: 'no-placement' };
-  const photo = { width: mockup.width, height: mockup.height };
-  if (typeof mockup.ref !== 'string' || !SAFE_REF.test(mockup.ref) || mockup.ref.includes('..') || !positive(photo.width) || !positive(photo.height)) return { ok: false, reason: 'invalid' };
+  const image = { width: mockup.width, height: mockup.height };
+  if (typeof mockup.ref !== 'string' || !SAFE_REF.test(mockup.ref) || mockup.ref.includes('..') || !positive(image.width) || !positive(image.height)) return { ok: false, reason: 'invalid' };
+  const framed = frameFor(side.photoFrame, image);
+  if (!framed) return { ok: false, reason: 'invalid' };
+  const { photo, draw } = framed;
   if (!isValidPlacement(side.placement, photo)) return { ok: false, reason: 'invalid' };
   if (!media.hasMedia(mockup.ref)) return { ok: false, reason: 'no-media' };
   const mask = mockup.mask;
@@ -121,8 +127,8 @@ export function productViewFor(profile: StudioProfile, sideId: string, media: Me
     typeof mask.ref === 'string' &&
     SAFE_REF.test(mask.ref) &&
     !mask.ref.includes('..') &&
-    mask.width === photo.width &&
-    mask.height === photo.height &&
+    mask.width === image.width &&
+    mask.height === image.height &&
     media.hasMedia(mask.ref);
   return {
     ok: true,
@@ -131,6 +137,7 @@ export function productViewFor(profile: StudioProfile, sideId: string, media: Me
       sideId,
       url: media.mediaUrl(mockup.ref),
       photo,
+      draw,
       placement: side.placement,
       mask: maskOk ? { url: media.mediaUrl(mask.ref) } : null,
       photoColour: typeof side.photoColour === 'string' ? side.photoColour : null,
@@ -192,6 +199,36 @@ export function colourUnavailable(view: ProductView | null, colour: StudioProduc
 
 /** Shown on a side that can't take the chosen colour; the photo is shown as taken. */
 export const COLOUR_UNAVAILABLE = 'Colour preview unavailable for this side.';
+
+const isRect = (r: unknown): r is Rect => {
+  if (!r || typeof r !== 'object') return false;
+  const { x, y, width, height } = r as Record<string, unknown>;
+  return typeof x === 'number' && typeof y === 'number' && Number.isFinite(x) && Number.isFinite(y) && x >= 0 && y >= 0 && positive(width) && positive(height);
+};
+const inside = (r: Rect, size: Size) => r.x + r.width <= size.width + 1e-9 && r.y + r.height <= size.height + 1e-9;
+
+/**
+ * The frame a side's placement is measured in, and how its photo is drawn into it (M4). Without a
+ * frame (M1 photos) the frame is the photo. With one, it must make sense: positive sizes, the photo
+ * (or its crop) inside the image and drawn inside the frame, and not stretched (proportions within
+ * 1 %, as the original drew pen photos into their 2000 × 700 frame). Otherwise null: invalid.
+ */
+export function frameFor(frame: unknown, image: Size): { photo: Size; draw: { crop: Rect | null; at: Rect } } | null {
+  if (frame === undefined || frame === null) return { photo: image, draw: { crop: null, at: { x: 0, y: 0, width: image.width, height: image.height } } };
+  if (typeof frame !== 'object') return null;
+  const { width, height, crop, at } = frame as Record<string, unknown>;
+  if (!positive(width) || !positive(height) || !isRect(at) || !inside(at, { width, height })) return null;
+  if (crop !== null && (!isRect(crop) || !inside(crop, image))) return null;
+  const shown = crop ?? image;
+  if (Math.abs(shown.width / shown.height / (at.width / at.height) - 1) > 0.01) return null;
+  return { photo: { width, height }, draw: { crop: crop ?? null, at } };
+}
+
+/** Where the photo is drawn, in design px (print px), for the editor (M2/M4). */
+export function photoRect(view: ProductView, placed: PlacedArtwork): Rect {
+  const corner = productToDesign({ x: view.draw.at.x, y: view.draw.at.y }, placed);
+  return { x: corner.x, y: corner.y, width: view.draw.at.width / placed.scale, height: view.draw.at.height / placed.scale };
+}
 
 /**
  * The space the Preview zooms and pans in on the product: the whole photo, with a "dpi" chosen so

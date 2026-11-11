@@ -16,7 +16,7 @@ import { finishedSizeMm, printBoxes } from '../geometry/boxes';
 import { fitScale, workspacePadding } from '../geometry/fit';
 import { formatSize } from '../profile/describe';
 import { ProductColourPicker } from '../product-view/colour-picker';
-import { COLOUR_UNAVAILABLE, colourUnavailable } from '../product-view/product-view';
+import { COLOUR_UNAVAILABLE, colourUnavailable, photoRect } from '../product-view/product-view';
 import { useProductColour, useProductColourOffered, useProductView, useProductViewOffered } from '../product-view/use-product-view';
 import { ProductViewToggle } from '../product-view/view-toggle';
 import type { SurfaceDesign } from '../schema/types';
@@ -85,6 +85,8 @@ export function CanvasWorkspace({ zoomPill = false, onStage }: CanvasWorkspacePr
   const colourOffered = useProductColourOffered(profile, surfaces);
   const product = useProductView(profile, surface, offered && wantProduct, colourOffered ? colour : null);
   const onProduct = product.status === 'loading' || product.status === 'ready';
+  // Where the photo (or, for mugs, the side's half of it) is drawn, in design px (M4).
+  const drawn = useMemo(() => (product.view && product.placed ? { rect: photoRect(product.view, product.placed), crop: product.view.draw.crop } : null), [product.view, product.placed]);
   const notes = [product.status === 'unavailable' ? CANVAS_PRODUCT_UNAVAILABLE : null, onProduct && colourOffered && colourUnavailable(product.view, colour, product.tint) ? COLOUR_UNAVAILABLE : null].filter(
     (note): note is string => note !== null,
   );
@@ -166,7 +168,7 @@ export function CanvasWorkspace({ zoomPill = false, onStage }: CanvasWorkspacePr
                 showGuides={showGuides}
                 editingId={editing && !sheetEditing ? editing.id : null}
                 onStage={onStage}
-                product={onProduct && product.bounds ? { photo: product.photo, bounds: product.bounds } : null}
+                product={onProduct && product.bounds && drawn ? { photo: product.photo, bounds: product.bounds, ...drawn } : null}
               />
             </div>
           </Suspense>

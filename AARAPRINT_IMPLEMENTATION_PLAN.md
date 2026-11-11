@@ -2222,6 +2222,7 @@ StudioState
 | M1 Product view foundation | Done |
 | M2 On-product workspace | Done |
 | M3 Product colour and masked tint | Done |
+| M4 Pens and mugs product view | Done |
 
 #### M1 — Product view foundation
 
@@ -2444,4 +2445,78 @@ StudioState
 
 **Not in M3:** drinkware, mug or pen colours; apparel and polos; perspective, umbrella panels and 3D; the original's frame over the artwork; changing the variant from the swatches (that belongs with the Phase 4 options panel). Real photos and masks stay blocked until their rights are cleared.
 
-**Phase 4 status:** M1–M3 complete. M4 has not started.
+#### M4 — Pens and mugs product view
+
+**Scope:** the M1–M2 product view (Preview and editing canvas) now also covers pens (49) and mugs (9), using the original Studio's photo maps and print-area formulas, copied as text from a second chunk (`3zkk7bvc_w-nw.js`) into `product-view-placements.json`. The photo is a visual layer only.
+
+**Pens**
+- **Frame and box:** the original draws a pen photo across a 2000 × 700 frame. The print box is the same for every pen: centred at (1160, 350), at most 700 × 104 frame px. So a 1200 × 240 print area lands as 520 × 104 at (900, 298); tests check this exactly against the original formula for every pen print size.
+- **Photos:** the recovered photos are 2118–2120 × 742, the same proportions within 0.2 %. They are drawn across the frame, as the original did.
+- **Families:**
+  - The original has 10 pen families with front and back photos, not 9 as the audit said: multicolor, classic, metal, roller, fountain, highlighter, stylus, gel, paper and wheat.
+  - It maps 50 slugs. All 49 of our pens are among them; the 50th, `gift-pen-wooden-ball`, is a gift here, and gifts aren't in M4.
+  - The `paper` family's photos (`paper-front-v2.png`, `paper-back-v2.png`) aren't in the recovered folders. So `pen-recycled-paper` has no photo and stays flat: 48 pens have both sides.
+- **Front and back:** each side uses its family's front or back photo, with the same box.
+- **Colour (deferred):** the original recolours pen parts (body, clip, tip, buttons) by pixel analysis inside hand-drawn part shapes per family and side. That is a new tint system, which M4 excludes. Pens show their family photo as taken, and the original part colours per family and pen are recorded in the data for later. Pens get no colour choice (the M3 choice is umbrella and rainwear only).
+
+**Mugs**
+- **Frame and photo:** the original's frame is 900 × 1086. Each mug has one paired photo (1448 × 1086) holding both sides as 724 px halves:
+  - the front is the left half, drawn at x 0;
+  - the back is the right half, drawn 176 px in.
+- **Print boxes:** both sides use the same box, centred at x 450, with each mug's own centre y and maximum size (e.g. 390 × 245 at y 515; the insulated travel mug 365 × 285). A 2700 × 1050 wrap lands as 390 × 151.7 at (255, 439.2).
+- **Photos:** only 5 of the 9 paired photos are recovered (custom black, custom decorative, colour-changing magic, personalised, magic colour change). The other 4 mugs (classic photo, insulated travel, large latte 15 oz, two-tone colour) get no photo and stay flat. Nothing is guessed.
+- **Left out:** the original also cut each mug out with hand-drawn shapes and recoloured its parts; that is the masks and recolouring M4 excludes, so the photo half is shown as taken. Mugs stay a flat 2D photo: no cylinder warp, curve, perspective or 3D.
+
+**Architecture**
+- **Photo frames:** a side may now carry a `photoFrame`: the frame its placement box is measured in, where the photo is drawn in it (`at`), and an optional crop of the photo (mugs).
+  - Without one (M1 products), the frame is the photo, so nothing changes for umbrellas, rainwear or drinkware.
+  - `frameFor` validates frames: positive sizes, the crop inside the photo, `at` inside the frame, and no stretching beyond 1 %. A frame that fails these checks makes the side invalid, so it stays flat.
+- **Unchanged pieces:** placement (contain, centred), the design ↔ product transforms, Fit over the whole frame, the rights gate and the shared hook all work as before. The editor draws the photo (or crop) at `photoRect` in design px; the Preview draws it at `at` in frame px.
+- **Profiles:** `productView` gains `pen` and `mug`. Only the 58 pen and mug profiles changed; `profiles-meta.json` lists the photos the original refers to that aren't recovered.
+
+**Rights:** every recovered pen and mug photo is unconfirmed, so customers see no change: no choice, and no photo is requested (checked in the browser). No photo is copied into `public/` or the build (checked).
+
+**Persistence, undo and proof** (unchanged from M2): the view, photo and frame are never in the design, versions, undo or autosave (checked in IndexedDB). Proofs are byte-for-byte the same flat and on the product, for a pen and a mug.
+
+**Tests**
+- **Unit** (`pens-mugs.test.ts`, 15):
+  - the extracted frames, boxes, families, slugs and mug cuts;
+  - every pen's family mapping and placement;
+  - placement against the original formula for every pen print size, plus small and oversized artwork;
+  - mug cuts, front and back, and placement;
+  - round trips;
+  - rights;
+  - frame validation;
+  - no colour choice for pens and mugs.
+- **Updated:** the M1 tests now expect the pen and mug kinds, and the profile counts include the 53 pens and mugs with photos.
+- **Component** (`shell/pens-mugs-view.test.tsx`, 6):
+  - only the shown side's photo loads, and there is no colour choice;
+  - the Preview draws the pen frame and the mug halves at the original boxes;
+  - unrecovered photos and real rights stay flat with no request;
+  - no undo step, layer or save.
+- **Browser** (`e2e/studio-penmug.spec.ts`; stand-in pen and mug photos in `e2e/product-fixtures.ts`):
+  - **A · Pen pixels:** photo and corner mark; artwork exactly in the 520 × 104 box, nothing outside. Then add, move, resize, rotate and undo, with the photo unmoved.
+  - **B · Pen front and back:** the back photo; editing the back leaves the front unchanged.
+  - **C · D · Mug pixels:** the front's left half with nothing past x 724; the back's right half drawn from x 176; one paired photo loaded once.
+  - **E · Preview:** the same crop, place and box as the editor, front and back.
+  - **F · Rights:** real pens and mugs, and unrecovered ones, are flat and never requested.
+  - **G · Saving:** autosave, reload, nothing about the view saved.
+  - **H · Proof:** identical flat and on the product, for a pen and a mug.
+  - Axe on the canvas and the Preview; widths 1440 to 360 px for a pen and a mug; tablet touch; phone.
+- **Manual smoke test** (real photos marked cleared in a local browser session only, never committed): gold click and fountain pens front, highlighter back; custom black mug front, back and Preview; personalised mug on a phone.
+
+**Results:** lint and typecheck clean; 742 unit and component tests passed (66 files); 367 browser tests passed, 0 failed (373 skipped, each because it's for a different device layout); production build passes.
+
+**Test stability:**
+- **Load timeouts:** with four parallel workers, each of three full runs lost one different heavy Phase 3 Studio test to a 30 s timeout (a tablet proof test, a phone Preview test, a templates test). Each takes about 9 s alone and passes when repeated. The browser suite now uses three workers locally (`playwright.config.ts`; CI keeps its default): the full run then passes with no failures, in the same time.
+- **Phone Preview race:** that test (M14, test 36) also polled the drawing before the Preview's separately loaded chunk had mounted. It now waits for the stage, as the spec's own `openPreview()` does.
+
+**Source gaps:**
+- 10 pen families, not 9; the paper family's photos are missing.
+- Only 5 of the 9 mug photos are recovered.
+- Pen and mug recolouring needs the original's part shapes, so it is deferred.
+- Mug cut-outs are not used.
+
+**Not in M4:** pen and mug colours, drinkware colour, apparel, polos, bags, signs, gifts, perspective, umbrella panels, cylinder warping and 3D; the options and price panel.
+
+**Phase 4 status:** M1–M4 complete. M5 has not started.

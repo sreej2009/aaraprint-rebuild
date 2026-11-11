@@ -83,6 +83,18 @@ export interface StudioSide {
   placement?: StudioPlacement | null;
   /** The colour this side's photo was taken in, e.g. "Black" (products with colours, M3). */
   photoColour?: string | null;
+  /**
+   * Pens and mugs (M4): the frame the placement is measured in, and where the photo — or a crop
+   * of it, in photo px — is drawn inside it. Without one, the frame is the photo itself (M1).
+   */
+  photoFrame?: StudioPhotoFrame | null;
+}
+
+export interface StudioPhotoFrame {
+  width: number;
+  height: number;
+  crop: { x: number; y: number; width: number; height: number } | null;
+  at: { x: number; y: number; width: number; height: number };
 }
 
 /** A product colour the on-product view can show (Phase 4 M3): one of the product's own colour options. */
@@ -95,7 +107,7 @@ export interface StudioProductColour {
 }
 
 /** Products whose Preview can show the design on a product photo (Phase 4 M1). */
-export type ProductViewKind = 'umbrella' | 'rainwear' | 'drinkware-wrap';
+export type ProductViewKind = 'umbrella' | 'rainwear' | 'drinkware-wrap' | 'pen' | 'mug';
 
 export interface StudioModel3d {
   ref: string;

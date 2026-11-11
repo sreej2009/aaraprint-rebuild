@@ -52,13 +52,13 @@ describe('the extracted placements', () => {
 });
 
 describe('which products have an on-product view', () => {
-  it('umbrellas (15), rainwear (20) and wrap-printed drinkware (49) only', () => {
+  it('umbrellas (15), rainwear (20), wrap-printed drinkware (49), and since M4 pens (49) and mugs (9) only', () => {
     const count = (kind: string) => all.filter((p) => p.productView === kind).length;
-    expect([count('umbrella'), count('rainwear'), count('drinkware-wrap')]).toEqual([15, 20, 49]);
+    expect([count('umbrella'), count('rainwear'), count('drinkware-wrap'), count('pen'), count('mug')]).toEqual([15, 20, 49, 49, 9]);
     for (const p of all.filter(hasProductView)) {
       expect(p.productView === 'drinkware-wrap' ? p.family === 'drinkware' && p.mode === 'wrap' : p.family === p.productView).toBe(true);
     }
-    // Flat drinkware, pens, mugs, apparel, bags, signs and gifts carry nothing new.
+    // Flat drinkware, apparel, bags, signs and gifts (the wooden gift pen too) carry nothing new.
     for (const p of all.filter((p) => !hasProductView(p))) {
       expect(p.sides.every((s) => !('placement' in s))).toBe(true);
     }
@@ -72,7 +72,8 @@ describe('which products have an on-product view', () => {
       const box = set.entries[ref.slice(set.folder.length, -set.extension.length)]!;
       return { centerX: box[0], centerY: box[1], maxWidth: box[2], maxHeight: box[3] };
     };
-    const sides = all.filter(hasProductView).flatMap((p) => p.sides);
+    // M1's photo sets (pens and mugs use their own frames: see pens-mugs.test.ts).
+    const sides = all.filter((p) => hasProductView(p) && p.productView !== 'pen' && p.productView !== 'mug').flatMap((p) => p.sides);
     for (const side of sides) expect(side.placement).toEqual(expected(side.mockup?.ref));
     expect(sides.filter((s) => s.placement).length).toBe(83 * 2);
   });
@@ -137,6 +138,7 @@ describe('the rights gate and fallbacks', () => {
         url: '/media/studio-fixtures/front.png',
         photo: { width: 1122, height: 1402 },
         placement: { centerX: 563, centerY: 374, maxWidth: 170, maxHeight: 227 },
+        draw: { crop: null, at: { x: 0, y: 0, width: 1122, height: 1402 } },
         // The real fabric mask's rights are unconfirmed: never used (M3).
         mask: null,
         photoColour: 'Black',

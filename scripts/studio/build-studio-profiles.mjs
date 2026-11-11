@@ -8,7 +8,8 @@
  *   src/data/generated/studio/product-view-placements.json
  *                                                  where artwork sits on each mockup photo
  *                                                  (scripts/studio/extract-product-views.mjs), and the
- *                                                  umbrella and rainwear colour palette and photo colours
+ *                                                  umbrella and rainwear colour palette and photo colours,
+ *                                                  and the pen and mug photo maps (M4)
  *
  * Writes:
  *   public/api/v1/studio/<slug>.json               Studio profile (mock API, like the catalogue)
@@ -85,6 +86,10 @@ async function buildProfile(product, missing, placements) {
   const photoColours = colours ? placements.umbrellaRainwearColours.photoColours[product.slug] : null;
   const sides = [];
   for (const [index, id] of ['front', 'back'].entries()) {
+    if (family === 'pen' || family === 'mug') {
+      sides.push({ id, label: labels[id], ...(await framedSide(family, product.slug, id, placements)) });
+      continue;
+    }
     const ref = print.mockups?.[id] ?? fallback?.[id] ?? null;
     const mockup = await mockupAsset(ref, missing, product.slug);
     // Only products with an on-product preview carry placements (others stay as in Phase 3); only
@@ -176,6 +181,59 @@ function productColoursFor(product, register) {
   return { options, defaultId: defaultOption.id };
 }
 
+/**
+ * A pen or mug side (Phase 4 M4), from the original's photo maps:
+ *   pens — the family's front or back photo, filling a 2000 × 700 frame; the print box is the same
+ *          for every pen (centre 1160, 350; at most 700 × 104 frame px);
+ *   mugs — one paired photo holding both sides: the front is its left half drawn at x 0 of a
+ *          900 × 1086 frame, the back its right half drawn 176 px in; each mug has its own box.
+ * Sides whose photo isn't in the recovered folders (the paper pen; four mugs) get no photo, and so
+ * stay flat. No photo, frame or box is ever guessed.
+ */
+async function framedSide(family, slug, sideId, placements) {
+  const none = { mockup: null, placement: null, photoFrame: null };
+  let ref;
+  let box;
+  let frame;
+  let crop = null;
+  let at;
+  if (family === 'pen') {
+    const pen = placements.pens.products[slug];
+    if (!pen) return none;
+    const photos = placements.pens.families[pen.family];
+    ref = `products/pens-2d/${sideId === 'back' ? photos.back : photos.front}`;
+    frame = placements.pens.frame;
+    box = placements.pens.box;
+    at = { x: 0, y: 0, width: frame.width, height: frame.height };
+  } else {
+    const mug = placements.mugs.products[slug];
+    if (!mug) return none;
+    const { sideWidth, backOffsetX } = placements.mugs;
+    ref = `products/mugs-2d/${mug.photo}`;
+    frame = placements.mugs.frame;
+    box = mug.box;
+    crop = { x: sideId === 'back' ? sideWidth : 0, y: 0, width: sideWidth, height: null };
+    at = { x: sideId === 'back' ? backOffsetX : 0, y: 0, width: sideWidth, height: frame.height };
+  }
+  const info = await imageInfo(ref);
+  if (!info) {
+    unavailablePhotos.add(`${slug}: ${ref}`);
+    return none;
+  }
+  if (crop) crop = { ...crop, height: info.height };
+  const shown = crop ?? { width: info.width, height: info.height };
+  const fits = (crop ? crop.x + crop.width <= info.width : true) && Math.abs(shown.width / shown.height / (at.width / at.height) - 1) < 0.01;
+  const [centerX, centerY, maxWidth, maxHeight] = box;
+  return {
+    mockup: { ref, format: info.format, width: info.width, height: info.height, mask: null, rights: ASSET_RIGHTS.mockup.status },
+    placement: fits ? { centerX, centerY, maxWidth, maxHeight } : null,
+    photoFrame: fits ? { width: frame.width, height: frame.height, crop, at } : null,
+  };
+}
+
+/** Pen and mug photos the original refers to that aren't in the recovered folders (reported, not errors). */
+const unavailablePhotos = new Set();
+
 async function modelAsset(product, family, missing) {
   const configured = product.print.model3d;
   const ref = configured?.src ?? (family === 'polo' ? POLO_MODEL : null);
@@ -249,6 +307,7 @@ function buildMeta(profiles, skipped, missing) {
       withPlacements: profiles.filter((p) => p.productView && p.sides.every((s) => s.placement)).length,
       withoutPlacements: profiles.filter((p) => p.productView && !p.sides.every((s) => s.placement)).map((p) => p.slug),
       withColours: profiles.filter((p) => p.productColours).length,
+      unavailablePhotos: [...unavailablePhotos].sort(),
       withoutColours: profiles.filter((p) => hasProductColours(p.family) && !p.productColours).map((p) => p.slug),
     },
     sizeAudit: {

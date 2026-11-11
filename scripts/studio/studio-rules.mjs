@@ -35,11 +35,11 @@ export function modeFor(product) {
 }
 
 /**
- * Products that get the "On the product" preview (Phase 4 M1): umbrellas, rainwear and wrap-printed
- * drinkware. Flat-printed drinkware, pens, mugs, apparel, bags, signs and gifts don't, yet.
+ * Products that get the "On the product" view: umbrellas, rainwear and wrap-printed drinkware
+ * (Phase 4 M1), pens and mugs (M4). Flat-printed drinkware, apparel, bags, signs and gifts don't, yet.
  */
 export function productViewFor(family, mode) {
-  if (family === 'umbrella' || family === 'rainwear') return family;
+  if (family === 'umbrella' || family === 'rainwear' || family === 'pen' || family === 'mug') return family;
   if (family === 'drinkware' && mode === 'wrap') return 'drinkware-wrap';
   return null;
 }

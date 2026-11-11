@@ -291,7 +291,18 @@ function PreviewBody({ document, surface, profile, view, onView, onSide, onRetry
                     ) : (
                       photo &&
                       productView &&
-                      placed && <ProductCanvas surface={surface} photo={photo} photoSize={productView.photo} placed={placed} width={available.width} height={available.height} viewport={viewport} />
+                      placed && (
+                        <ProductCanvas
+                          surface={surface}
+                          photo={photo}
+                          photoSize={productView.photo}
+                          draw={productView.draw}
+                          placed={placed}
+                          width={available.width}
+                          height={available.height}
+                          viewport={viewport}
+                        />
+                      )
                     )}
                   </div>
                 </Suspense>

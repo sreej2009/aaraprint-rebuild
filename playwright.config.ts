@@ -15,6 +15,10 @@ export default defineConfig({
   testDir: './e2e',
   testIgnore: captureScreens ? [] : ['**/visual-review.spec.ts', '**/studio-visual.spec.ts'],
   fullyParallel: true,
+  // Three workers locally (Phase 4 M4): with four, a different heavy Studio test timed out in each
+  // of three full runs (each takes about 9 s alone); with three the whole suite passes in the same
+  // time. CI keeps Playwright's default.
+  workers: process.env.CI ? undefined : 3,
   forbidOnly: Boolean(process.env.CI),
   retries: process.env.CI ? 1 : 0,
   reporter: process.env.CI ? 'github' : 'list',

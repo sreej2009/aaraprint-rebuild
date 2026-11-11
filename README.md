@@ -64,7 +64,7 @@ scripts/
   catalogue/product-types.mjs           product-type rules used for the "Type" filter
   content/import-content.mjs            converts the original content/policy pages into structured blocks
   studio/build-studio-profiles.mjs      builds a Design Studio profile per product (print area, trim, sides, mockups, rights, product-view placements)
-  studio/extract-product-views.mjs      copies the original's on-product placements (umbrella, rainwear, drinkware) and umbrella/rainwear colours into data
+  studio/extract-product-views.mjs      copies the original's on-product placements (umbrella, rainwear, drinkware, pens, mugs) and umbrella/rainwear colours into data
   recovery/recover-additional-assets.mjs downloads assets missing from ../recovered into ../recovered-additional
   serve-build.mjs                       production preview server (static-hosting rules)
 tooling/local-media.ts     serves /media/* from the recovered folders in dev/preview
@@ -111,7 +111,7 @@ e2e/                       Playwright specs (routing, navigation, keyboard, axe 
 | 1 | Foundations — tokens, components, shell, routing + pre-rendering, data layer, tests, asset recovery | ✅ Done |
 | 2 | Catalogue, product pages and content pages | ✅ Done |
 | 3 | Design Studio core — all customisable products, flat artwork view, desktop/tablet/phone | ✅ Done (plan §18.19) |
-| 4 | Studio advanced (snapping, QR, preflight, on-product apparel & wrap modes, options panel) | In progress: M1 product view, M2 on-product workspace and M3 product colour done (plan §19) |
+| 4 | Studio advanced (snapping, QR, preflight, on-product apparel & wrap modes, options panel) | In progress: M1 product view, M2 on-product workspace, M3 product colour, M4 pens and mugs done (plan §19) |
 | 5 | 3D previews and remaining product modes | — |
 | 6 | Cart, checkout (pay on delivery), accounts, tracking — needs backend | — |
 | 7 | Polish, performance, SEO and launch | — |

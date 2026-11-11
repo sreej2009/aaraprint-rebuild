@@ -17,9 +17,8 @@ export const PHOTO_RGB = [200, 214, 192];
 export const MARK_RGB = [32, 32, 32];
 export const INDIGO = [0x2f, 0x2a, 0x7a];
 
-/** An RGB PNG of the photo's size, pixel by pixel. */
-function png(pixel: (x: number, y: number) => number[]): Buffer {
-  const { width, height } = PHOTO;
+/** An RGB PNG (the umbrella photo's size unless given), pixel by pixel. */
+function png(pixel: (x: number, y: number) => number[], { width, height } = PHOTO): Buffer {
   const raw = Buffer.alloc((width * 3 + 1) * height);
   for (let y = 0; y < height; y++) {
     const row = y * (width * 3 + 1);
@@ -54,6 +53,21 @@ export const SHADES = { shadow: [70, 70, 70], mid: [140, 140, 140], highlight: [
 const inFabric = (x: number, y: number) => x >= FABRIC.x0 && x <= FABRIC.x1 && y >= FABRIC.y0 && y <= FABRIC.y1;
 export const shadeAt = (x: number) => (x < 420 ? SHADES.shadow : x < 700 ? SHADES.mid : SHADES.highlight);
 const FABRIC_PNG = png((x, y) => (isMark(x, y) ? MARK_RGB : inFabric(x, y) ? shadeAt(x) : PHOTO_RGB));
+/**
+ * Pens and mugs (M4). A pen photo the real photos' size (2120 × 742; drawn into the 2000 × 700
+ * frame): one colour on the front, another on the back, with the corner mark. A paired mug photo
+ * (1448 × 1086): the front half (left, x < 724) and the back half (right) in different colours,
+ * each with its own corner mark.
+ */
+export const PEN_PHOTO = { width: 2120, height: 742 };
+export const MUG_PHOTO = { width: 1448, height: 1086 };
+export const PEN_RGB = { front: [214, 196, 170], back: [170, 196, 214] };
+export const MUG_RGB = { front: [236, 220, 200], back: [200, 220, 236] };
+const PEN_PNG = {
+  front: png((x, y) => (isMark(x, y) ? MARK_RGB : PEN_RGB.front), PEN_PHOTO),
+  back: png((x, y) => (isMark(x, y) ? MARK_RGB : PEN_RGB.back), PEN_PHOTO),
+};
+const MUG_PNG = png((x, y) => (isMark(x % 724, y) ? MARK_RGB : x < 724 ? MUG_RGB.front : MUG_RGB.back), MUG_PHOTO);
 const MASK_PNG = { front: png((x, y) => (inFabric(x, y) ? [255, 255, 255] : [0, 0, 0])), back: png((x, y) => (inFabric(x, y) && x <= FABRIC.backX1 ? [255, 255, 255] : [0, 0, 0])) };
 
 /**
@@ -61,13 +75,15 @@ const MASK_PNG = { front: png((x, y) => (inFabric(x, y) ? [255, 255, 255] : [0, 
  * `photo: 'fabric'` serves the fabric photo; `mask: 'cleared'` adds cleared stand-in masks (front and
  * back differ). Without it the real masks stay in the profile, with their real (unconfirmed) rights.
  */
-export async function clearedStandIn(page: Page, slug = 'umbrella-golf', { photo = 'ok' as 'ok' | 'fabric' | 'missing', mask = 'real' as 'real' | 'cleared' } = {}) {
+export async function clearedStandIn(page: Page, slug = 'umbrella-golf', { photo = 'ok' as 'ok' | 'fabric' | 'pen' | 'mug' | 'missing', mask = 'real' as 'real' | 'cleared' } = {}) {
   await page.route(`**/api/v1/studio/${slug}.json`, async (route: Route) => {
     const response = await route.fetch();
     const profile = await response.json();
     for (const side of profile.sides) {
       if (!side.mockup) continue;
-      side.mockup = { ...side.mockup, ref: `studio-fixtures/${slug}-${side.id}.png`, format: 'png', rights: 'cleared' };
+      // A mug's sides share one paired photo, as the real ones do.
+      const ref = photo === 'mug' ? `studio-fixtures/${slug}-paired.png` : `studio-fixtures/${slug}-${side.id}.png`;
+      side.mockup = { ...side.mockup, ref, format: 'png', rights: 'cleared' };
       if (mask === 'cleared') side.mockup.mask = { ref: `studio-fixtures/${slug}-${side.id}-mask.png`, width: PHOTO.width, height: PHOTO.height, rights: 'cleared' };
     }
     await route.fulfill({ response, json: profile });
@@ -77,6 +93,8 @@ export async function clearedStandIn(page: Page, slug = 'umbrella-golf', { photo
     const masked = /-(front|back)-mask\.png$/.exec(name);
     if (masked) return route.fulfill({ status: 200, contentType: 'image/png', body: MASK_PNG[masked[1] as 'front' | 'back'] });
     if (photo === 'missing') return route.fulfill({ status: 404, body: '' });
+    if (photo === 'pen') return route.fulfill({ status: 200, contentType: 'image/png', body: name.endsWith('-back.png') ? PEN_PNG.back : PEN_PNG.front });
+    if (photo === 'mug') return route.fulfill({ status: 200, contentType: 'image/png', body: MUG_PNG });
     return route.fulfill({ status: 200, contentType: 'image/png', body: photo === 'fabric' ? FABRIC_PNG : PHOTO_PNG });
   });
 }

@@ -28,11 +28,12 @@ export interface CanvasStageProps {
   /** Called with the Konva stage once mounted (exports, tests); null on unmount. */
   onStage?: (stage: Konva.Stage | null) => void;
   /**
-   * Editing on the product (Phase 4 M2): the product photo, drawn behind the artwork at `bounds`
+   * Editing on the product (Phase 4 M2): the product photo, drawn behind the artwork at `rect`
+   * (design px; for mugs only `crop`, the side's half of the paired photo — M4), inside `bounds`
    * (the whole photo in design px, so the print area lands on the original's placement). The photo
    * is null while it loads. A backdrop only: not an element, not selectable, never exported.
    */
-  product?: { photo: HTMLImageElement | HTMLCanvasElement | null; bounds: Rect } | null;
+  product?: { photo: HTMLImageElement | HTMLCanvasElement | null; bounds: Rect; rect: Rect; crop: Rect | null } | null;
 }
 
 /**
@@ -59,7 +60,7 @@ export default function CanvasStage({ surface, width, height, viewport, showGuid
     <Stage ref={stageRef} width={width} height={height} scaleX={s} scaleY={s} x={viewport.x} y={viewport.y} listening={false} className="studio-stage">
       <Layer name={WORKSPACE_LAYER} listening={false}>
         {product ? (
-          product.photo && <KonvaImage name="product-mockup" image={product.photo} {...product.bounds} listening={false} perfectDrawEnabled={false} />
+          product.photo && <KonvaImage name="product-mockup" image={product.photo} {...product.rect} crop={product.crop ?? undefined} listening={false} perfectDrawEnabled={false} />
         ) : (
           <Shape
             sceneFunc={(ctx, shape) => {

@@ -82,7 +82,7 @@ describe('Studio profiles', () => {
 
   it('find every referenced mockup, mask and model in the recovered folders', () => {
     expect(meta.missing).toEqual([]);
-    expect(meta.withMockups).toBe(320);
+    expect(meta.withMockups).toBe(320 + 48 + 5); // + pens and mugs with photos (Phase 4 M4)
     const polo = profile('apparel-polo-classic').sides[0]?.mockup;
     expect(polo).toMatchObject({ ref: 'products/polo/front.png', width: 1254, height: 1254 });
     const umbrella = profile('umbrella-golf').sides[0]?.mockup;
@@ -91,7 +91,7 @@ describe('Studio profiles', () => {
 
   it('mark asset rights so unconfirmed assets are never used', () => {
     const mockupRights = [...profiles.values()].flatMap((p) => p.sides.flatMap((s) => (s.mockup ? [s.mockup.rights] : [])));
-    expect(mockupRights).toHaveLength(640);
+    expect(mockupRights).toHaveLength(640 + (48 + 5) * 2);
     expect(new Set(mockupRights)).toEqual(new Set(['unconfirmed']));
     const poloModel = profile('apparel-polo-classic').model3d;
     expect(poloModel).toMatchObject({ ref: 'models/polo-shirt.glb', rights: 'attribution-required' });

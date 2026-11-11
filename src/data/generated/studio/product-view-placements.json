@@ -376,5 +376,796 @@
       "umbrella-two-fold-bulk": ["Black", "Navy"],
       "umbrella-two-fold-sun": ["Yellow", "Yellow"]
     }
+  },
+  "pens": {
+    "source": "_next/static/chunks/3zkk7bvc_w-nw.js",
+    "note": "Print box: the artwork is fitted inside [maxWidth × maxHeight] centred on (centerX, centerY), in frame px; the photo fills the frame. Part colours are recorded for reference; pen recolouring is not used (it needs part masks).",
+    "frame": {
+      "width": 2000,
+      "height": 700
+    },
+    "box": [1160, 350, 700, 104],
+    "families": {
+      "classic": {
+        "front": "classic-front.png",
+        "back": "classic-back.png",
+        "sourceColours": {
+          "body": "#ffffff",
+          "clip": "#ffffff",
+          "tip": "#a0acb6",
+          "button1": "#ffffff",
+          "button2": "#ffffff",
+          "button3": "#ffffff",
+          "button4": "#ffffff"
+        }
+      },
+      "fountain": {
+        "front": "fountain-front.png",
+        "back": "fountain-back.png",
+        "sourceColours": {
+          "body": "#ffffff",
+          "clip": "#a0acb6",
+          "tip": "#a0acb6",
+          "button1": "#a0acb6",
+          "button2": "#a0acb6",
+          "button3": "#a0acb6",
+          "button4": "#a0acb6"
+        }
+      },
+      "gel": {
+        "front": "gel-front.png",
+        "back": "gel-back.png",
+        "sourceColours": {
+          "body": "#ffffff",
+          "clip": "#ffffff",
+          "tip": "#a0acb6",
+          "button1": "#d8dde3",
+          "button2": "#d8dde3",
+          "button3": "#d8dde3",
+          "button4": "#d8dde3"
+        }
+      },
+      "highlighter": {
+        "front": "highlighter-front.png",
+        "back": "highlighter-back.png",
+        "sourceColours": {
+          "body": "#ffffff",
+          "clip": "#ffffff",
+          "tip": "#f4df14",
+          "button1": "#ffffff",
+          "button2": "#ffffff",
+          "button3": "#ffffff",
+          "button4": "#ffffff"
+        }
+      },
+      "metal": {
+        "front": "metal-front.png",
+        "back": "metal-back.png",
+        "sourceColours": {
+          "body": "#ffffff",
+          "clip": "#a0acb6",
+          "tip": "#a0acb6",
+          "button1": "#a0acb6",
+          "button2": "#a0acb6",
+          "button3": "#a0acb6",
+          "button4": "#a0acb6"
+        }
+      },
+      "multicolor": {
+        "front": "multicolor-front.png",
+        "back": "multicolor-back.png",
+        "sourceColours": {
+          "body": "#ffffff",
+          "clip": "#a0acb6",
+          "tip": "#a0acb6",
+          "button1": "#e3444b",
+          "button2": "#2476d7",
+          "button3": "#292f39",
+          "button4": "#26a36a"
+        }
+      },
+      "paper": {
+        "front": "paper-front-v2.png",
+        "back": "paper-back-v2.png",
+        "sourceColours": {
+          "body": "#c8a77a",
+          "clip": "#292929",
+          "tip": "#292929",
+          "button1": "#292929",
+          "button2": "#292929",
+          "button3": "#292929",
+          "button4": "#292929"
+        }
+      },
+      "roller": {
+        "front": "roller-front.png",
+        "back": "roller-back.png",
+        "sourceColours": {
+          "body": "#ffffff",
+          "clip": "#a0acb6",
+          "tip": "#a0acb6",
+          "button1": "#ffffff",
+          "button2": "#ffffff",
+          "button3": "#ffffff",
+          "button4": "#ffffff"
+        }
+      },
+      "stylus": {
+        "front": "stylus-front.png",
+        "back": "stylus-back.png",
+        "sourceColours": {
+          "body": "#ffffff",
+          "clip": "#a0acb6",
+          "tip": "#a0acb6",
+          "button1": "#242424",
+          "button2": "#242424",
+          "button3": "#242424",
+          "button4": "#242424"
+        }
+      },
+      "wheat": {
+        "front": "wheat-front.png",
+        "back": "wheat-back.png",
+        "sourceColours": {
+          "body": "#e4d0aa",
+          "clip": "#e4d0aa",
+          "tip": "#e4d0aa",
+          "button1": "#e4d0aa",
+          "button2": "#e4d0aa",
+          "button3": "#e4d0aa",
+          "button4": "#e4d0aa"
+        }
+      }
+    },
+    "products": {
+      "gift-pen-wooden-ball": {
+        "family": "metal",
+        "colours": {
+          "body": "#a9713c",
+          "clip": "#1f1f1f",
+          "tip": "#1f1f1f",
+          "button1": "#1f1f1f",
+          "button2": "#a0acb6",
+          "button3": "#a0acb6",
+          "button4": "#a0acb6"
+        }
+      },
+      "pen-ballpoint-classic": {
+        "family": "classic",
+        "colours": {
+          "body": "#ffffff",
+          "clip": "#ffffff",
+          "tip": "#a0acb6",
+          "button1": "#ffffff",
+          "button2": "#ffffff",
+          "button3": "#ffffff",
+          "button4": "#ffffff"
+        }
+      },
+      "pen-black-matte-ball": {
+        "family": "metal",
+        "colours": {
+          "body": "#242424",
+          "clip": "#52525b",
+          "tip": "#52525b",
+          "button1": "#52525b",
+          "button2": "#a0acb6",
+          "button3": "#a0acb6",
+          "button4": "#a0acb6"
+        }
+      },
+      "pen-black-matte-roller": {
+        "family": "roller",
+        "colours": {
+          "body": "#242424",
+          "clip": "#3f3f46",
+          "tip": "#3f3f46",
+          "button1": "#242424",
+          "button2": "#ffffff",
+          "button3": "#ffffff",
+          "button4": "#ffffff"
+        }
+      },
+      "pen-bulk-ball": {
+        "family": "classic",
+        "colours": {
+          "body": "#f4f7fb",
+          "clip": "#2563eb",
+          "tip": "#a0acb6",
+          "button1": "#2563eb",
+          "button2": "#ffffff",
+          "button3": "#ffffff",
+          "button4": "#ffffff"
+        }
+      },
+      "pen-custom-full-white": {
+        "family": "classic",
+        "colours": {
+          "body": "#ffffff",
+          "clip": "#ffffff",
+          "tip": "#a0acb6",
+          "button1": "#ffffff",
+          "button2": "#ffffff",
+          "button3": "#ffffff",
+          "button4": "#ffffff"
+        }
+      },
+      "pen-customized-basic": {
+        "family": "classic",
+        "colours": {
+          "body": "#ffffff",
+          "clip": "#ea580c",
+          "tip": "#a0acb6",
+          "button1": "#ea580c",
+          "button2": "#ffffff",
+          "button3": "#ffffff",
+          "button4": "#ffffff"
+        }
+      },
+      "pen-executive-metal-ball": {
+        "family": "metal",
+        "colours": {
+          "body": "#172554",
+          "clip": "#a0acb6",
+          "tip": "#a0acb6",
+          "button1": "#a0acb6",
+          "button2": "#a0acb6",
+          "button3": "#a0acb6",
+          "button4": "#a0acb6"
+        }
+      },
+      "pen-executive-roller": {
+        "family": "roller",
+        "colours": {
+          "body": "#172554",
+          "clip": "#a0acb6",
+          "tip": "#a0acb6",
+          "button1": "#172554",
+          "button2": "#ffffff",
+          "button3": "#ffffff",
+          "button4": "#ffffff"
+        }
+      },
+      "pen-fountain-gift-set": {
+        "family": "fountain",
+        "colours": {
+          "body": "#242424",
+          "clip": "#c49a45",
+          "tip": "#c49a45",
+          "button1": "#c49a45",
+          "button2": "#a0acb6",
+          "button3": "#a0acb6",
+          "button4": "#a0acb6"
+        }
+      },
+      "pen-gel-ink": {
+        "family": "gel",
+        "colours": {
+          "body": "#ffffff",
+          "clip": "#2563eb",
+          "tip": "#a0acb6",
+          "button1": "#d8dde3",
+          "button2": "#d8dde3",
+          "button3": "#d8dde3",
+          "button4": "#d8dde3"
+        }
+      },
+      "pen-getz-cap-type": {
+        "family": "roller",
+        "colours": {
+          "body": "#ffffff",
+          "clip": "#dc2626",
+          "tip": "#a0acb6",
+          "button1": "#dc2626",
+          "button2": "#ffffff",
+          "button3": "#ffffff",
+          "button4": "#ffffff"
+        }
+      },
+      "pen-getz-opaque-push-type": {
+        "family": "classic",
+        "colours": {
+          "body": "#ffffff",
+          "clip": "#2563eb",
+          "tip": "#a0acb6",
+          "button1": "#2563eb",
+          "button2": "#ffffff",
+          "button3": "#ffffff",
+          "button4": "#ffffff"
+        }
+      },
+      "pen-gold-click": {
+        "family": "classic",
+        "colours": {
+          "body": "#fff7e6",
+          "clip": "#c49a45",
+          "tip": "#c49a45",
+          "button1": "#c49a45",
+          "button2": "#ffffff",
+          "button3": "#ffffff",
+          "button4": "#ffffff"
+        }
+      },
+      "pen-grand-opaque-ballpoint": {
+        "family": "classic",
+        "colours": {
+          "body": "#f8fafc",
+          "clip": "#0f766e",
+          "tip": "#a0acb6",
+          "button1": "#0f766e",
+          "button2": "#ffffff",
+          "button3": "#ffffff",
+          "button4": "#ffffff"
+        }
+      },
+      "pen-green-silver-ball": {
+        "family": "classic",
+        "colours": {
+          "body": "#23734d",
+          "clip": "#a0acb6",
+          "tip": "#a0acb6",
+          "button1": "#a0acb6",
+          "button2": "#ffffff",
+          "button3": "#ffffff",
+          "button4": "#ffffff"
+        }
+      },
+      "pen-highlighter-set": {
+        "family": "highlighter",
+        "colours": {
+          "body": "#ffffff",
+          "clip": "#ffffff",
+          "tip": "#f4df14",
+          "button1": "#ffffff",
+          "button2": "#ffffff",
+          "button3": "#ffffff",
+          "button4": "#ffffff"
+        }
+      },
+      "pen-marble-design-metal-ball": {
+        "family": "metal",
+        "colours": {
+          "body": "#e7e5e4",
+          "clip": "#c49a45",
+          "tip": "#c49a45",
+          "button1": "#c49a45",
+          "button2": "#a0acb6",
+          "button3": "#a0acb6",
+          "button4": "#a0acb6"
+        }
+      },
+      "pen-metal-twist": {
+        "family": "metal",
+        "colours": {
+          "body": "#c2c7cc",
+          "clip": "#a0acb6",
+          "tip": "#a0acb6",
+          "button1": "#a0acb6",
+          "button2": "#a0acb6",
+          "button3": "#a0acb6",
+          "button4": "#a0acb6"
+        }
+      },
+      "pen-multi-function": {
+        "family": "multicolor",
+        "colours": {
+          "body": "#ffffff",
+          "clip": "#a0acb6",
+          "tip": "#a0acb6",
+          "button1": "#e3444b",
+          "button2": "#2476d7",
+          "button3": "#292f39",
+          "button4": "#26a36a"
+        }
+      },
+      "pen-multicolor-ball": {
+        "family": "multicolor",
+        "colours": {
+          "body": "#ffffff",
+          "clip": "#a0acb6",
+          "tip": "#a0acb6",
+          "button1": "#e3444b",
+          "button2": "#2476d7",
+          "button3": "#292f39",
+          "button4": "#26a36a"
+        }
+      },
+      "pen-new-cap-plastic-ball": {
+        "family": "roller",
+        "colours": {
+          "body": "#ffffff",
+          "clip": "#2563eb",
+          "tip": "#a0acb6",
+          "button1": "#2563eb",
+          "button2": "#ffffff",
+          "button3": "#ffffff",
+          "button4": "#ffffff"
+        }
+      },
+      "pen-parker-aster-deluxe": {
+        "family": "metal",
+        "colours": {
+          "body": "#172554",
+          "clip": "#a0acb6",
+          "tip": "#a0acb6",
+          "button1": "#a0acb6",
+          "button2": "#a0acb6",
+          "button3": "#a0acb6",
+          "button4": "#a0acb6"
+        }
+      },
+      "pen-parker-odyssey-chrome": {
+        "family": "metal",
+        "colours": {
+          "body": "#c2c7cc",
+          "clip": "#d4d7da",
+          "tip": "#d4d7da",
+          "button1": "#d4d7da",
+          "button2": "#a0acb6",
+          "button3": "#a0acb6",
+          "button4": "#a0acb6"
+        }
+      },
+      "pen-parker-odyssey-gold": {
+        "family": "metal",
+        "colours": {
+          "body": "#242424",
+          "clip": "#c49a45",
+          "tip": "#c49a45",
+          "button1": "#c49a45",
+          "button2": "#a0acb6",
+          "button3": "#a0acb6",
+          "button4": "#a0acb6"
+        }
+      },
+      "pen-personalised-basic": {
+        "family": "classic",
+        "colours": {
+          "body": "#ffffff",
+          "clip": "#9333ea",
+          "tip": "#a0acb6",
+          "button1": "#9333ea",
+          "button2": "#ffffff",
+          "button3": "#ffffff",
+          "button4": "#ffffff"
+        }
+      },
+      "pen-plastic-basic": {
+        "family": "classic",
+        "colours": {
+          "body": "#ffffff",
+          "clip": "#2563eb",
+          "tip": "#a0acb6",
+          "button1": "#2563eb",
+          "button2": "#ffffff",
+          "button3": "#ffffff",
+          "button4": "#ffffff"
+        }
+      },
+      "pen-premium-brass-golden": {
+        "family": "metal",
+        "colours": {
+          "body": "#242424",
+          "clip": "#c49a45",
+          "tip": "#c49a45",
+          "button1": "#c49a45",
+          "button2": "#a0acb6",
+          "button3": "#a0acb6",
+          "button4": "#a0acb6"
+        }
+      },
+      "pen-premium-brush-stone-black": {
+        "family": "metal",
+        "colours": {
+          "body": "#27272a",
+          "clip": "#52525b",
+          "tip": "#52525b",
+          "button1": "#52525b",
+          "button2": "#a0acb6",
+          "button3": "#a0acb6",
+          "button4": "#a0acb6"
+        }
+      },
+      "pen-premium-magnetic-roller": {
+        "family": "roller",
+        "colours": {
+          "body": "#111827",
+          "clip": "#c49a45",
+          "tip": "#c49a45",
+          "button1": "#111827",
+          "button2": "#ffffff",
+          "button3": "#ffffff",
+          "button4": "#ffffff"
+        }
+      },
+      "pen-premium-matte": {
+        "family": "metal",
+        "colours": {
+          "body": "#374151",
+          "clip": "#a0acb6",
+          "tip": "#a0acb6",
+          "button1": "#a0acb6",
+          "button2": "#a0acb6",
+          "button3": "#a0acb6",
+          "button4": "#a0acb6"
+        }
+      },
+      "pen-promotional-basic": {
+        "family": "classic",
+        "colours": {
+          "body": "#ffffff",
+          "clip": "#dc2626",
+          "tip": "#a0acb6",
+          "button1": "#dc2626",
+          "button2": "#ffffff",
+          "button3": "#ffffff",
+          "button4": "#ffffff"
+        }
+      },
+      "pen-recycled-paper": {
+        "family": "paper",
+        "colours": {
+          "body": "#c8a77a",
+          "clip": "#292929",
+          "tip": "#292929",
+          "button1": "#292929",
+          "button2": "#292929",
+          "button3": "#292929",
+          "button4": "#292929"
+        }
+      },
+      "pen-sleek-metal-ballpoint": {
+        "family": "metal",
+        "colours": {
+          "body": "#c2c7cc",
+          "clip": "#a0acb6",
+          "tip": "#a0acb6",
+          "button1": "#a0acb6",
+          "button2": "#a0acb6",
+          "button3": "#a0acb6",
+          "button4": "#a0acb6"
+        }
+      },
+      "pen-stylus-combo": {
+        "family": "stylus",
+        "colours": {
+          "body": "#ffffff",
+          "clip": "#a0acb6",
+          "tip": "#a0acb6",
+          "button1": "#242424",
+          "button2": "#242424",
+          "button3": "#242424",
+          "button4": "#242424"
+        }
+      },
+      "pen-submarine-artistic-round-ring": {
+        "family": "metal",
+        "colours": {
+          "body": "#581c87",
+          "clip": "#a0acb6",
+          "tip": "#a0acb6",
+          "button1": "#9333ea",
+          "button2": "#a0acb6",
+          "button3": "#a0acb6",
+          "button4": "#a0acb6"
+        }
+      },
+      "pen-submarine-fountain": {
+        "family": "fountain",
+        "colours": {
+          "body": "#242424",
+          "clip": "#c49a45",
+          "tip": "#c49a45",
+          "button1": "#c49a45",
+          "button2": "#a0acb6",
+          "button3": "#a0acb6",
+          "button4": "#a0acb6"
+        }
+      },
+      "pen-submarine-gold-plated-ball": {
+        "family": "metal",
+        "colours": {
+          "body": "#d3ad59",
+          "clip": "#c49a45",
+          "tip": "#c49a45",
+          "button1": "#c49a45",
+          "button2": "#a0acb6",
+          "button3": "#a0acb6",
+          "button4": "#a0acb6"
+        }
+      },
+      "pen-submarine-liberty-watermark": {
+        "family": "metal",
+        "colours": {
+          "body": "#f7f8fa",
+          "clip": "#a0acb6",
+          "tip": "#a0acb6",
+          "button1": "#1d4ed8",
+          "button2": "#a0acb6",
+          "button3": "#a0acb6",
+          "button4": "#a0acb6"
+        }
+      },
+      "pen-submarine-mini-rose-gold-tip": {
+        "family": "metal",
+        "colours": {
+          "body": "#f8e8e5",
+          "clip": "#c88678",
+          "tip": "#c88678",
+          "button1": "#c88678",
+          "button2": "#a0acb6",
+          "button3": "#a0acb6",
+          "button4": "#a0acb6"
+        }
+      },
+      "pen-submarine-roller-swarovski": {
+        "family": "roller",
+        "colours": {
+          "body": "#172554",
+          "clip": "#a0acb6",
+          "tip": "#a0acb6",
+          "button1": "#172554",
+          "button2": "#ffffff",
+          "button3": "#ffffff",
+          "button4": "#ffffff"
+        }
+      },
+      "pen-submarine-sleek-roller": {
+        "family": "roller",
+        "colours": {
+          "body": "#1f2937",
+          "clip": "#a0acb6",
+          "tip": "#a0acb6",
+          "button1": "#1f2937",
+          "button2": "#ffffff",
+          "button3": "#ffffff",
+          "button4": "#ffffff"
+        }
+      },
+      "pen-submarine-xylo-steel-roller": {
+        "family": "roller",
+        "colours": {
+          "body": "#b9c0c7",
+          "clip": "#a0acb6",
+          "tip": "#a0acb6",
+          "button1": "#b9c0c7",
+          "button2": "#ffffff",
+          "button3": "#ffffff",
+          "button4": "#ffffff"
+        }
+      },
+      "pen-swissbrand-eternia": {
+        "family": "metal",
+        "colours": {
+          "body": "#1e3a8a",
+          "clip": "#a0acb6",
+          "tip": "#a0acb6",
+          "button1": "#a0acb6",
+          "button2": "#a0acb6",
+          "button3": "#a0acb6",
+          "button4": "#a0acb6"
+        }
+      },
+      "pen-swissbrand-legacy": {
+        "family": "metal",
+        "colours": {
+          "body": "#7f1d3c",
+          "clip": "#c49a45",
+          "tip": "#c49a45",
+          "button1": "#c49a45",
+          "button2": "#a0acb6",
+          "button3": "#a0acb6",
+          "button4": "#a0acb6"
+        }
+      },
+      "pen-swissbrand-zenith": {
+        "family": "metal",
+        "colours": {
+          "body": "#242424",
+          "clip": "#a0acb6",
+          "tip": "#a0acb6",
+          "button1": "#a0acb6",
+          "button2": "#a0acb6",
+          "button3": "#a0acb6",
+          "button4": "#a0acb6"
+        }
+      },
+      "pen-triangle-wire-clip": {
+        "family": "classic",
+        "colours": {
+          "body": "#ffffff",
+          "clip": "#a0acb6",
+          "tip": "#a0acb6",
+          "button1": "#ffffff",
+          "button2": "#ffffff",
+          "button3": "#ffffff",
+          "button4": "#ffffff"
+        }
+      },
+      "pen-twist-plastic-ball": {
+        "family": "classic",
+        "colours": {
+          "body": "#ffffff",
+          "clip": "#334155",
+          "tip": "#a0acb6",
+          "button1": "#334155",
+          "button2": "#ffffff",
+          "button3": "#ffffff",
+          "button4": "#ffffff"
+        }
+      },
+      "pen-wheat-straw": {
+        "family": "wheat",
+        "colours": {
+          "body": "#e4d0aa",
+          "clip": "#e4d0aa",
+          "tip": "#e4d0aa",
+          "button1": "#e4d0aa",
+          "button2": "#e4d0aa",
+          "button3": "#e4d0aa",
+          "button4": "#e4d0aa"
+        }
+      },
+      "pen-white-opaque-assorted": {
+        "family": "classic",
+        "colours": {
+          "body": "#ffffff",
+          "clip": "#16a34a",
+          "tip": "#a0acb6",
+          "button1": "#16a34a",
+          "button2": "#ffffff",
+          "button3": "#ffffff",
+          "button4": "#ffffff"
+        }
+      }
+    }
+  },
+  "mugs": {
+    "source": "_next/static/chunks/3zkk7bvc_w-nw.js",
+    "note": "The paired photo holds both sides as halves of sideWidth px. Front: the left half drawn at x 0 of the frame; back: the right half drawn at x backOffsetX. Both sides use the same print box, centred at half the frame width. The original also cut the mug out with drawn shapes and recoloured its parts; neither is used.",
+    "frame": {
+      "width": 900,
+      "height": 1086
+    },
+    "sideWidth": 724,
+    "backOffsetX": 176,
+    "products": {
+      "gift-mug-custom-black": {
+        "photo": "custom-black.png",
+        "box": [450, 515, 390, 245]
+      },
+      "gift-mug-custom-decorative": {
+        "photo": "custom-decorative.png",
+        "box": [450, 505, 390, 245]
+      },
+      "gift-mug-magic-colour-change": {
+        "photo": "colour-changing-magic.png",
+        "box": [450, 515, 390, 245]
+      },
+      "gift-mug-personalised": {
+        "photo": "personalised.png",
+        "box": [450, 515, 390, 245]
+      },
+      "mug-classic-photo": {
+        "photo": "classic-photo.png",
+        "box": [450, 515, 390, 245]
+      },
+      "mug-insulated-travel": {
+        "photo": "insulated-travel.png",
+        "box": [450, 515, 365, 285]
+      },
+      "mug-large-latte-15oz": {
+        "photo": "large-latte-15oz.png",
+        "box": [450, 505, 375, 255]
+      },
+      "mug-magic-colour-change": {
+        "photo": "magic-colour-change.png",
+        "box": [450, 510, 395, 250]
+      },
+      "mug-two-tone-colour": {
+        "photo": "two-tone-colour.png",
+        "box": [450, 515, 390, 245]
+      }
+    }
   }
 }

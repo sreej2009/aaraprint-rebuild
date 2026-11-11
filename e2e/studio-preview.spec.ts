@@ -372,6 +372,8 @@ test.describe('phone: preview', () => {
     await previewButton(page).tap();
     await expect(preview(page)).toBeVisible();
     await expect(page.getByTestId('preview-loading')).toHaveCount(0, { timeout: 10_000 });
+    // The drawing loads as its own chunk: wait for its stage, as openPreview() does.
+    await page.waitForFunction(() => window.Konva.stages.some((s) => s.container().classList.contains('studio-preview-stage')));
     const viewport = page.viewportSize()!;
     expect((await preview(page).boundingBox())!).toMatchObject({ width: viewport.width, height: viewport.height });
     const back = preview(page).getByRole('radio', { name: /^Back/ });

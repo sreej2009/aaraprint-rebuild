@@ -37,20 +37,35 @@
       "note": "Oval card: drawn as an ellipse, as in the original Studio."
     }
   ],
-  "withMockups": 320,
+  "withMockups": 373,
   "with3dModel": 44,
   "productViews": {
     "byKind": {
       "drinkware-wrap": 49,
-      "none": 448,
+      "mug": 9,
+      "none": 390,
+      "pen": 49,
       "rainwear": 20,
       "umbrella": 15
     },
-    "withPlacements": 83,
+    "withPlacements": 136,
     "withoutPlacements": [
-      "gift-water-bottle-steel"
+      "gift-water-bottle-steel",
+      "mug-classic-photo",
+      "mug-insulated-travel",
+      "mug-large-latte-15oz",
+      "mug-two-tone-colour",
+      "pen-recycled-paper"
     ],
     "withColours": 34,
+    "unavailablePhotos": [
+      "mug-classic-photo: products/mugs-2d/classic-photo.png",
+      "mug-insulated-travel: products/mugs-2d/insulated-travel.png",
+      "mug-large-latte-15oz: products/mugs-2d/large-latte-15oz.png",
+      "mug-two-tone-colour: products/mugs-2d/two-tone-colour.png",
+      "pen-recycled-paper: products/pens-2d/paper-back-v2.png",
+      "pen-recycled-paper: products/pens-2d/paper-front-v2.png"
+    ],
     "withoutColours": [
       "umbrella-photo-print"
     ]
@@ -837,7 +852,7 @@
       }
     },
     "byStatus": {
-      "unconfirmed": 557,
+      "unconfirmed": 580,
       "attribution-required": 1
     },
     "files": {
@@ -2226,6 +2241,98 @@
         "products": 1
       },
       "products/labels-packaging-2d/sticker-window-front.png": {
+        "status": "unconfirmed",
+        "products": 1
+      },
+      "products/mugs-2d/colour-changing-magic.png": {
+        "status": "unconfirmed",
+        "products": 2
+      },
+      "products/mugs-2d/custom-black.png": {
+        "status": "unconfirmed",
+        "products": 2
+      },
+      "products/mugs-2d/custom-decorative.png": {
+        "status": "unconfirmed",
+        "products": 2
+      },
+      "products/mugs-2d/magic-colour-change.png": {
+        "status": "unconfirmed",
+        "products": 2
+      },
+      "products/mugs-2d/personalised.png": {
+        "status": "unconfirmed",
+        "products": 2
+      },
+      "products/pens-2d/classic-back.png": {
+        "status": "unconfirmed",
+        "products": 14
+      },
+      "products/pens-2d/classic-front.png": {
+        "status": "unconfirmed",
+        "products": 14
+      },
+      "products/pens-2d/fountain-back.png": {
+        "status": "unconfirmed",
+        "products": 2
+      },
+      "products/pens-2d/fountain-front.png": {
+        "status": "unconfirmed",
+        "products": 2
+      },
+      "products/pens-2d/gel-back.png": {
+        "status": "unconfirmed",
+        "products": 1
+      },
+      "products/pens-2d/gel-front.png": {
+        "status": "unconfirmed",
+        "products": 1
+      },
+      "products/pens-2d/highlighter-back.png": {
+        "status": "unconfirmed",
+        "products": 1
+      },
+      "products/pens-2d/highlighter-front.png": {
+        "status": "unconfirmed",
+        "products": 1
+      },
+      "products/pens-2d/metal-back.png": {
+        "status": "unconfirmed",
+        "products": 18
+      },
+      "products/pens-2d/metal-front.png": {
+        "status": "unconfirmed",
+        "products": 18
+      },
+      "products/pens-2d/multicolor-back.png": {
+        "status": "unconfirmed",
+        "products": 2
+      },
+      "products/pens-2d/multicolor-front.png": {
+        "status": "unconfirmed",
+        "products": 2
+      },
+      "products/pens-2d/roller-back.png": {
+        "status": "unconfirmed",
+        "products": 8
+      },
+      "products/pens-2d/roller-front.png": {
+        "status": "unconfirmed",
+        "products": 8
+      },
+      "products/pens-2d/stylus-back.png": {
+        "status": "unconfirmed",
+        "products": 1
+      },
+      "products/pens-2d/stylus-front.png": {
+        "status": "unconfirmed",
+        "products": 1
+      },
+      "products/pens-2d/wheat-back.png": {
+        "status": "unconfirmed",
+        "products": 1
+      },
+      "products/pens-2d/wheat-front.png": {
         "status": "unconfirmed",
         "products": 1
       },

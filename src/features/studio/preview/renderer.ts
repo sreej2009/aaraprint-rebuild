@@ -1,5 +1,6 @@
 import { lazy, type ComponentType } from 'react';
 import type Konva from 'konva';
+import type { Rect } from '../geometry/boxes';
 import type { Size } from '../geometry/fit';
 import type { Viewport } from '../geometry/viewport';
 import type { PlacedArtwork } from '../product-view/product-view';
@@ -31,6 +32,8 @@ export interface ProductCanvasProps {
   /** The photo as taken, or recoloured with its mask (M3). */
   photo: HTMLImageElement | HTMLCanvasElement;
   photoSize: Size;
+  /** Where the photo is drawn in the frame, and which part of it (pens and mugs, M4). */
+  draw: { crop: Rect | null; at: Rect };
   placed: PlacedArtwork;
   width: number;
   height: number;
