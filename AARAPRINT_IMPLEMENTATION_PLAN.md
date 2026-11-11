@@ -2554,3 +2554,21 @@ When the same real routes were served with the photos marked cleared, the choice
 **Found, not changed (needs a decision):** product pages (Phase 2) show the same recovered photos in their galleries. The pen and umbrella pages request `/media/products/pens-2d/…` and `/media/products/umbrellas-rainwear-2d/…`. These are catalogue images, outside the Studio's rights gate.
 
 **Phase 4 status:** M1–M4 complete, with the product-view corrective fix. M5 has not started.
+
+---
+
+## 20. Workflow parity specification
+
+**`AARAPRINT_WORKFLOW_SPEC.md`** (11 Nov 2026) is now the source of truth for *behaviour*. It records:
+- the original's workflow, product logic and editor behaviour, from live sessions on the original site and the recovered source;
+- what may be redesigned (the UI) and what must match;
+- a comparison with this implementation.
+
+Its main corrections for future work:
+- **Product-first Studio:** photo-frame families always edit on the product; perspective families open "On product".
+- **Product options in the Studio:** the first tool. Colour and other physical choices set the ordered variant and price, are saved with the design and are undoable. This replaces the M3 view-only colour behaviour.
+- **Required options:** orientation and quantity are asked before the Studio.
+- **Review:** Next → Review → Approve → design attached to the product page.
+
+Its §19 gives the recommended order. Phases and milestones above are history and unchanged; Phase 4 M5 has not started.
+
