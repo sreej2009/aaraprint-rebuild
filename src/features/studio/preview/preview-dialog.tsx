@@ -8,7 +8,6 @@ import { formatZoom, wheelZoomFactor } from '../geometry/viewport';
 import { formatSize } from '../profile/describe';
 import type { StudioProfile } from '../profile/types';
 import { productSpace } from '../product-view/product-view';
-import { ProductColourPicker } from '../product-view/colour-picker';
 import { COLOUR_UNAVAILABLE, colourUnavailable } from '../product-view/product-view';
 import { useProductColour, useProductColourOffered, useProductView, useProductViewOffered } from '../product-view/use-product-view';
 import { ProductViewToggle, type ProductViewMode } from '../product-view/view-toggle';
@@ -111,8 +110,8 @@ function PreviewBody({ document, surface, profile, view, onView, onSide, onRetry
    */
   const offered = useProductViewOffered(profile, document.surfaces);
   const wanted = offered && view === 'product';
-  // The product colour (M3) is shared with the canvas: the same choice, the same tinted photo.
-  const { colours, colour, choose } = useProductColour(profile);
+  // The product colour is the design's (Product options, M4): the same tinted photo as the canvas.
+  const { colour } = useProductColour(profile);
   const colourOffered = useProductColourOffered(profile, document.surfaces);
   const product = useProductView(profile, surface, wanted, colourOffered ? colour : null);
   const { view: productView, placed, photo } = product;
@@ -234,7 +233,6 @@ function PreviewBody({ document, surface, profile, view, onView, onSide, onRetry
   const toggle = offered && (
     <>
       <ProductViewToggle label="Preview view" testId="preview-view-toggle" value={view} onChange={switchView} />
-      {onProduct && colourOffered && colours && colour && <ProductColourPicker colours={colours.options} value={colour.id} onChange={choose} testId="preview-colours" />}
     </>
   );
 

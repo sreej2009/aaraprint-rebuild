@@ -1,6 +1,6 @@
 import AxeBuilder from '@axe-core/playwright';
 import type { APIRequestContext, Page } from '@playwright/test';
-import { confirmEntry, expect, settleAnimations, test } from './fixtures';
+import { confirmEntry, expect, settleAnimations, test, openTool } from './fixtures';
 
 /**
  * "Design it" entry workflow (Phase 4 M3): product page → entry dialog when a required entry
@@ -124,7 +124,7 @@ test.describe('Design it: flows', () => {
     await studioReady(page);
 
     // An edit in the Studio is saved from the Studio's own document: it carries the configuration.
-    await page.getByRole('button', { name: 'Text', exact: true }).first().click();
+    await openTool(page, 'Text');
     await page.getByRole('button', { name: 'Add heading' }).click();
     await page.keyboard.press('Control+Enter');
     await expect.poll(async () => (await savedDesigns(page))[0]?.document.surfaces[0]?.elements.length ?? 0, { timeout: 8000 }).toBe(1);

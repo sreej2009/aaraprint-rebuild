@@ -1,7 +1,7 @@
 import AxeBuilder from '@axe-core/playwright';
 import type { Page } from '@playwright/test';
 import type KonvaNamespace from 'konva';
-import { expect, test } from './fixtures';
+import { expect, test, openTool } from './fixtures';
 
 /**
  * Text tool (Phase 3 M8) against the real canvas: adding text, editing it in place (desktop,
@@ -86,7 +86,7 @@ async function canvasPoint(page: Page, x: number, y: number) {
 }
 
 async function addPreset(page: Page, name: string) {
-  await page.getByRole('navigation', { name: 'Design tools' }).getByRole('button', { name: 'Text', exact: true }).click();
+  await openTool(page, 'Text');
   await page.getByRole('button', { name }).click();
 }
 

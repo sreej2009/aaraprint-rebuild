@@ -41,3 +41,14 @@ export async function confirmEntry(
   await dialog.getByRole('radio', { name: orientation })[press]();
   await dialog.getByRole('button', { name: confirm })[press]();
 }
+
+/**
+ * Open a Studio tool from the rail (desktop, tablet) or the phone toolbar, unless it is already
+ * open: since Phase 4 M4 the Studio opens on the tool the product family's registry entry names
+ * (Text for visiting cards, Product options for umbrellas, Uploads for letterheads).
+ */
+export async function openTool(page: Page, name: string, press: 'click' | 'tap' = 'click'): Promise<void> {
+  const button = page.getByRole('navigation', { name: 'Design tools' }).getByRole('button', { name, exact: true });
+  if ((await button.getAttribute('aria-pressed')) === 'true') return;
+  await button[press]();
+}

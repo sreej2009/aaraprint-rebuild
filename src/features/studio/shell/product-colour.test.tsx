@@ -12,7 +12,8 @@ import { readProduct, readProfile } from '../testing/catalogue-fixtures';
 import { StudioApp } from './studio-app';
 
 /**
- * Product colour (Phase 4 M3) in the full Studio and the Preview. jsdom can't read pixels, so the
+ * Product colour in the full Studio and the Preview: since M4 it is the design's product option
+ * (Product options panel: undoable, saved, sets the variant), shown on the photo with its mask (M3). jsdom can't read pixels, so the
  * tint itself is a stand-in that reports what it was asked for (the algorithm has its own tests,
  * and the browser tests check real pixels); these check the choice, the rights, what's requested,
  * the fallbacks, and that nothing reaches the design.
@@ -91,36 +92,46 @@ function renderStudio({ product = umbrella, profile = stand(), width = 1440, var
 
 const canvas = () => screen.getByRole('region', { name: /^Design canvas: / });
 const footer = () => canvas().querySelector('footer')!;
-const colours = (scope: HTMLElement = footer()) => within(scope).queryByRole('radiogroup', { name: 'Product colour' });
-const swatch = (name: string, scope: HTMLElement = footer()) => within(colours(scope)!).getByRole('radio', { name });
+const canvasColours = () => footer().querySelector('[role=radiogroup][aria-label="Product colour"]');
+const colours = () => screen.queryByRole('radiogroup', { name: /^Canopy Colour/ });
+const swatch = (name: string) => within(colours()!).getByRole('radio', { name: new RegExp(`^${name}`) });
 const sideRadio = (name: 'Front' | 'Back') => within(screen.getByRole('radiogroup', { name: 'Side' })).getByRole('radio', { name: new RegExp(`^${name}`) });
 const layerRows = () => [...(screen.queryByRole('list', { name: 'Layers' })?.querySelectorAll('[data-layer-row]') ?? [])].map((row) => row.getAttribute('aria-label'));
 
-async function onTheProduct(user: ReturnType<typeof userEvent.setup>) {
+/** Product-first (M4): the umbrella opens on its photo. */
+async function onTheProduct() {
   await screen.findByRole('region', { name: /^Design canvas: / });
-  await user.click(within(screen.getByRole('radiogroup', { name: 'Canvas view' })).getByRole('radio', { name: 'On the product' }));
   await waitFor(() => expect(canvas()).toHaveAttribute('data-view', 'product'));
 }
 
-describe('the colour choice', () => {
-  it('appears on the product with the product’s own colours, named; the variant’s colour is chosen; the photo is already that colour, so no tint', async () => {
+/** The Product options panel (rail on desktop and tablet, More on phones). */
+async function openProductOptions(user: ReturnType<typeof userEvent.setup>) {
+  if (screen.queryByTestId('studio-product-facts')) return; // umbrellas open on Product options (registry)
+  const rail = screen.queryByRole('button', { name: 'Product options' });
+  if (rail) await user.click(rail);
+  else {
+    await user.click(within(screen.getByRole('navigation', { name: 'Design tools' })).getByRole('button', { name: /^More/ }));
+    await user.click(await screen.findByRole('button', { name: /^Product options/ }));
+  }
+  await screen.findByTestId('studio-product-facts');
+}
+
+describe('the colour is the design’s product configuration (M4)', () => {
+  it('opens on the product in the colour being ordered; the photo is already that colour, so no tint, and no separate picker', async () => {
     const user = renderStudio();
-    await screen.findByRole('region', { name: /^Design canvas: / });
-    expect(colours()).toBeNull(); // not on the flat sheet
-    await onTheProduct(user);
-    expect(
-      within(colours()!)
-        .getAllByRole('radio')
-        .map((r) => r.getAttribute('aria-label')),
-    ).toEqual(['Black', 'Navy', 'Red']);
-    expect(swatch('Black')).toHaveAttribute('aria-checked', 'true');
+    await onTheProduct();
+    expect(canvasColours()).toBeNull(); // the M3 view-only picker is gone: the colour is a product option
     expect(canvas()).toHaveAttribute('data-tint', 'none');
     expect(tints.requests).toEqual([]);
+    await openProductOptions(user);
+    expect(within(colours()!).getAllByRole('radio').map((r) => r.getAttribute('aria-label'))).toEqual(['Black', 'Navy', 'Red']);
+    expect(swatch('Black')).toHaveAttribute('aria-checked', 'true');
   });
 
   it('another colour tints the photo with this side’s mask; the back uses its own photo and mask', async () => {
     const user = renderStudio();
-    await onTheProduct(user);
+    await onTheProduct();
+    await openProductOptions(user);
     await user.click(swatch('Navy'));
     expect(swatch('Navy')).toHaveAttribute('aria-checked', 'true');
     await waitFor(() => expect(canvas()).toHaveAttribute('data-tint', 'applied'));
@@ -135,17 +146,28 @@ describe('the colour choice', () => {
     expect(tints.requests).toHaveLength(2);
   });
 
-  it('works from the keyboard: arrows move and choose; Delete on a swatch never deletes artwork', async () => {
+  it('is one undo step that changes the variant and SKU; undo restores the colour and the photo, the artwork never changes', async () => {
     const user = renderStudio();
-    await onTheProduct(user);
+    await onTheProduct();
     const layers = layerRows();
-    await user.click(within(screen.getByRole('list', { name: 'Layers' })).getAllByRole('button')[0]!);
-    swatch('Black').focus();
-    await user.keyboard('{ArrowRight}');
-    expect(swatch('Navy')).toHaveFocus();
-    expect(swatch('Navy')).toHaveAttribute('aria-checked', 'true');
-    await user.keyboard('{Delete}{Backspace}');
+    await openProductOptions(user);
+    const facts = () => screen.getByTestId('studio-product-facts').textContent ?? '';
+    const before = facts();
+    await user.click(swatch('Red'));
+    await waitFor(() => expect(canvas()).toHaveAttribute('data-tint', 'applied'));
+    expect(facts()).not.toBe(before);
+    expect(facts()).toMatch(/Red/);
+    const undo = screen.getByRole('button', { name: 'Undo' });
+    expect(undo).toBeEnabled();
+    await user.click(undo);
+    expect(swatch('Black')).toHaveAttribute('aria-checked', 'true');
+    expect(facts()).toBe(before);
+    await waitFor(() => expect(canvas()).toHaveAttribute('data-tint', 'none'));
+    expect(screen.getByRole('button', { name: 'Undo' })).toBeDisabled();
+    await user.click(screen.getByRole('button', { name: 'Redo' }));
+    expect(swatch('Red')).toHaveAttribute('aria-checked', 'true');
     expect(layerRows()).toEqual(layers);
+    expect(layerRows().some((name) => /colour|tint|mask|mockup/i.test(name ?? ''))).toBe(false);
   });
 
   it('starts on the colour of the variant being designed', async () => {
@@ -153,35 +175,41 @@ describe('the colour choice', () => {
     const red = group.values.find((v) => v.label === 'Red')!;
     const variant = umbrella.variants.find((v) => v.optionValueIds.includes(red.id))!;
     const user = renderStudio({ variantId: variant.id });
-    await onTheProduct(user);
-    expect(swatch('Red')).toHaveAttribute('aria-checked', 'true');
+    await onTheProduct();
     await waitFor(() => expect(canvas()).toHaveAttribute('data-tint', 'applied'));
+    await openProductOptions(user);
+    expect(swatch('Red')).toHaveAttribute('aria-checked', 'true');
   });
 });
 
 describe('rights and fallbacks', () => {
-  it('no choice: real (unconfirmed) photos; cleared photos whose masks aren’t; the photo-print umbrella (no colour option)', async () => {
-    let user = renderStudio({ profile: umbrellaProfile });
+  it('real (unconfirmed) photos stay flat with a note; cleared photos whose masks aren’t show the photo as taken; the photo-print umbrella has no colour', async () => {
+    renderStudio({ profile: umbrellaProfile });
     await screen.findByRole('region', { name: /^Design canvas: / });
     expect(screen.queryByRole('radiogroup', { name: 'Canvas view' })).toBeNull();
-    expect(colours()).toBeNull();
+    expect(canvas()).toHaveAttribute('data-view', 'flat');
+    expect(screen.getByTestId('canvas-workspace-note')).toBeInTheDocument();
     document.body.innerHTML = '';
 
-    user = renderStudio({ profile: stand(() => 'unconfirmed') });
-    await onTheProduct(user);
-    expect(colours()).toBeNull();
+    let user = renderStudio({ profile: stand(() => 'unconfirmed') });
+    await onTheProduct();
+    await openProductOptions(user);
+    await user.click(swatch('Navy'));
     expect(canvas()).toHaveAttribute('data-tint', 'none');
+    expect(tints.requests).toEqual([]);
     document.body.innerHTML = '';
 
     user = renderStudio({ product: readProduct('umbrella-photo-print'), profile: stand(() => 'cleared', readProfile('umbrella-photo-print')) });
-    await onTheProduct(user);
+    await onTheProduct();
+    await openProductOptions(user);
     expect(colours()).toBeNull();
     expect(tints.requests).toEqual([]); // no mask was ever asked for
   });
 
   it('a side whose mask isn’t cleared shows its photo as taken, and says the colour can’t be shown there', async () => {
     const user = renderStudio({ profile: stand((side) => (side === 'back' ? 'unconfirmed' : 'cleared')) });
-    await onTheProduct(user);
+    await onTheProduct();
+    await openProductOptions(user);
     await user.click(swatch('Navy'));
     await waitFor(() => expect(canvas()).toHaveAttribute('data-tint', 'applied'));
     await user.click(sideRadio('Back'));
@@ -193,7 +221,8 @@ describe('rights and fallbacks', () => {
   it('a tint that fails shows the photo as taken, with the note; the editor keeps working', async () => {
     tints.fail = true;
     const user = renderStudio();
-    await onTheProduct(user);
+    await onTheProduct();
+    await openProductOptions(user);
     await user.click(swatch('Red'));
     await waitFor(() => expect(canvas()).toHaveAttribute('data-tint', 'failed'));
     expect(screen.getByTestId('canvas-colour-unavailable')).toBeInTheDocument();
@@ -201,33 +230,8 @@ describe('rights and fallbacks', () => {
   });
 });
 
-describe('nothing reaches the design', () => {
-  it('colour changes add no undo step, no save and no layer; undo still undoes the last edit', async () => {
-    const user = renderStudio();
-    await onTheProduct(user);
-    const status = screen.getByTestId('save-status').getAttribute('data-status');
-    const layers = layerRows();
-    await user.click(within(screen.getByRole('list', { name: 'Layers' })).getAllByRole('button')[0]!);
-    const x = screen.getByRole('textbox', { name: 'X, from the left trim edge' });
-    const before = (x as HTMLInputElement).value;
-    await user.clear(x);
-    await user.type(x, '12{Enter}');
-    const afterEdit = screen.getByTestId('save-status').getAttribute('data-status');
-    for (const name of ['Red', 'Navy', 'Black', 'Red']) await user.click(swatch(name));
-    await new Promise((resolve) => setTimeout(resolve, 1300)); // past the autosave delay
-    expect(screen.getByTestId('save-status').getAttribute('data-status')).toBe(afterEdit);
-    expect(layerRows()).toEqual(layers);
-    expect(layerRows().some((name) => /colour|tint|mask|mockup/i.test(name ?? ''))).toBe(false);
-    await user.click(screen.getByRole('button', { name: 'Undo' }));
-    expect(screen.getByRole('textbox', { name: 'X, from the left trim edge' })).toHaveValue(before);
-    expect(screen.getByRole('button', { name: 'Undo' })).toBeDisabled();
-    expect(swatch('Red')).toHaveAttribute('aria-checked', 'true'); // undo never changes the colour
-    expect(status).not.toBeNull();
-  });
-});
-
 describe('shared with the Preview', () => {
-  it('the Preview shows the same colour (the same tinted photo), and a colour chosen there comes back to the canvas', async () => {
+  it('the Preview shows the same colour (the same tinted photo) and has no colour control of its own', async () => {
     const drawn: { photo?: string } = {};
     setPreviewRendererForTests({
       Canvas: ({ surface }: PreviewCanvasProps) => <div data-testid="preview-canvas" data-side={surface.id} />,
@@ -239,27 +243,24 @@ describe('shared with the Preview', () => {
       size: { width: 1000, height: 600 },
     });
     const user = renderStudio();
-    await onTheProduct(user);
+    await onTheProduct();
+    await openProductOptions(user);
     await user.click(swatch('Navy'));
     await waitFor(() => expect(canvas()).toHaveAttribute('data-tint', 'applied'));
     await user.click(screen.getByRole('button', { name: 'Preview' }));
     const dialog = await screen.findByRole('dialog', { name: 'Preview' });
     await user.click(within(dialog).getByRole('radio', { name: 'On the product' }));
     await waitFor(() => expect(within(dialog).getByTestId('product-canvas')).toHaveAttribute('data-photo', '#243052'));
-    expect(swatch('Navy', dialog)).toHaveAttribute('aria-checked', 'true');
+    expect(within(dialog).queryByRole('radiogroup', { name: /colou?r/i })).toBeNull();
     expect(tints.requests).toHaveLength(1); // the canvas's tint, reused
-    await user.click(swatch('Red', dialog));
-    await waitFor(() => expect(within(dialog).getByTestId('product-canvas')).toHaveAttribute('data-photo', '#b0262d'));
-    await user.keyboard('{Escape}');
-    await waitFor(() => expect(screen.queryByRole('dialog')).toBeNull());
-    expect(swatch('Red')).toHaveAttribute('aria-checked', 'true');
   });
 
-  it('sits in the canvas footer on tablets and phones too', async () => {
+  it('Product options are reachable on tablets and phones too', async () => {
     for (const width of [820, 390]) {
       document.body.innerHTML = '';
       const user = renderStudio({ width });
-      await onTheProduct(user);
+      await onTheProduct();
+      await openProductOptions(user);
       expect(colours()).not.toBeNull();
     }
   });

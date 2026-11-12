@@ -1,7 +1,7 @@
 import AxeBuilder from '@axe-core/playwright';
 import type { Page } from '@playwright/test';
 import type KonvaNamespace from 'konva';
-import { expect, test } from './fixtures';
+import { expect, test, openTool } from './fixtures';
 
 /**
  * Preview in the browser (Phase 3 M14): opening and closing with focus handled, drawing the
@@ -269,7 +269,7 @@ test.describe('desktop: preview', () => {
     await openPreview(page);
     await expect(preview(page).getByTestId('preview-empty')).toHaveText('Your design is empty');
     await closePreview(page);
-    await page.getByRole('navigation', { name: 'Design tools' }).getByRole('button', { name: 'Text', exact: true }).click();
+    await openTool(page, 'Text');
     await page.getByRole('button', { name: 'Add heading' }).click();
     await page.keyboard.type('Front only');
     await page.keyboard.press('Control+Enter');
@@ -283,7 +283,7 @@ test.describe('desktop: preview', () => {
   test('31–33 · shows unsaved changes, adds no undo step, doesn’t trigger saving, and the saved design still restores', async ({ page }) => {
     await open(page);
     await saved(page).catch(() => {}); // a new design isn't saved until it changes
-    await page.getByRole('navigation', { name: 'Design tools' }).getByRole('button', { name: 'Text', exact: true }).click();
+    await openTool(page, 'Text');
     await page.getByRole('button', { name: 'Add heading' }).click();
     await page.keyboard.type('Not saved yet');
     await page.keyboard.press('Control+Enter');

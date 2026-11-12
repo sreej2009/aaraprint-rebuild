@@ -2581,7 +2581,8 @@ Its §19 gives the recommended order. Phases and milestones above are history an
 | M1 Schema v3 and product family registry | Done |
 | M2 Product options UI (product page) | Done |
 | M3 "Design it" entry workflow | Done |
-| M4… Product-first Studio workspaces, Review/Approve | Not started (audit §18) |
+| M4 Product-first Studio workspace | Done |
+| M5… Review/Approve | Not started (audit §18) |
 
 ### M1 — Schema v3 and product family registry
 
@@ -2867,3 +2868,83 @@ The product page's initial JS went from 250.9 KB to **252.4 KB** gzipped (+1.5 K
   - keyboard and axe;
   - G at 1440, 1280, 820, 390 and 360 px, completing the flow to the Studio on phones.
 - Existing Studio specs go through the entry step via the shared `confirmEntry` helper (`e2e/fixtures.ts`). The M2 "older design" e2e moved to flow E.
+
+### M4 — Product-first Studio workspace
+
+**Scope:** the Studio opens in the workspace the original used for the design's product family, on the tool the original opened on, with the M2 Product options inside the Studio. 2D only. Out of scope (later milestones): the 3D polo and `.glb` models, Review and Approve, sign-in, design attached to the product page, cart, checkout, QR, tables, CMYK, advanced crop and effects, new mockup rights, and any newly recovered files.
+
+#### Workspace resolution (`src/features/studio/workspace/workspace.ts`)
+
+`resolveWorkspace(product, profile)` returns the session's `StudioWorkspace`. It reads the family from the design's persisted product reference (`product.familyId`, schema v3). A design saved before it recorded a family uses the registry's family for its slug. Nothing is read from the URL or from lists of slugs.
+
+| Field | Meaning |
+|---|---|
+| `kind` | The registry's workspace: `photo-frame`, `perspective`, `gift-frame`, `polo-stage` or `flat`. |
+| `views`, `flatLabel` | The original's canvas views in its order ("On product" + "Flat artwork", "Seal design" for stamps). |
+| `representation` | `product-photo`: the original's photo frame with exact placements (the existing product view, rights-gated). `not-imported`: the original shows the product but its geometry isn't imported yet. `none`: a flat print product. |
+| `initialView` | `product` only when the product can be shown; otherwise `flat`. |
+| `toggle` | The Flat / On the product switch: shown when the product can be shown. |
+| `initialTool` | The registry's first tool: Product options, Text (visiting cards, stationery) or Uploads (letterheads). |
+| `singleSurface` | The registry prints one surface. |
+
+**Fails safe:** an unknown product, or a design whose family doesn't match its product, gets the plain flat print area and nothing else. A null profile never shows a photo.
+
+| Family group | Original | This Studio |
+|---|---|---|
+| Umbrella, rainwear, drinkware, pen, mug (photo frame) | Product photo with the print area on it | Opens **on the product** (existing M1–M4 product view). Real photos stay rights-blocked: production shows the flat print area with the note "The product photo isn't available here: you're designing the flat print area." The Studio's existing Flat view is kept as a switch for precise work. |
+| Apparel, bags, caps, signs, marketing print, labels, packaging, posters, gifts, stamps (perspective) | "On product" perspective with a Flat artwork switch | The perspective faces are quads with clip polygons (388 entries in the original's source), not affine placements, so they can't be drawn faithfully with the current product view. **Not imported:** these open on the flat print area with "On-product view for this product isn't available yet: you're designing the flat print area." |
+| Gift frames, round mouse pad | Gift frame | Not imported, as above. |
+| Polo | Drawn polo stage (2D Edit / 3D Preview) | Not imported (2D flat print area, note). No 3D. |
+| Visiting cards, stationery, letterheads, invitations, envelopes, notebooks, folders, mouse pad | Flat print area | Flat print area; no note, no switch. |
+
+**Session:** `StudioApp` resolves the workspace once per session from the store's `familyId` and passes it in the session context. The viewport store is created already in the workspace's view (`createViewportStore({ productView })`), so a product-first family never draws flat first: no flicker. The browser test records every value of the canvas's `data-view` from the first render and sees only `product`.
+
+#### Product options in the Studio
+
+- **Tool:** the rail's first tool is now **Product options** (it was "Product", product facts only). It opens by default where the registry says so, as the original did. Visiting cards open on Text and letterheads on Uploads (previously every product opened on Templates). Phones keep their toolbar; Product options is under More.
+- **Panel** (`shell/tool-content.tsx`): the product facts (options, unit price, SKU, "Change options" link back to the product page) and print size, plus the M2 `ProductOptions` component in a new `studio` mode.
+- **Studio mode** (`product-options.tsx`): shows only options with `behaviour.editableInStudio` (catalogue options such as an umbrella's Canopy Colour or a garment's Size and Colour, Studio formats, part colours, the same-design switch). Orientation and order quantity stay on the product page. The panel's own Undo/Redo is hidden: the Studio's top-bar Undo/Redo and shortcuts cover these changes. Products with nothing editable in the Studio (visiting cards) say "This product's options are chosen on the product page."
+- **Commands:** each change is the same M1 product command the product page uses (one undo step, autosaved with the design). The variant and SKU are re-resolved, and the price follows everywhere.
+- **Price:** the session now carries `resolvePrice(product, workflow, configuration)`. The top bar and the panel show its unit price (variant plus Studio adjustments). The session's variant follows the design's `variantId` instead of the URL's.
+
+#### Product colour: now the ordered colour
+
+M3 (§19) made the photo colour a view-only choice in the canvas footer and the Preview, never saved and never undone. The workflow spec replaces that: the colour is the design's product configuration.
+- The footer and Preview colour pickers are removed (`product-view/colour-picker.tsx` deleted). The viewport store no longer has `productColour`.
+- `useProductColour(profile)` picks the photo's colour from the configuration's option values and variant (`chooseColour`), so the masked tint follows the ordered colour on the canvas and in the Preview.
+- Choosing a colour in Product options changes the variant and SKU, is one undo step, and is saved with the design. Undo restores the previous colour and the photo as taken.
+- Masks and photos keep their own rights gates: an unconfirmed mask shows the photo as taken with the existing note, and nothing about the tint, mask or photo is saved.
+
+#### Sides
+
+The Side switch hides when the registry prints one surface (letterheads, some flyers, signs, certificates, card holders, the phone case), the other sides are empty and the first side is being edited. A design that already uses another side can still reach it. Profiles keep their sides; no new surface architecture.
+
+#### Fixes found on the way
+
+- **A Studio choice survived only until a reload.** The Studio loader filled in the default variant whenever the URL had no `?variantId=`, so restoring `?design=` synced the design back to the default (harmless while the Studio couldn't change the variant). The loader now passes only a variant the URL really names. A new design still starts on the default, and a `?variantId=` already in the URL follows the design's variant (`VariantInUrl`), so links and reloads keep the choice.
+- **Text tool names (WCAG 2.5.3).** Opening visiting cards on Text put the Text panel into the axe scans for the first time. Its buttons were named "Add heading" while showing "Add a heading", so the name didn't contain the visible text. Each preset is now a picture of the text with a content-free button laid over it, named by what it does (names unchanged).
+
+#### Kept as it was
+
+- The design stays in print px; the photo is a backdrop that is never picked, saved, undone or exported. Proofs are byte-for-byte the same on the product and flat.
+- Real product photos and masks stay blocked until their rights are cleared. Development fixtures (`?product-view-fixtures=1`) remain development-only.
+- All editor tools, sides, templates, uploads, history, preview, print check and proof behave as before.
+- No new binary assets, no changes to `../recovered` or `../recovered-additional`.
+
+#### Bundle
+
+Gzipped JS loaded on entry, measured from the build manifest against the M3 commit: the Studio route went from 302.6 KB to **306.6 KB** (+4.0 KB: the Product options panel, workspace resolution and pricing in the session). The product page went from 231.2 KB to **232.0 KB** (+0.8 KB: the Studio mode in the shared options component). Nothing new loads before the Studio opens.
+
+#### Tests
+
+- `workspace/workspace.test.ts` (34): every one of the 26 families, for each of its products with the real profiles (kind, tool, single surface, initial view, switch); photo-frame families with and without placements; perspective, gift-frame and polo kept flat with the note and their flat labels; flat families with no note; unknown products, mismatched families, designs without a family and a null profile all fail safe; notes.
+- `shell/studio-product-options.test.tsx` (6): a garment opens on Product options with only Studio-editable options; a size changes the variant, SKU and price as one undo step and is autosaved with the configuration; the choice survives reopening the design; the phone sheet; a visiting card opens on Text with "chosen on the product page"; a letterhead opens on Uploads with no Side switch.
+- `shell/product-colour.test.tsx` (rewritten, 9): the colour is a Product option; tint per side's mask; one undo step that changes the SKU; the variant's colour first; rights and fallbacks; the Preview follows with no picker of its own; tablet and phone.
+- `shell/helpers.test.ts`: `loadStudio` passes a variant only when the URL names a real one.
+- Updated for product-first opening: `product-workspace.test.tsx`, `pens-mugs-view.test.tsx`, `preview-dialog.test.tsx`, `studio-shell.test.tsx`, `templates-tool.test.tsx`, `text-inspector.test.tsx`.
+- `e2e/studio-workspaces.spec.ts` (new): 15 families (umbrella, rainwear, drinkware, pen, mug, apparel, polo, bag, marketing print, packaging, stamp, gift frame, sign, visiting card, letterhead) at 1440, 1280, 820, 390 and 360 px: workspace, view, note, no switch without a usable photo, first tool, sides, no sideways scroll, no console errors. A cleared stand-in umbrella opens on the product with no flat first at every width; its colour is undoable and survives a reload.
+- `e2e/studio-colour.spec.ts` rewritten for the colour as a Product option (pixels, masks per side, undo order, Preview, rights, saved SKU, proofs, widths, tablet, phone, axe). Product-view specs updated for opening on the product. A shared `openTool` helper (`e2e/fixtures.ts`) opens a tool only if it isn't already open.
+
+**Results:** lint and typecheck clean; 890 unit and component tests passed (79 files); production build passes. Full browser suite on the final build: 412 passed, 1 failed, 414 skipped (each because it is for a different device layout or width loop). The failure was the desktop skip-link tab-order check in `studio.spec.ts`, under full-suite load. It passed 6 of 6 when repeated alone and again when `studio.spec.ts` and `entry.spec.ts` were re-run on every device (46 passed), so it is a timing flake, not a regression.
+
+**Not in M4:** perspective, gift-frame and polo product views (their geometry is in the original's source but not imported); 3D; resizing artwork when a size option changes; Review and Approve.

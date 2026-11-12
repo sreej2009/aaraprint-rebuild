@@ -1,6 +1,6 @@
 import type { Page } from '@playwright/test';
 import type KonvaNamespace from 'konva';
-import { expect, test } from './fixtures';
+import { expect, openTool, test } from './fixtures';
 
 /**
  * Templates in the browser (Phase 3 M13): finding them, how well each suits the product,
@@ -32,6 +32,8 @@ test.afterEach(() => {
 async function open(page: Page, url = CARD) {
   await page.goto(url);
   await page.waitForFunction(() => Boolean(window.Konva?.stages.some((st) => st.container().closest('#studio-canvas'))));
+  // Cards open on Text since Phase 4 M4 (registry); Templates is one click away where panels dock.
+  if ((await page.viewportSize())!.width >= 1280) await openTool(page, 'Templates');
 }
 
 const panel = (page: Page) => page.getByRole('complementary', { name: 'Templates' });

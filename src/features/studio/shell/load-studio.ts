@@ -4,7 +4,6 @@ import { studioApi, type StudioApi } from '../profile/api';
 import type { StudioProfile } from '../profile/types';
 import { fixturesRequested, withProductViewFixtures } from '../product-view/dev-fixtures';
 import { isToolId, type ToolId } from './tools';
-import { resolveStudioVariant } from './variant';
 
 export type StudioLoad =
   | { status: 'not-found' }
@@ -26,7 +25,7 @@ export type StudioLoad =
  * Everything the Studio route needs, from `/products/:slug/design?variantId=&side=&mode=&tool=&sample=`.
  * - Unknown products → not-found (404).
  * - Products without a Studio profile (printed as shown) → unsupported.
- * - Unknown variant / side / tool values fall back to defaults instead of failing.
+ * - Unknown variant / side / tool values are ignored (null) instead of failing.
  * Network and server errors propagate to the route's error boundary.
  */
 export async function loadStudio(slug: string, url: URL, apis: { catalogue: CatalogueApi; studio: StudioApi } = { catalogue: catalogueApi, studio: studioApi }, signal?: AbortSignal): Promise<StudioLoad> {
@@ -39,7 +38,10 @@ export async function loadStudio(slug: string, url: URL, apis: { catalogue: Cata
   // Development only: stand-in product photos on request (product-view/dev-fixtures.ts). Production
   // builds drop this branch, so real profiles are always used there.
   const shown = import.meta.env.DEV && fixturesRequested(url, sessionStore()) ? withProductViewFixtures(profile) : profile;
-  const variant = resolveStudioVariant(product, params.get('variantId'));
+  // Only a variant the URL really names: without one, a restored design keeps its own (since M4
+  // the Studio can change it), and a new design starts on the default (StudioApp).
+  const requested = params.get('variantId');
+  const variant = product.variants.find((v) => v.id === requested);
   const side = params.get('side');
   const tool = params.get('tool');
   return {

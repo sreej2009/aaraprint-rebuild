@@ -10,7 +10,7 @@ import { readProduct, readProfile } from '../testing/catalogue-fixtures';
 import { StudioApp } from './studio-app';
 
 /**
- * The editing workspace on the product (Phase 4 M2) in the full Studio. jsdom has no layout, so the
+ * The editing workspace on the product (Phase 4 M2; product-first since M4) in the full Studio. jsdom has no layout, so the
  * Konva stage itself isn't drawn here (the browser tests check the drawing and the editing on it);
  * these check the choice, what is loaded, the fallbacks and that nothing reaches the design.
  */
@@ -97,19 +97,18 @@ describe('which products offer it', () => {
     expect(canvas()).toHaveAttribute('data-view', 'flat');
     expect(screen.queryByTestId('canvas-product-unavailable')).not.toBeInTheDocument();
     expect(photos.requested.filter((url) => url.includes('umbrellas-rainwear-2d'))).toEqual([]);
+    // The umbrella is a product-first workspace; without a usable photo it says why it is flat.
+    expect(screen.getByTestId('canvas-workspace-note')).toHaveTextContent('The product photo isn’t available here');
   });
 });
 
 describe('flat and on the product', () => {
-  it('starts Flat; On the product puts the photo behind the artwork, front and back, and back to Flat', async () => {
+  it('starts on the product (M4): the photo behind the artwork, front and back; Flat and back again', async () => {
     const user = renderStudio();
     await ready();
-    expect(option('Flat')).toHaveAttribute('aria-checked', 'true');
     expect(viewChoice()!.closest('footer')).not.toBeNull();
-    expect(fixturePhotos()).toEqual([]); // nothing loaded until asked for
-
-    await user.click(option('On the product'));
     expect(option('On the product')).toHaveAttribute('aria-checked', 'true');
+    expect(screen.queryByTestId('canvas-workspace-note')).not.toBeInTheDocument();
     expect(canvas()).toHaveAttribute('data-view', 'product');
     expect(canvas()).toHaveAccessibleName(/^Design canvas: Front, .+, on the product$/);
     expect(within(canvas()).getByText(/· on a product photo$/)).toBeInTheDocument();
@@ -122,6 +121,8 @@ describe('flat and on the product', () => {
     await user.click(option('Flat'));
     expect(canvas()).toHaveAttribute('data-view', 'flat');
     expect(canvas()).toHaveAccessibleName(/^Design canvas: Back, [^,]+$/);
+    await user.click(option('On the product'));
+    expect(canvas()).toHaveAttribute('data-view', 'product');
   });
 
   it('works from the keyboard; Delete on the choice never deletes the selected artwork', async () => {
@@ -129,10 +130,12 @@ describe('flat and on the product', () => {
     await ready();
     const layers = layerRows();
     await user.click(within(screen.getByRole('list', { name: 'Layers' })).getAllByRole('button')[0]!);
-    option('Flat').focus();
-    await user.keyboard('{ArrowRight}');
-    expect(option('On the product')).toHaveFocus();
+    option('On the product').focus();
+    await user.keyboard('{ArrowLeft}');
+    expect(option('Flat')).toHaveFocus();
     await user.keyboard(' ');
+    expect(canvas()).toHaveAttribute('data-view', 'flat');
+    await user.keyboard('{ArrowRight} ');
     expect(canvas()).toHaveAttribute('data-view', 'product');
     await user.keyboard('{Delete}');
     await user.keyboard('{Backspace}');
@@ -143,7 +146,6 @@ describe('flat and on the product', () => {
     photos.failing.add('/media/studio-fixtures/umbrella-front.png');
     const user = renderStudio({ profile: cleared((side) => (side.id === 'back' ? { placement: null } : {})) });
     await ready();
-    await user.click(option('On the product'));
     expect(await screen.findByTestId('canvas-product-unavailable')).toHaveTextContent('On-product view unavailable for this product.');
     expect(canvas()).toHaveAttribute('data-view', 'flat');
     await user.click(sideRadio('Back'));
@@ -163,7 +165,6 @@ describe('nothing about the view reaches the design', () => {
     const layers = layerRows();
     expect(screen.getByRole('button', { name: 'Undo' })).toBeDisabled();
 
-    await user.click(option('On the product'));
     await user.click(sideRadio('Back'));
     await user.click(sideRadio('Front'));
     await user.click(option('Flat'));
@@ -199,9 +200,10 @@ describe('nothing about the view reaches the design', () => {
       await waitFor(() => expect(screen.queryByRole('dialog')).not.toBeInTheDocument());
       return text;
     };
+    const onProduct = await facts();
+    await user.click(option('Flat'));
     const flat = await facts();
-    await user.click(option('On the product'));
-    expect(await facts()).toBe(flat);
+    expect(onProduct).toBe(flat);
     expect(flat).toMatch(/Proof image\d+ × \d+ px/);
   });
 

@@ -105,12 +105,13 @@ test.describe('tools and panels', () => {
   test('desktop: rail toggles a docked panel; layers and properties are docked', async ({ page }, info) => {
     test.skip(layoutOf(info) !== 'desktop', 'desktop layout');
     await page.goto(STUDIO);
-    await expect(page.getByRole('complementary', { name: 'Templates' })).toBeVisible();
+    // Visiting cards open on Text, as on the original (registry, Phase 4 M4).
+    await expect(page.getByRole('complementary', { name: 'Text' })).toBeVisible();
     await expect(page.getByRole('complementary', { name: 'Layers and properties' })).toBeVisible();
-    await page.getByRole('button', { name: 'Product', exact: true }).click();
-    const panel = page.getByRole('complementary', { name: 'Product and print size' });
+    await page.getByRole('button', { name: 'Product options', exact: true }).click();
+    const panel = page.getByRole('complementary', { name: 'Product options' });
     expect(nbsp((await panel.textContent()) ?? '')).toContain('91.9 × 53.8 mm');
-    await page.getByRole('button', { name: 'Product', exact: true }).click();
+    await page.getByRole('button', { name: 'Product options', exact: true }).click();
     await expect(panel).toHaveCount(0);
   });
 
@@ -160,8 +161,8 @@ test.describe('tools and panels', () => {
     await expect(sheet).toHaveCount(0);
 
     await toolbar.getByRole('button', { name: 'More' }).click();
-    await page.getByRole('dialog', { name: 'More tools' }).getByRole('button', { name: /Product and print size/ }).click();
-    await expect(page.getByRole('dialog', { name: 'Product and print size' })).toBeVisible();
+    await page.getByRole('dialog', { name: 'More tools' }).getByRole('button', { name: /Product options/ }).click();
+    await expect(page.getByRole('dialog', { name: 'Product options' })).toBeVisible();
   });
 });
 

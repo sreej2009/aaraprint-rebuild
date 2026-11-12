@@ -158,8 +158,9 @@ test.describe('desktop: editing on the product', () => {
     await clearedStandIn(page);
     await open(page, UMBRELLA);
     await setBackground(page, 'Deep indigo');
-    expect(mediaRequests.filter((p) => p.includes('studio-fixtures'))).toEqual([]); // not loaded until asked for
-    await expect(option(page, 'Flat')).toHaveAttribute('aria-checked', 'true');
+    // Product-first (M4): the umbrella opens on its photo; only the side shown is loaded.
+    await expect(option(page, 'On the product')).toHaveAttribute('aria-checked', 'true');
+    expect(mediaRequests.filter((p) => p.includes('studio-fixtures'))).toEqual(['/media/studio-fixtures/umbrella-golf-front.png']);
     await onTheProduct(page);
     const photo = bounds(BOXES.front);
     // Samples 3 screen px from each edge (at Fit, a print px is a small fraction of a screen px).
@@ -314,9 +315,9 @@ test.describe('desktop: editing on the product', () => {
     await page.reload();
     await page.waitForFunction(() => Boolean(window.Konva?.stages.some((st) => st.container().closest('#studio-canvas')?.querySelector('canvas'))));
     await expect.poll(async () => (await boxOf(page, id)).x).toBeCloseTo(box.x, 6);
-    // A new session starts on the flat sheet: the view was never part of the design.
-    await expect(region(page)).toHaveAttribute('data-view', 'flat');
-    await expect(option(page, 'Flat')).toHaveAttribute('aria-checked', 'true');
+    // A new session opens in the family's workspace (on the product, M4): the view was never saved.
+    await expect(region(page)).toHaveAttribute('data-view', 'product');
+    await expect(option(page, 'On the product')).toHaveAttribute('aria-checked', 'true');
   });
 
   test('switching views is not an edit: no undo step, no autosave, no version, same design', async ({ page }) => {

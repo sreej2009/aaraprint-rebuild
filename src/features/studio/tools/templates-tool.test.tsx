@@ -53,7 +53,7 @@ function renderStudio({ width = 1440 } = {}) {
         path: '/products/:slug/design',
         element: (
           <TooltipProvider>
-            <StudioApp product={product} profile={profile} variantId={null} initialSurface={null} initialTool={null} sample={false} />
+            <StudioApp product={product} profile={profile} variantId={null} initialSurface={null} initialTool={width < 768 ? null : 'templates'} sample={false} />
           </TooltipProvider>
         ),
       },

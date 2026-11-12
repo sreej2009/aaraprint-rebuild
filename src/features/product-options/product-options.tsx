@@ -23,6 +23,12 @@ export interface ProductOptionsProps {
   workflow: ProductWorkflow;
   store: StudioStore;
   issues: readonly ConfigurationIssue[];
+  /**
+   * Where the options are shown. `page` (the product page, M2) shows every option. `studio` (the
+   * Design Studio's Product options panel, M4) shows only what the registry marks editable in the
+   * Studio; the Studio's own Undo and Redo cover these changes.
+   */
+  mode?: 'page' | 'studio';
 }
 
 function IssueText({ issues }: { issues: readonly ConfigurationIssue[] }) {
@@ -35,16 +41,20 @@ function IssueText({ issues }: { issues: readonly ConfigurationIssue[] }) {
   );
 }
 
-export function ProductOptions({ product, workflow, store, issues }: ProductOptionsProps) {
+export function ProductOptions({ product, workflow, store, issues, mode = 'page' }: ProductOptionsProps) {
+  const inStudio = mode === 'studio';
   const configuration = useStore(store, (s) => s.document.product.configuration);
   const actions = useStore(store, (s) => s.actions);
   const undoLabel = useStore(store, (s) => s.history.past.at(-1)?.label ?? null);
   const redoLabel = useStore(store, (s) => s.history.future.at(-1)?.label ?? null);
 
   const designable = product.isCustomizable;
-  const bound = useMemo(() => bindCatalogueOptions(workflow, product), [workflow, product]);
-  const orientation = designable ? workflow.options.find((o): o is EntryOptionDefinition => o.source === 'entry' && o.role === 'orientation') : undefined;
-  const orderQuantity = workflow.options.find((o): o is OrderOptionDefinition => o.source === 'order');
+  const editable = (behaviour: { editableInStudio: boolean }) => !inStudio || behaviour.editableInStudio;
+  const bound = useMemo(() => bindCatalogueOptions(workflow, product).filter(({ definition }) => !inStudio || definition.behaviour.editableInStudio), [workflow, product, inStudio]);
+  const orientationOption = designable ? workflow.options.find((o): o is EntryOptionDefinition => o.source === 'entry' && o.role === 'orientation') : undefined;
+  const orientation = orientationOption && editable(orientationOption.behaviour) ? orientationOption : undefined;
+  const orderOption = workflow.options.find((o): o is OrderOptionDefinition => o.source === 'order');
+  const orderQuantity = orderOption && editable(orderOption.behaviour) ? orderOption : undefined;
   const studioOptions = useMemo(() => (designable ? applicableOptions(workflow, product).filter((o): o is StudioOptionDefinition => o.source === 'studio') : []), [designable, workflow, product]);
   const sameDesign = designable && workflow.sameDesignBothSides.available ? workflow.sameDesignBothSides : null;
   const orientationIssues = orientation ? issuesFor(issues, orientation.id) : [];
@@ -52,9 +62,16 @@ export function ProductOptions({ product, workflow, store, issues }: ProductOpti
   return (
     <section aria-labelledby="product-options-heading" className="flex flex-col gap-6" data-product-options={workflow.family.id}>
       <div className="flex items-center justify-between gap-3">
-        <h2 id="product-options-heading" className="text-h4 font-semibold text-fg">
-          Your choices
-        </h2>
+        {inStudio ? (
+          <h3 id="product-options-heading" className="text-body-sm font-semibold text-fg">
+            Your choices
+          </h3>
+        ) : (
+          <h2 id="product-options-heading" className="text-h4 font-semibold text-fg">
+            Your choices
+          </h2>
+        )}
+        {!inStudio && (
         <div className="flex items-center gap-1">
           <Button type="button" size="sm" variant="ghost" disabled={!undoLabel} onClick={() => actions.undo()} aria-label={undoLabel ? `Undo: ${undoLabel}` : 'Undo'}>
             <Undo2 aria-hidden="true" /> Undo
@@ -63,7 +80,14 @@ export function ProductOptions({ product, workflow, store, issues }: ProductOpti
             <Redo2 aria-hidden="true" /> Redo
           </Button>
         </div>
+        )}
       </div>
+
+      {inStudio && bound.length === 0 && !orientation && !orderQuantity && studioOptions.length === 0 && !sameDesign && (
+        <p className="text-body-sm text-fg-muted" data-no-studio-options>
+          This product’s options are chosen on the product page.
+        </p>
+      )}
 
       {orientation && (
         <div className="flex flex-col gap-1.5" data-option={orientation.id} data-option-source="entry">
@@ -100,10 +124,10 @@ export function ProductOptions({ product, workflow, store, issues }: ProductOpti
       )}
 
       {(studioOptions.length > 0 || sameDesign) && (
-        <div className="flex flex-col gap-5 border-t border-border pt-5" data-studio-options>
+        <div className={inStudio && bound.length === 0 ? 'flex flex-col gap-5' : 'flex flex-col gap-5 border-t border-border pt-5'} data-studio-options>
           <div className="flex flex-col gap-0.5">
             <h3 className="text-body font-semibold text-fg">Product details</h3>
-            <p className="text-caption text-fg-muted">Saved with your design. You can change these again in the Design Studio.</p>
+            <p className="text-caption text-fg-muted">{inStudio ? 'Saved with your design. Changes can be undone.' : 'Saved with your design. You can change these again in the Design Studio.'}</p>
           </div>
           {studioOptions.map((option) => (
             <div key={option.id} data-option={option.id} data-option-source="studio">

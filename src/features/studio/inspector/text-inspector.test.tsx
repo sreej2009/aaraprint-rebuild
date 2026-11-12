@@ -74,7 +74,8 @@ async function selectLayer(user: ReturnType<typeof userEvent.setup>, name: strin
 describe('Text tool', () => {
   it('adds a heading centred in the safe area, selected and open for typing', async () => {
     const user = renderStudio();
-    await user.click(screen.getByRole('button', { name: 'Text' }));
+    // Visiting cards open on the Text tool (registry, M4).
+    expect(screen.getByRole('button', { name: 'Text' })).toHaveAttribute('aria-pressed', 'true');
     const panel = screen.getByRole('complementary', { name: 'Text' });
     expect(within(panel).getAllByRole('button', { name: /^Add / }).map((b) => b.getAttribute('aria-label'))).toEqual(['Add heading', 'Add subheading', 'Add body text', 'Add name and title']);
     await user.click(within(panel).getByRole('button', { name: 'Add heading' }));
@@ -93,7 +94,8 @@ describe('Text tool', () => {
 
   it('adds name and title as two layers in one undo step', async () => {
     const user = renderStudio();
-    await user.click(screen.getByRole('button', { name: 'Text' }));
+    // Visiting cards open on the Text tool (registry, M4).
+    expect(screen.getByRole('button', { name: 'Text' })).toHaveAttribute('aria-pressed', 'true');
     await user.click(screen.getByRole('button', { name: 'Add name and title' }));
     expect(rowNames().slice(0, 2)).toEqual(['Job title, text', 'Your Name, text']);
     expect(screen.getByText('Front · 10 items')).toBeInTheDocument();

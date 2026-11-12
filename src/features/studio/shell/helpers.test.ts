@@ -28,10 +28,11 @@ function apis(overrides: { product?: unknown; profile?: unknown; error?: Error }
 const url = (query = '') => new URL(`http://localhost/products/business-card-classic/design${query}`);
 
 describe('loadStudio', () => {
-  it('loads the product and profile, defaulting the variant, side and tool', async () => {
+  it('loads the product and profile; no variant, side or tool unless the URL names one', async () => {
     const result = await loadStudio('business-card-classic', url(), apis());
     expect(result).toMatchObject({ status: 'ready', product: { slug: 'business-card-classic' }, profile: { slug: 'business-card-classic' }, initialSurface: null, initialTool: null });
-    expect(result.status === 'ready' && result.variantId).toBe(card.variants.find((v) => v.isDefault)?.id);
+    // A restored design keeps its own variant; a new one starts on the default (StudioApp).
+    expect(result.status === 'ready' && result.variantId).toBeNull();
   });
 
   it('keeps a valid variant and side from the URL and ignores unknown ones', async () => {
@@ -39,7 +40,7 @@ describe('loadStudio', () => {
     const ok = await loadStudio('business-card-classic', url(`?variantId=${variant.id}&side=back`), apis());
     expect(ok).toMatchObject({ variantId: variant.id, initialSurface: 'back' });
     const bad = await loadStudio('business-card-classic', url('?variantId=nope&side=inside&tool=lasers'), apis());
-    expect(bad).toMatchObject({ variantId: card.variants.find((v) => v.isDefault)?.id, initialSurface: null, initialTool: null });
+    expect(bad).toMatchObject({ variantId: null, initialSurface: null, initialTool: null });
   });
 
   it('opens Uploads for the product page’s “Upload your design” link, or a named tool', async () => {

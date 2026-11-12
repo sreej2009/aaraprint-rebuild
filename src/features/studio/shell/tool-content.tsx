@@ -1,4 +1,7 @@
+import { useMemo } from 'react';
 import { Link } from 'react-router';
+import { ProductOptions } from '@/features/product-options/product-options';
+import { validateConfiguration } from '@/features/product-workflow/validation';
 import { Button } from '@/design-system';
 import { formatINR } from '@/lib/format';
 import { BackgroundTool } from '../tools/background-tool';
@@ -7,7 +10,8 @@ import { ShapesTool } from '../tools/shapes-tool';
 import { TemplatesTool } from '../tools/templates-tool';
 import { TextTool } from '../tools/text-tool';
 import { UploadsTool } from '../tools/uploads-tool';
-import { useStudioSession } from './session-context';
+import { useStudio, useStudioStoreApi } from '../store';
+import { unitPriceCents, useStudioSession } from './session-context';
 import type { ToolDefinition } from './tools';
 
 /** The body of a tool panel, shared by the docked panel, the tablet overlay and phone sheets. */
@@ -51,25 +55,37 @@ function Facts({ rows }: { rows: [string, string | null][] }) {
   );
 }
 
+/**
+ * Product options in the Studio (Phase 4 M4): the M2 options the registry marks editable in the
+ * Studio, bound to this design's configuration (each change one product command: undoable,
+ * autosaved), then the product facts and print size.
+ */
 function ProductDetails() {
-  const { product, variant, variantLabel, print, productHref } = useStudioSession();
+  const { product, variant, variantLabel, print, productHref, workspace, price } = useStudioSession();
+  const store = useStudioStoreApi();
+  const configuration = useStudio((s) => s.document.product.configuration);
+  const workflow = workspace?.workflow ?? null;
+  const issues = useMemo(() => (workflow ? validateConfiguration(product, workflow, configuration) : []), [product, workflow, configuration]);
+  const unit = unitPriceCents(price, variant?.priceCents ?? null);
+  const sku = price?.status === 'priced' ? price.sku : (variant?.sku ?? null);
   return (
     <div className="flex flex-col gap-6">
-      <section aria-labelledby="studio-product-heading" className="flex flex-col gap-3">
+      <section aria-labelledby="studio-product-heading" className="flex flex-col gap-3" data-testid="studio-product-facts">
         <h3 id="studio-product-heading" className="text-body-sm font-semibold text-fg">
           {product.name}
         </h3>
         <Facts
           rows={[
             ['Options', variantLabel || null],
-            ['Price', variant ? formatINR(variant.priceCents) : null],
+            ['Price', unit !== null ? formatINR(unit) : null],
           ]}
         />
-        {variant && <p className="text-caption break-all text-fg-muted">SKU {variant.sku}</p>}
+        {sku && <p className="text-caption break-all text-fg-muted">SKU {sku}</p>}
         <Button asChild variant="secondary" size="sm" className="self-start">
           <Link to={productHref}>Change options</Link>
         </Button>
       </section>
+      {workflow && product.isCustomizable && <ProductOptions product={product} workflow={workflow} store={store} issues={issues} mode="studio" />}
       <section aria-labelledby="studio-print-heading" className="flex flex-col gap-3">
         <h3 id="studio-print-heading" className="text-body-sm font-semibold text-fg">
           Print size

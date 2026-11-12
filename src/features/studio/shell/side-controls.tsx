@@ -1,17 +1,25 @@
+import { useContext } from 'react';
 import { CopyPlus, Ellipsis, Eraser } from 'lucide-react';
 import { Button, ConfirmDialog, Dialog, DialogClose, DialogContent, DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger, IconButton, SegmentedControl } from '@/design-system';
 import { useInteractionStoreApi } from '../canvas/interaction-store';
 import { selectActiveSurface, selectActiveSurfaceId, useStudio, useStudioStoreApi } from '../store';
 import { describeContents, frontToBackPlan, hasSides, isSurfaceEmpty } from './side-rules';
+import { StudioSessionContext } from './session-context';
 import { useStudioUi } from './ui-context';
 import { useSideActions, useSwitchSide } from './use-side-actions';
 
-/** Front / Back, with the number of items on each. Hidden for single-sided products. */
+/**
+ * Front / Back, with the number of items on each. Hidden for single-sided products, and (M4) for
+ * products the registry prints on one surface while the other sides are empty and not being
+ * edited: no needless front/back control, but a design that already uses a side can still reach it.
+ */
 export function SideSwitcher({ size = 'md', className }: { size?: 'sm' | 'md'; className?: string }) {
   const active = useStudio(selectActiveSurfaceId);
   const surfaces = useStudio((s) => s.document.surfaces);
   const switchSide = useSwitchSide();
+  const singleSurface = useContext(StudioSessionContext)?.workspace?.singleSurface ?? false;
   if (surfaces.length < 2) return null;
+  if (singleSurface && active === surfaces[0]?.id && surfaces.slice(1).every(isSurfaceEmpty)) return null;
   return (
     <SegmentedControl
       label="Side"

@@ -38,19 +38,15 @@ export function TextTool() {
     <div className="flex flex-col gap-4">
       <ul className="flex flex-col gap-2">
         {TEXT_PRESETS.map((preset) => (
-          <li key={preset.id}>
-            <button
-              type="button"
-              disabled={!surface}
-              onClick={() => add(preset)}
-              aria-label={`Add ${preset.label.toLowerCase()}`}
-              aria-describedby={`text-preset-${preset.id}`}
-              className="group flex w-full items-center gap-3 rounded-md border border-border bg-surface px-4 py-3 text-left transition-colors hover:border-accent hover:bg-accent-soft/40 disabled:cursor-not-allowed disabled:opacity-50"
-            >
+          <li key={preset.id} className="group relative">
+            {/* The card is a picture of the text; the button laid over it is named by what it does
+                ("Add heading"), so its name never has to repeat the sample text (WCAG 2.5.3). */}
+            <div className="flex w-full items-center gap-3 rounded-md border border-border bg-surface px-4 py-3 text-left transition-colors group-hover:border-accent group-hover:bg-accent-soft/40 group-has-[button:disabled]:opacity-50">
               <span className="flex min-w-0 flex-1 flex-col gap-1">
                 {preset.lines.map((line) => (
                   <span
                     key={line.text}
+                    aria-hidden="true"
                     className="truncate text-fg"
                     style={{ fontFamily: fontCss(line.fontFamily), fontWeight: line.fontWeight, fontSize: line === preset.lines[0] ? PREVIEW_SIZE[preset.id] : '0.8125rem', letterSpacing: `${line.letterSpacing}em`, lineHeight: 1.2 }}
                   >
@@ -64,7 +60,15 @@ export function TextTool() {
               <span aria-hidden="true" className="grid size-8 shrink-0 place-items-center rounded-full bg-surface-subtle text-fg-muted transition-colors group-hover:bg-accent group-hover:text-fg-on-accent">
                 <Plus className="size-4" />
               </span>
-            </button>
+            </div>
+            <button
+              type="button"
+              disabled={!surface}
+              onClick={() => add(preset)}
+              aria-label={`Add ${preset.label.toLowerCase()}`}
+              aria-describedby={`text-preset-${preset.id}`}
+              className="absolute inset-0 rounded-md disabled:cursor-not-allowed"
+            />
           </li>
         ))}
       </ul>

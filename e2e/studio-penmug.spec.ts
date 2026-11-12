@@ -2,7 +2,7 @@ import AxeBuilder from '@axe-core/playwright';
 import type { Download, Page } from '@playwright/test';
 import { readFileSync } from 'node:fs';
 import type KonvaNamespace from 'konva';
-import { expect, settleAnimations, test } from './fixtures';
+import { expect, settleAnimations, test, openTool } from './fixtures';
 import { clearedStandIn, INDIGO, MARK_RGB, MUG_RGB, near, PEN_RGB, placed } from './product-fixtures';
 
 /**
@@ -98,7 +98,7 @@ async function setBackground(page: Page, name: string) {
 }
 
 async function addHeading(page: Page, text: string) {
-  await page.getByRole('navigation', { name: 'Design tools' }).getByRole('button', { name: 'Text', exact: true }).click();
+  await openTool(page, 'Text');
   await page.getByRole('button', { name: 'Add heading' }).click();
   await page.keyboard.type(text);
   await page.keyboard.press('Control+Enter');
@@ -339,7 +339,8 @@ test.describe('desktop: rights, saving and proofs', () => {
         ),
       )
       .toEqual(['Saved on the pen']);
-    await expect(region(page)).toHaveAttribute('data-view', 'flat');
+    // A new session opens on the product (M4 product-first); the view itself was never saved.
+    await expect(region(page)).toHaveAttribute('data-view', 'product');
   });
 
   test('H · proofs are byte-for-byte the same flat and on the product, for a pen and a mug', async ({ page }) => {

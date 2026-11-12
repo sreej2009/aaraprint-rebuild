@@ -117,14 +117,15 @@ async function storedDesign(page: Page) {
 test.describe('desktop: on the product', () => {
   test.skip(({ hasTouch, isMobile }) => hasTouch || isMobile, 'mouse and keyboard');
 
-  test('1 · a cleared stand-in: Flat first, then the photo with the artwork in the original place (pixels), front and back', async ({ page }) => {
+  test('1 · a cleared stand-in: the Preview starts Flat, then the photo with the artwork in the original place (pixels), front and back', async ({ page }) => {
     await clearedStandIn(page);
     await open(page);
     await setBackground(page, 'Deep indigo');
     await openPreview(page);
     await expect(option(page, 'Flat')).toHaveAttribute('aria-checked', 'true');
     await expect(preview(page).getByTestId('preview-area')).toHaveAttribute('data-view', 'flat');
-    expect(mediaRequests.filter((p) => p.includes('studio-fixtures'))).toEqual([]); // only loaded when asked for
+    // The canvas behind opens on the product (M4), so only its front photo has been loaded.
+    expect(mediaRequests.filter((p) => p.includes('studio-fixtures'))).toEqual(['/media/studio-fixtures/umbrella-golf-front.png']);
 
     await onTheProduct(page);
     const front = placed(BOXES.front);

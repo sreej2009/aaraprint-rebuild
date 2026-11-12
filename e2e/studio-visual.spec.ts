@@ -99,7 +99,9 @@ test('screenshot text editing and text properties', async ({ page, hasTouch, isM
   await page.goto('/products/business-card-classic/design?sample=1');
   await samplePoint(page, 0, 0);
   const tools = page.getByRole('navigation', { name: 'Design tools' });
-  await (hasTouch ? tools.getByRole('button', { name: 'Text', exact: true }).tap() : tools.getByRole('button', { name: 'Text', exact: true }).click());
+  // Visiting cards open on Text where panels dock (registry, Phase 4 M4): don't toggle it shut.
+  const textTool = tools.getByRole('button', { name: 'Text', exact: true });
+  if ((await textTool.getAttribute('aria-pressed')) !== 'true') await (hasTouch ? textTool.tap() : textTool.click());
   if (!hasTouch && !isMobile) await page.screenshot({ path: `review-screens/${info.project.name}-studio-text-tool.png` });
   await page.getByRole('button', { name: 'Add subheading' }).click();
   await page.keyboard.type('Design & Print Studio');
@@ -373,7 +375,8 @@ test('screenshot print check', async ({ page, hasTouch, isMobile }, info) => {
     await openChecks();
     await shot('print-check-empty');
     await page.keyboard.press('Escape');
-    await page.getByRole('navigation', { name: 'Design tools' }).getByRole('button', { name: 'Text', exact: true }).click();
+    const textTool = page.getByRole('navigation', { name: 'Design tools' }).getByRole('button', { name: 'Text', exact: true });
+    if ((await textTool.getAttribute('aria-pressed')) !== 'true') await textTool.click();
     await page.getByRole('button', { name: 'Add heading' }).click();
     await page.keyboard.type('Riya Sharma');
     await page.keyboard.press('Control+Enter');

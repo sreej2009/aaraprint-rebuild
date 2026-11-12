@@ -63,7 +63,8 @@ describe('Studio shell — desktop (≥ 1280 px)', () => {
     expect(within(banner).getByText(/100 cards · Classic Black/)).toBeInTheDocument();
     expect(within(banner).getByText('₹229')).toBeInTheDocument();
     expect(screen.getByRole('navigation', { name: 'Design tools' })).toBeInTheDocument();
-    expect(screen.getByRole('complementary', { name: 'Templates' })).toBeInTheDocument(); // panel open by default
+    // Opens on the tool the registry names for visiting cards (Text, as on the original; M4).
+    expect(screen.getByRole('complementary', { name: 'Text' })).toBeInTheDocument();
     expect(screen.getByRole('complementary', { name: 'Layers and properties' })).toBeInTheDocument();
     const canvas = screen.getByRole('region', { name: /^Design canvas: Front, 88\.9.×.50\.8.mm$/ });
     expect(within(canvas).getByText(/300.DPI/)).toBeInTheDocument();
@@ -78,19 +79,19 @@ describe('Studio shell — desktop (≥ 1280 px)', () => {
   it('toggles tool panels from the rail; Escape closes and returns focus', async () => {
     const { user } = renderStudio();
     const text = screen.getByRole('button', { name: 'Text' });
-    await user.click(text);
     expect(text).toHaveAttribute('aria-pressed', 'true');
-    expect(screen.getByRole('heading', { level: 2, name: 'Text' })).toBeInTheDocument();
-    // The Text tool works since M8; tools still to come say so.
-    expect(screen.getByRole('button', { name: 'Add heading' })).toBeInTheDocument();
     await user.click(text);
     expect(text).toHaveAttribute('aria-pressed', 'false');
     expect(screen.queryByRole('complementary', { name: 'Text' })).not.toBeInTheDocument();
+    await user.click(text);
+    expect(text).toHaveAttribute('aria-pressed', 'true');
+    expect(screen.getByRole('heading', { level: 2, name: 'Text' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Add heading' })).toBeInTheDocument();
 
-    await user.click(screen.getByRole('button', { name: 'Product' }));
+    await user.click(screen.getByRole('button', { name: 'Product options' }));
     await user.click(screen.getByRole('button', { name: 'Close panel' }));
-    expect(screen.queryByRole('complementary', { name: 'Product and print size' })).not.toBeInTheDocument();
-    expect(screen.getByRole('button', { name: 'Product' })).toHaveFocus();
+    expect(screen.queryByRole('complementary', { name: 'Product options' })).not.toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Product options' })).toHaveFocus();
 
     await user.click(screen.getByRole('button', { name: 'Help' }));
     await user.tab(); // Help is the last rail button; the panel comes next
@@ -103,7 +104,7 @@ describe('Studio shell — desktop (≥ 1280 px)', () => {
 
   it('shows the product and print size in the Product panel', async () => {
     const { user } = renderStudio({ initialTool: 'product' });
-    const panel = screen.getByRole('complementary', { name: 'Product and print size' });
+    const panel = screen.getByRole('complementary', { name: 'Product options' });
     const text = (panel.textContent ?? '').replaceAll(String.fromCharCode(0xa0), ' ');
     for (const fact of ['88.9 × 50.8 mm', '91.9 × 53.8 mm', '1.5 mm each side', '2 mm from the edge', '300 DPI', 'Rectangle', 'Front and back', '₹229']) {
       expect(text).toContain(fact);
@@ -151,7 +152,7 @@ describe('Studio shell — desktop (≥ 1280 px)', () => {
 describe('Studio shell — laptop and tablet', () => {
   it('laptop: docked panel, inspector in a drawer', async () => {
     const { user } = renderStudio({ width: 1100 });
-    expect(screen.getByRole('complementary', { name: 'Templates' })).toBeInTheDocument();
+    expect(screen.getByRole('complementary', { name: 'Text' })).toBeInTheDocument();
     expect(screen.queryByRole('complementary', { name: 'Layers and properties' })).not.toBeInTheDocument();
     await user.click(screen.getByRole('button', { name: 'Layers and properties' }));
     const drawer = await screen.findByRole('dialog', { name: 'Layers and properties' });

@@ -1,6 +1,6 @@
 import type { Page } from '@playwright/test';
 import type KonvaNamespace from 'konva';
-import { expect, test } from './fixtures';
+import { expect, test, openTool } from './fixtures';
 
 /**
  * Saving designs in the browser (Phase 3 M11) with the real IndexedDB: autosave, Save now,
@@ -36,7 +36,7 @@ async function canvas(page: Page) {
 }
 
 async function addHeading(page: Page, text: string) {
-  await page.getByRole('navigation', { name: 'Design tools' }).getByRole('button', { name: 'Text', exact: true }).click();
+  await openTool(page, 'Text');
   await page.getByRole('button', { name: 'Add heading' }).click();
   await page.keyboard.type(text);
   await page.keyboard.press('Control+Enter');

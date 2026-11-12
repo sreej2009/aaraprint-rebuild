@@ -36,15 +36,11 @@ export interface ViewportState {
   showGuides: boolean;
   /**
    * Edit on the product photo instead of the flat sheet (Phase 4 M2), where the product allows it.
-   * View state like zoom: never saved, never undone; a new Studio session starts flat.
+   * View state like zoom: never saved, never undone. Since M4 a session starts in its workspace's
+   * view (product-first families on the product). The product's colour is not view state: it is
+   * the design's product configuration (M4, replacing the M3 view-only colour).
    */
   productView: boolean;
-  /**
-   * The product colour chosen for the photo (Phase 4 M3; a catalogue option value id), or null for
-   * the default (the variant's colour). View state, shared by the canvas and the Preview: never
-   * saved, never undone, and it never changes the variant or the price.
-   */
-  productColour: string | null;
   /** The side on screen, and the views of the others, as they were left. */
   surfaceId: string | null;
   saved: Readonly<Record<string, SavedView>>;
@@ -80,7 +76,6 @@ export interface ViewportActions {
   setViewport(viewport: Viewport): void;
   setShowGuides(show: boolean): void;
   setProductView(on: boolean): void;
-  setProductColour(id: string | null): void;
 }
 
 export type ViewportStore = StoreApi<ViewportState>;
@@ -120,7 +115,7 @@ export function limitsOf(state: Pick<ViewportState, 'area' | 'content' | 'dpi'>)
   return zoomLimits(zoomPercent(fitScaleFor(state), state.dpi));
 }
 
-export function createViewportStore(initial: { showGuides?: boolean } = {}): ViewportStore {
+export function createViewportStore(initial: { showGuides?: boolean; productView?: boolean } = {}): ViewportStore {
   return createStore<ViewportState>()((set, get) => {
     const fitted = (area: Size, content: Rect): Viewport => fitViewport(area, content, workspacePadding(area.width));
     const ready = () => {
@@ -228,10 +223,6 @@ export function createViewportStore(initial: { showGuides?: boolean } = {}): Vie
       setProductView(on) {
         set({ productView: on });
       },
-
-      setProductColour(id) {
-        set({ productColour: id });
-      },
     };
 
     return {
@@ -241,8 +232,7 @@ export function createViewportStore(initial: { showGuides?: boolean } = {}): Vie
       mode: 'fit',
       viewport: { scale: 1, x: 0, y: 0 },
       showGuides: initial.showGuides ?? readGuidesPreference(),
-      productView: false,
-      productColour: null,
+      productView: initial.productView ?? false,
       surfaceId: null,
       saved: {},
       actions,

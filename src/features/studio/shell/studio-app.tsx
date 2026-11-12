@@ -1,5 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useSearchParams } from 'react-router';
+import { useStore } from 'zustand';
+import { resolvePrice } from '@/features/product-workflow/pricing';
 import type { Product } from '@/lib/catalogue/types';
 import { describePrint } from '../profile/describe';
 import type { StudioProfile } from '../profile/types';
@@ -24,6 +26,8 @@ import { StudioLoading, StudioOpenProblem } from './studio-states';
 import type { ToolId } from './tools';
 import { StudioUiProvider } from './ui-provider';
 import { resolveStudioVariant, variantSummary } from './variant';
+import { resolveWorkspace } from '../workspace/workspace';
+import { TOOL_FOR_INITIAL } from './tools';
 // The Studio's own typefaces (decision D3), loaded only here.
 import '../assets/studio-fonts.css';
 
@@ -117,7 +121,11 @@ function EditorSession({ product, profile, variantId, initialSurface, initialToo
     if (restored) studio.getState().actions.syncProductVariant(effectiveVariantId);
     return studio;
   });
-  const [viewportStore] = useState(() => createViewportStore());
+  // The workspace comes from the design's persisted product configuration (M4): product-first
+  // families open on the product straight away (no flat first, no flicker).
+  const familyId = useStore(store, (s) => s.document.product.familyId);
+  const workspace = useMemo(() => resolveWorkspace({ slug: product.slug, familyId }, profile), [product.slug, familyId, profile]);
+  const [viewportStore] = useState(() => createViewportStore({ productView: workspace.initialView === 'product' }));
   const [interactionStore] = useState(() => createInteractionStore());
   const [controller] = useState<SaveController>(() =>
     createSaveController({
@@ -139,8 +147,13 @@ function EditorSession({ product, profile, variantId, initialSurface, initialToo
     return () => setAssetSource(null);
   }, [repository]);
 
+  // What's being designed follows the design itself: a product option changed in the Studio
+  // updates the variant, SKU and price shown everywhere (M4).
+  const designVariantId = useStore(store, (s) => s.document.product.variantId);
+  const configuration = useStore(store, (s) => s.document.product.configuration);
+  const price = useMemo(() => resolvePrice(product, workspace.workflow, configuration), [product, workspace.workflow, configuration]);
   const session = useMemo<StudioSession>(() => {
-    const variant = resolveStudioVariant(product, effectiveVariantId);
+    const variant = resolveStudioVariant(product, designVariantId ?? effectiveVariantId);
     const params = new URLSearchParams(variant ? { variantId: variant.id } : {});
     return {
       product,
@@ -150,8 +163,10 @@ function EditorSession({ product, profile, variantId, initialSurface, initialToo
       print: describePrint(profile),
       productHref: `/products/${product.slug}${params.size ? `?${params}` : ''}`,
       startNewDesign: onStartNew,
+      workspace,
+      price,
     };
-  }, [product, profile, effectiveVariantId, onStartNew]);
+  }, [product, profile, designVariantId, effectiveVariantId, onStartNew, workspace, price]);
 
   return (
     <StudioProvider store={store}>
@@ -160,9 +175,10 @@ function EditorSession({ product, profile, variantId, initialSurface, initialToo
         <StudioSessionContext.Provider value={session}>
           <ViewportStoreContext.Provider value={viewportStore}>
             <InteractionStoreContext.Provider value={interactionStore}>
-              <StudioUiProvider initialTool={initialTool}>
+              <StudioUiProvider initialTool={initialTool} defaultTool={TOOL_FOR_INITIAL[workspace.initialTool]}>
                 <SideInUrl />
                 <DesignInUrl />
+                <VariantInUrl />
                 <Shortcuts viewport={viewportStore} interaction={interactionStore} />
                 <StudioShell />
               </StudioUiProvider>
@@ -197,6 +213,22 @@ function SideInUrl() {
     else next.delete('side');
     setParams(next, { replace: true, preventScrollReset: true });
   }, [active, first, params, setParams]);
+  return null;
+}
+
+/**
+ * A `?variantId=` in the URL follows the design's variant (M4: Product options can change it in
+ * the Studio), so a reload or a shared link never undoes a choice made here. It is never added.
+ */
+function VariantInUrl() {
+  const variantId = useStudio((s) => s.document.product.variantId);
+  const [params, setParams] = useSearchParams();
+  useEffect(() => {
+    if (!params.has('variantId') || !variantId || params.get('variantId') === variantId) return;
+    const next = new URLSearchParams(params);
+    next.set('variantId', variantId);
+    setParams(next, { replace: true, preventScrollReset: true });
+  }, [variantId, params, setParams]);
   return null;
 }
 

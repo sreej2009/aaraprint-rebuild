@@ -1,10 +1,10 @@
 import { useContext, useMemo } from 'react';
 import { useImage } from '../assets/image-cache';
-import { useViewport, useViewportStoreApi } from '../canvas/viewport-context';
 import type { Rect } from '../geometry/boxes';
 import type { StudioProductColour, StudioProfile } from '../profile/types';
 import type { SurfaceDesign } from '../schema/types';
 import { StudioSessionContext } from '../shell/session-context';
+import { useStudio } from '../store';
 import { chooseColour, placeArtwork, productBounds, productColoursOf, productViewFor, tintFor, type PlacedArtwork, type ProductColours, type ProductView } from './product-view';
 import { latestTint, useTint } from './tint-renderer';
 
@@ -84,18 +84,17 @@ export function useProductView(profile: StudioProfile | null, surface: SurfaceDe
 export interface ProductColourChoice {
   colours: ProductColours | null;
   colour: StudioProductColour | null;
-  choose(id: string): void;
 }
 
 /**
- * The product colour shown on the photo, shared by the canvas and the Preview: chosen in this
- * session (viewport store), else the variant's colour, else the product's default. View state only.
+ * The product colour shown on the photo, shared by the canvas and the Preview (M4): the colour the
+ * design's product configuration orders (its catalogue colour option, chosen in Product options
+ * and saved, undone and autosaved with the design), else the product's default. Not view state.
  */
 export function useProductColour(profile: StudioProfile | null): ProductColourChoice {
-  const store = useViewportStoreApi();
-  const chosen = useViewport((s) => s.productColour);
+  const options = useStudio((s) => s.document.product.configuration.options);
   const variant = useContext(StudioSessionContext)?.variant;
   const colours = useMemo(() => (profile ? productColoursOf(profile) : null), [profile]);
-  const colour = useMemo(() => (colours ? chooseColour(colours, chosen, variant?.optionValueIds) : null), [colours, chosen, variant]);
-  return { colours, colour, choose: (id) => store.getState().actions.setProductColour(id) };
+  const colour = useMemo(() => (colours ? chooseColour(colours, null, [...Object.values(options), ...(variant?.optionValueIds ?? [])]) : null), [colours, options, variant]);
+  return { colours, colour };
 }

@@ -1,4 +1,5 @@
 import { CircleQuestionMark, ImageUp, LayoutTemplate, Package, PaintBucket, Shapes, Sparkles, Type, type LucideIcon } from 'lucide-react';
+import type { InitialTool } from '@/features/product-workflow/types';
 
 export type ToolId = 'templates' | 'text' | 'uploads' | 'graphics' | 'shapes' | 'background' | 'product' | 'help';
 
@@ -22,12 +23,12 @@ export const TOOLS: readonly ToolDefinition[] = [
   { id: 'graphics', label: 'Graphics', title: 'Graphics', icon: Sparkles, intro: 'Icons, badges and illustrations for your design.', comingSoon: false },
   { id: 'shapes', label: 'Shapes', title: 'Shapes', icon: Shapes, intro: 'Rectangles, circles, lines, stars and arrows.', comingSoon: false },
   { id: 'background', label: 'Background', title: 'Background', icon: PaintBucket, intro: 'Colour the whole side, right to the edge.', comingSoon: false },
-  { id: 'product', label: 'Product', title: 'Product and print size', icon: Package, intro: 'What you’re designing and how it will print.', comingSoon: false },
+  { id: 'product', label: 'Product options', title: 'Product options', icon: Package, intro: 'Your product choices are saved with the design and set what is ordered.', comingSoon: false },
   { id: 'help', label: 'Help', title: 'Print tips', icon: CircleQuestionMark, intro: 'How to get a sharp, well-trimmed print.', comingSoon: false },
 ];
 
-/** Rail order: design tools, then product; Help sits at the bottom of the rail. */
-export const RAIL_TOOLS = TOOLS.filter((t) => t.id !== 'help');
+/** Rail order: Product options first (product-first, as the original), then the design tools; Help sits at the bottom. */
+export const RAIL_TOOLS = [toolById('product'), ...TOOLS.filter((t) => t.id !== 'help' && t.id !== 'product')];
 export const HELP_TOOL = TOOLS.find((t) => t.id === 'help')!;
 
 /** Phone bottom toolbar; everything else lives under "More". */
@@ -39,6 +40,9 @@ export function toolById(id: ToolId): ToolDefinition {
   if (!tool) throw new Error(`Unknown tool "${id}"`);
   return tool;
 }
+
+/** The registry's initial tool (as observed on the original) → this Studio's tool. */
+export const TOOL_FOR_INITIAL: Record<InitialTool, ToolId> = { 'product-options': 'product', text: 'text', uploads: 'uploads' };
 
 export function isToolId(value: string | null): value is ToolId {
   return TOOLS.some((t) => t.id === value);

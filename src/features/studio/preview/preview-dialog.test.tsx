@@ -290,8 +290,8 @@ describe('on the product (Phase 4 M1)', () => {
     expect(option('Flat')).toHaveAttribute('aria-checked', 'true');
     expect(option('On the product')).toHaveAttribute('aria-checked', 'false');
     expect(within(dialog()).getByTestId('preview-area')).toHaveAttribute('data-view', 'flat');
-    // Nothing is loaded until it's asked for.
-    expect(fixturePhotos()).toEqual([]);
+    // The canvas behind is product-first (M4), so only the front photo it shows has been loaded.
+    expect(fixturePhotos()).toEqual(['/media/studio-fixtures/umbrella-front.png']);
 
     await user.click(option('On the product'));
     expect(option('On the product')).toHaveAttribute('aria-checked', 'true');

@@ -5,11 +5,11 @@ import { useStudioLayout, type StudioLayout } from './use-studio-layout';
 
 const docksPanel = (layout: StudioLayout) => layout === 'laptop' || layout === 'desktop';
 
-export function StudioUiProvider({ initialTool, children }: { initialTool: ToolId | null; children: ReactNode }) {
+export function StudioUiProvider({ initialTool, defaultTool = 'templates', children }: { initialTool: ToolId | null; defaultTool?: ToolId; children: ReactNode }) {
   const layout = useStudioLayout();
   // Laptops and desktops open with a panel docked; phones and tablets start with the canvas only,
   // unless a tool was asked for (e.g. "Upload your design" on the product page).
-  const [activeTool, setActiveTool] = useState<ToolId | null>(() => initialTool ?? (docksPanel(layout) ? 'templates' : null));
+  const [activeTool, setActiveTool] = useState<ToolId | null>(() => initialTool ?? (docksPanel(layout) ? defaultTool : null));
   const [inspectorOpen, setInspectorOpen] = useState(false);
   const [moreOpen, setMoreOpen] = useState(false);
   const [sideDialog, openSideDialog] = useState<SideDialog | null>(null);

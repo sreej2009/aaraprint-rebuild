@@ -90,8 +90,11 @@ async function flow(page: Page, slug: string, photo: 'ok' | 'pen', expectPhoto: 
   const [frontBox, backBox] = profile.sides.map((s) => boxOf(s.placement));
   await clearedStandIn(page, slug, { photo });
   await startDesigning(page, slug);
-  // 3 · the choice is there, Flat first.
-  await expect(canvasChoice(page).getByRole('radio', { name: 'Flat' })).toHaveAttribute('aria-checked', 'true');
+  // 3 · product-first (Phase 4 M4): the Studio opens on the product; Flat is there for precise work.
+  await expect(canvasChoice(page).getByRole('radio', { name: 'On the product' })).toHaveAttribute('aria-checked', 'true');
+  await expect(region(page)).toHaveAttribute('data-view', 'product');
+  await canvasChoice(page).getByRole('radio', { name: 'Flat' }).click();
+  await expect(region(page)).toHaveAttribute('data-view', 'flat');
   // Some artwork: a background colour on the front.
   await page.getByRole('navigation', { name: 'Design tools' }).getByRole('button', { name: 'Background' }).click();
   await page.getByRole('complementary', { name: 'Background' }).getByRole('button', { name: 'Deep indigo' }).click();

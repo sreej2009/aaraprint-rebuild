@@ -15,10 +15,10 @@ import { ZoomAnnouncer, ZoomControl } from '../canvas/zoom-control';
 import { finishedSizeMm, printBoxes } from '../geometry/boxes';
 import { fitScale, workspacePadding } from '../geometry/fit';
 import { formatSize } from '../profile/describe';
-import { ProductColourPicker } from '../product-view/colour-picker';
 import { COLOUR_UNAVAILABLE, colourUnavailable, photoRect } from '../product-view/product-view';
 import { useProductColour, useProductColourOffered, useProductView, useProductViewOffered } from '../product-view/use-product-view';
 import { ProductViewToggle } from '../product-view/view-toggle';
+import { workspaceNote } from '../workspace/workspace';
 import type { SurfaceDesign } from '../schema/types';
 import { selectActiveSurface, useStudio, useStudioStoreApi } from '../store';
 import { CANVAS_HELP_ID, CANVAS_REGION_ID } from './dom-ids';
@@ -76,12 +76,19 @@ export function CanvasWorkspace({ zoomPill = false, onStage }: CanvasWorkspacePr
    * shows the whole photo. Every editing tool works as on the flat sheet. The choice is view state
    * (viewport store): never saved, never undone. Unsupported products stay exactly as before.
    */
-  const profile = useContext(StudioSessionContext)?.profile ?? null;
+  const session = useContext(StudioSessionContext);
+  const profile = session?.profile ?? null;
+  // The workspace for this design's family (M4): product-first families start on the product and
+  // have no flat switch; the switch appears only where the original had both views and the
+  // product can be shown.
+  const workspace = session?.workspace;
   const surfaces = useStudio((s) => s.document.surfaces);
   const wantProduct = useViewport((s) => s.productView);
-  const offered = useProductViewOffered(profile, surfaces);
-  // The product colour (M3): the photo's fabric recoloured with its mask; the design never changes.
-  const { colours, colour, choose } = useProductColour(profile);
+  // The workspace decides whether this family is shown on its product photo (rights still gate it).
+  const photoAvailable = useProductViewOffered(profile, surfaces);
+  const offered = photoAvailable && (!workspace || workspace.representation === 'product-photo');
+  // The product colour: the design's ordered colour (Product options), recoloured with the mask.
+  const { colour } = useProductColour(profile);
   const colourOffered = useProductColourOffered(profile, surfaces);
   const product = useProductView(profile, surface, offered && wantProduct, colourOffered ? colour : null);
   const onProduct = product.status === 'loading' || product.status === 'ready';
@@ -90,6 +97,8 @@ export function CanvasWorkspace({ zoomPill = false, onStage }: CanvasWorkspacePr
   const notes = [product.status === 'unavailable' ? CANVAS_PRODUCT_UNAVAILABLE : null, onProduct && colourOffered && colourUnavailable(product.view, colour, product.tint) ? COLOUR_UNAVAILABLE : null].filter(
     (note): note is string => note !== null,
   );
+  const flatNote = workspace && product.status !== 'unavailable' ? workspaceNote(workspace, onProduct, offered) : null;
+  const showToggle = offered && (workspace ? workspace.toggle : true);
   const content = useMemo(() => (print ? (onProduct && product.bounds ? product.bounds : printBoxes(print).bleed) : null), [print, onProduct, product.bounds]);
   // Phones edit text in a bottom sheet (room for the keyboard); larger screens edit in place.
   const sheetEditing = useContext(StudioUiContext)?.layout === 'phone';
@@ -139,6 +148,7 @@ export function CanvasWorkspace({ zoomPill = false, onStage }: CanvasWorkspacePr
       data-studio-keys=""
       data-studio-canvas=""
       data-view={onProduct ? 'product' : 'flat'}
+      data-workspace={workspace?.kind}
       data-tint={onProduct ? product.tint : undefined}
       className="relative flex h-full min-h-0 flex-col bg-surface-sunken focus-visible:-outline-offset-2 data-pointer-focus:outline-none"
     >
@@ -204,15 +214,20 @@ export function CanvasWorkspace({ zoomPill = false, onStage }: CanvasWorkspacePr
         <p>
           <span className="font-semibold text-fg">{surface.label}</span> · {sizeText} · {surface.print.dpi} DPI{onProduct && (import.meta.env.DEV && profile?.devFixtures ? ' · on a stand-in photo (development only)' : ' · on a product photo')}
         </p>
-        {offered && (
+        {showToggle && (
           <ProductViewToggle
             label="Canvas view"
             testId="canvas-view-toggle"
             value={wantProduct ? 'product' : 'flat'}
+            flatLabel={workspace?.flatLabel}
             onChange={(next) => viewportStore.getState().actions.setProductView(next === 'product')}
           />
         )}
-        {onProduct && colourOffered && colours && colour && <ProductColourPicker colours={colours.options} value={colour.id} onChange={choose} testId="canvas-colours" />}
+        {flatNote && (
+          <p className="w-full text-caption text-fg-muted md:w-auto" data-testid="canvas-workspace-note">
+            {flatNote}
+          </p>
+        )}
         <GuideLegend hasBleed={surface.print.bleedPx > 0} dimmed={!showGuides} />
       </footer>
     </section>

@@ -9,7 +9,7 @@ import { ZoomControl } from '../canvas/zoom-control';
 import { PrintCheckButton } from '../preflight/print-check-dialog';
 import { PreviewButton } from '../preview/preview-dialog';
 import { SaveStatus } from './save-status';
-import { useStudioSession } from './session-context';
+import { unitPriceCents, useStudioSession } from './session-context';
 import { SideMenu, SideSwitcher } from './side-controls';
 import { useStudioUi } from './ui-context';
 
@@ -116,7 +116,8 @@ function HistoryButtons() {
 }
 
 function ProductSummary() {
-  const { product, variant, variantLabel } = useStudioSession();
+  const { product, variant, variantLabel, price } = useStudioSession();
+  const unit = unitPriceCents(price, variant?.priceCents ?? null);
   return (
     <div className="flex max-w-72 min-w-0 flex-col items-end text-right leading-tight">
       <p className="truncate text-caption text-fg-muted" title={product.name}>
@@ -124,7 +125,7 @@ function ProductSummary() {
       </p>
       <p className="truncate text-body-sm text-fg" title={variantLabel}>
         {variantLabel && <span className="text-fg-muted">{variantLabel} · </span>}
-        {variant && <span className="font-semibold tabular-nums">{formatINR(variant.priceCents)}</span>}
+        {unit !== null && <span className="font-semibold tabular-nums" data-testid="studio-price">{formatINR(unit)}</span>}
       </p>
     </div>
   );

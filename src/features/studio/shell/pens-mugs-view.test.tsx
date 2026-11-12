@@ -101,11 +101,10 @@ async function openPreviewOnProduct(user: ReturnType<typeof userEvent.setup>) {
 }
 
 describe('pens', () => {
-  it('offer the product view; the family’s front and back photos load only when shown; no colour choice', async () => {
+  it('open on the product (M4); each side’s photo loads only when that side is shown; no colour choice', async () => {
     const user = renderStudio('pen-gold-click');
     await screen.findByRole('region', { name: /^Design canvas: / });
-    expect(requested.filter((u) => u.includes('pens-2d'))).toEqual([]);
-    await onTheProduct(user);
+    await waitFor(() => expect(canvas()).toHaveAttribute('data-view', 'product'));
     expect(canvas()).toHaveAccessibleName(/^Design canvas: Front, .+, on the product$/);
     await waitFor(() => expect(requested.filter((u) => u.includes('pens-2d'))).toEqual(['/media/products/pens-2d/classic-front.png']));
     await user.click(sideRadio('Back'));
