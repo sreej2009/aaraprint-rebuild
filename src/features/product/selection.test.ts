@@ -4,7 +4,13 @@ import { describe, expect, it } from 'vitest';
 import type { Product, ProductSummary } from '@/lib/catalogue/types';
 import { defaultSelection, resolveVariant } from '@/lib/pricing';
 import { galleryImages } from './gallery';
-import { displayFor, priceSummary, printSpecs, selectionForVariant, unavailableReason, unitLabel } from './selection';
+import { emptyConfiguration } from '@/features/product-workflow/configuration';
+import { resolvePrice } from '@/features/product-workflow/pricing';
+import { productWorkflow } from '@/features/product-workflow/registry';
+import { displayFor, printSpecs, selectionForVariant, unavailableReason, unitLabel } from './selection';
+
+/** The product page prices through the product-workflow resolver (Phase 4 M2). */
+const priceOf = (product: Product, options: Record<string, string>, quantity: number) => resolvePrice(product, productWorkflow(product.slug), { ...emptyConfiguration(), options, quantity });
 
 const root = path.resolve('public/api/v1/catalogue');
 const load = (slug: string) => JSON.parse(fs.readFileSync(path.join(root, 'products', `${slug}.json`), 'utf8')) as Product;
@@ -19,12 +25,15 @@ describe('every product page can be priced', () => {
     }
   });
 
-  it('prices every SKU exactly: summary total = SKU price × sets', () => {
+  it('prices every SKU exactly: total = SKU price × sets', () => {
     for (const product of all) {
       for (const variant of product.variants) {
         const selection = selectionForVariant(product, variant.id)!;
-        expect(priceSummary(product, selection, 1).totalCents, variant.sku).toBe(variant.priceCents);
-        expect(priceSummary(product, selection, 3).totalCents, variant.sku).toBe(variant.priceCents * 3);
+        const one = priceOf(product, selection, 1);
+        const three = priceOf(product, selection, 3);
+        expect(one.status === 'priced' && one.sku, product.slug).toBe(variant.sku);
+        expect(one.status === 'priced' && one.totalPriceCents, variant.sku).toBe(variant.priceCents);
+        expect(three.status === 'priced' && three.totalPriceCents, variant.sku).toBe(variant.priceCents * 3);
       }
     }
   });
@@ -56,9 +65,9 @@ describe('selection helpers', () => {
 
   it('computes per-unit price with sets', () => {
     const variant = cards.variants.find((v) => v.sku === 'BUSINESS-CARD-CLASSIC-QTY-250-INK-CLASSIC-BLACK')!;
-    const summary = priceSummary(cards, selectionForVariant(cards, variant.id)!, 2);
-    expect(summary).toMatchObject({ totalCents: 75800, units: 500 });
-    expect(summary.unitCents).toBeCloseTo(151.6);
+    const price = priceOf(cards, selectionForVariant(cards, variant.id)!, 2);
+    expect(price.status === 'priced' && [price.totalPriceCents, price.piecesPerUnit! * price.quantity]).toEqual([75800, 500]);
+    expect(price.status === 'priced' && price.totalPriceCents / 500).toBeCloseTo(151.6);
   });
 
   it('flags combinations that have no SKU', () => {

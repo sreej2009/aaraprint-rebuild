@@ -1,5 +1,5 @@
 import { swatchFor } from '@/lib/catalogue/colours';
-import type { OptionGroup, PrintConfig, Product, Variant } from '@/lib/catalogue/types';
+import type { OptionGroup, PrintConfig, Product } from '@/lib/catalogue/types';
 import { quantityGroup, resolveVariant, type Selection } from '@/lib/pricing';
 
 export type GroupDisplay = 'tiers' | 'swatches' | 'chips' | 'select';
@@ -41,23 +41,6 @@ export function unitLabel(product: Pick<Product, 'optionGroups'>): string {
   if (word.endsWith('ies')) return `${word.slice(0, -3)}y`;
   if (/(ches|shes|xes)$/.test(word)) return word.slice(0, -2);
   return word.endsWith('s') && !word.endsWith('ss') ? word.slice(0, -1) : word;
-}
-
-export interface PriceSummary {
-  variant: Variant | undefined;
-  totalCents: number;
-  /** Units included (tier quantity × sets), when the product has quantity tiers. */
-  units: number | null;
-  unitCents: number | null;
-}
-
-export function priceSummary(product: Pick<Product, 'optionGroups' | 'variants'>, selection: Selection, sets: number): PriceSummary {
-  const variant = resolveVariant(product, selection);
-  const totalCents = (variant?.priceCents ?? 0) * sets;
-  const qtyGroup = quantityGroup(product);
-  const tierQuantity = qtyGroup ? qtyGroup.values.find((v) => v.id === selection[qtyGroup.id])?.quantity ?? null : null;
-  const units = tierQuantity ? tierQuantity * sets : null;
-  return { variant, totalCents, units, unitCents: units ? totalCents / units : null };
 }
 
 // ------------------------------------------------------------- Print specs

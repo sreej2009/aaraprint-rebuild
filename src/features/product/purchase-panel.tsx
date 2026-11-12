@@ -1,27 +1,40 @@
 import { CircleCheck, PenTool, RefreshCcw, Truck, Upload, Wallet } from 'lucide-react';
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { Link } from 'react-router';
-import { Badge, Button, Callout, Price, QuantityStepper } from '@/design-system';
+import { useStore } from 'zustand';
+import { Badge, Button, Callout, Price } from '@/design-system';
 import { business } from '@/config/business';
 import { designHref } from '@/features/catalogue/links';
+import { ProductOptions } from '@/features/product-options/product-options';
+import type { ProductDesignSession } from '@/features/product-options/session';
+import { resolvePrice } from '@/features/product-workflow/pricing';
+import { validateConfiguration } from '@/features/product-workflow/validation';
 import type { Product } from '@/lib/catalogue/types';
 import { formatINR } from '@/lib/format';
-import type { Selection } from '@/lib/pricing';
-import { OptionGroupField } from './option-group-field';
-import { priceSummary } from './selection';
 
 export interface PurchasePanelProps {
   product: Product;
   categoryName: string | null;
-  selection: Selection;
-  onSelectionChange: (groupId: string, valueId: string) => void;
-  sets: number;
-  onSetsChange: (sets: number) => void;
+  /** The product's design session: its configuration is what's shown and priced (Phase 4 M2). */
+  session: ProductDesignSession;
 }
 
-export function PurchasePanel({ product, categoryName, selection, onSelectionChange, sets, onSetsChange }: PurchasePanelProps) {
-  const summary = priceSummary(product, selection, sets);
-  const variantId = summary.variant?.id;
+const PERSISTENCE_NOTE = {
+  starting: null,
+  device: 'Your choices are saved with your design on this device.',
+  memory: 'Your choices last for this visit.',
+} as const;
+
+export function PurchasePanel({ product, categoryName, session }: PurchasePanelProps) {
+  const { store, workflow } = session;
+  const configuration = useStore(store, (s) => s.document.product.configuration);
+  // Price and validity come from the product-workflow domain only (M1 resolver, M2 validation).
+  const price = useMemo(() => resolvePrice(product, workflow, configuration), [product, workflow, configuration]);
+  const issues = useMemo(() => (workflow ? validateConfiguration(product, workflow, configuration) : []), [product, workflow, configuration]);
+  const variantId = price.status === 'priced' ? price.variantId : undefined;
+  const ready = issues.length === 0 && Boolean(variantId);
+  const units = price.status === 'priced' && price.piecesPerUnit ? price.piecesPerUnit * price.quantity : null;
+  const persistenceNote = product.isCustomizable ? PERSISTENCE_NOTE[session.persistence] : null;
   const ctaRef = useRef<HTMLDivElement>(null);
   const [ctaVisible, setCtaVisible] = useState(true);
 
@@ -46,44 +59,67 @@ export function PurchasePanel({ product, categoryName, selection, onSelectionCha
         <p className="text-body text-fg-muted">{product.shortDescription}</p>
       </div>
 
-      {product.optionGroups.map((group) => (
-        <OptionGroupField key={group.id} product={product} group={group} selection={selection} onChange={onSelectionChange} />
-      ))}
-
-      <QuantityStepper
-        label={product.quantityStepper === 'sets' ? 'Number of sets' : 'Quantity'}
-        value={sets}
-        onValueChange={onSetsChange}
-        min={1}
-        max={product.quantityStepper === 'sets' ? 50 : 500}
-      />
+      {workflow ? (
+        <ProductOptions product={product} workflow={workflow} store={store} issues={issues} />
+      ) : (
+        <Callout tone="warning">This product’s options can’t be shown right now. Please contact us to order it.</Callout>
+      )}
 
       <div className="flex flex-col gap-4 rounded-lg border border-border bg-surface-subtle p-5">
-        <div aria-live="polite" className="flex flex-col gap-1">
+        <div aria-live="polite" className="flex flex-col gap-1" data-price-summary>
           <span className="text-caption font-medium text-fg-muted">Your price</span>
-          <Price amount={summary.totalCents} size="lg" suffix="incl. printing" />
-          {summary.units && summary.unitCents !== null && (
-            <span className="text-body-sm text-fg-muted tabular-nums">
-              {summary.units.toLocaleString('en-IN')} units · {formatINR(Math.round(summary.unitCents))} each
-            </span>
-          )}
-          {summary.variant && <span className="text-caption text-fg-muted">SKU {summary.variant.sku}</span>}
-        </div>
-        <div ref={ctaRef} className="flex flex-col gap-2 sm:flex-row">
-          {product.isCustomizable ? (
+          {price.status === 'priced' ? (
             <>
-              <Button asChild size="lg" className="flex-1">
-                <Link to={designHref(product.slug, variantId)}>
-                  <PenTool aria-hidden="true" /> Start designing
-                </Link>
-              </Button>
-              <Button asChild size="lg" variant="secondary" className="flex-1">
-                <Link to={designHref(product.slug, variantId, 'upload')}>
-                  <Upload aria-hidden="true" /> Upload your file
-                </Link>
-              </Button>
+              <Price amount={price.totalPriceCents} size="lg" suffix="incl. printing" />
+              {units !== null && (
+                <span className="text-body-sm text-fg-muted tabular-nums">
+                  {units.toLocaleString('en-IN')} units · {formatINR(Math.round(price.totalPriceCents / units))} each
+                </span>
+              )}
+              {price.quantity > 1 && (
+                <span className="text-body-sm text-fg-muted tabular-nums">
+                  {formatINR(price.unitPriceCents)} × {price.quantity} {product.quantityStepper === 'sets' ? 'sets' : 'items'}
+                </span>
+              )}
+              {price.adjustments.map((a) => (
+                <span key={a.optionId} className="text-body-sm text-fg-muted tabular-nums" data-price-adjustment>
+                  Includes {a.label} ({a.cents > 0 ? '+' : '−'}
+                  {formatINR(Math.abs(a.cents))})
+                </span>
+              ))}
+              <span className="text-caption text-fg-muted">SKU {price.sku}</span>
             </>
+          ) : (
+            <p className="text-body-sm font-medium text-fg">Choose your options to see the price.</p>
+          )}
+        </div>
+        <div ref={ctaRef} className="flex flex-col gap-2">
+          {product.isCustomizable ? (
+            ready ? (
+              <div className="flex flex-col gap-2 sm:flex-row">
+                <Button asChild size="lg" className="flex-1">
+                  <Link to={designHref(product.slug, variantId)}>
+                    <PenTool aria-hidden="true" /> Start designing
+                  </Link>
+                </Button>
+                <Button asChild size="lg" variant="secondary" className="flex-1">
+                  <Link to={designHref(product.slug, variantId, 'upload')}>
+                    <Upload aria-hidden="true" /> Upload your file
+                  </Link>
+                </Button>
+              </div>
+            ) : (
+              <>
+                <Button size="lg" disabled aria-describedby="choices-needed">
+                  <PenTool aria-hidden="true" /> Start designing
+                </Button>
+                <p id="choices-needed" className="text-body-sm text-danger" data-choices-needed>
+                  Finish your choices above to start designing. {issues.map((i) => i.message).join(' ')}
+                </p>
+              </>
+            )
           ) : null}
+          {persistenceNote && <p className="text-caption text-fg-muted">{persistenceNote}</p>}
         </div>
         <Callout tone="info" className="py-3">
           {product.isCustomizable
@@ -121,8 +157,8 @@ export function PurchasePanel({ product, categoryName, selection, onSelectionCha
         }`}
       >
         <div className="mx-auto flex max-w-xl items-center justify-between gap-3">
-          <Price amount={summary.totalCents} size="md" />
-          {product.isCustomizable && (
+          {price.status === 'priced' ? <Price amount={price.totalPriceCents} size="md" /> : <span className="text-body-sm text-fg-muted">Choose your options</span>}
+          {product.isCustomizable && ready && (
             <Button asChild tabIndex={ctaVisible ? -1 : undefined}>
               <Link to={designHref(product.slug, variantId)} tabIndex={ctaVisible ? -1 : undefined}>
                 Start designing

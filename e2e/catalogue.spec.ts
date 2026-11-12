@@ -122,8 +122,9 @@ test.describe('product pages', () => {
       await page.goto(`/products/${slug}`);
       await expect(page.getByRole('heading', { level: 1, name: product.name })).toBeVisible();
       await expectPriceMatchesSku(page, product);
-      // Pick a different value in each option group and check again.
-      for (const group of await page.getByRole('radiogroup').all()) {
+      // Pick a different value in each catalogue option group and check again. (Studio-only
+      // choices such as envelope sizes add a saved price adjustment — product-options.spec.ts.)
+      for (const group of await page.locator('[data-option-source="catalogue"]').getByRole('radiogroup').all()) {
         const unchecked = group.locator('[role="radio"][aria-checked="false"]:not([aria-disabled="true"])').first();
         if (await unchecked.count()) {
           await unchecked.click();

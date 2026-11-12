@@ -5,7 +5,7 @@ import { describe, expect, it } from 'vitest';
 import type { ProductSummary } from '@/lib/catalogue/types';
 import { readProduct } from '@/features/studio/testing/catalogue-fixtures';
 import { PRODUCT_FAMILIES } from './families';
-import { bindCatalogueOptions, catalogueGroupForRole, familyIdForSlug, listFamilies, productWorkflow, registeredSlugs } from './registry';
+import { applicableOptions, bindCatalogueOptions, catalogueGroupForRole, familyIdForSlug, listFamilies, productWorkflow, registeredSlugs } from './registry';
 import { PRODUCT_FAMILY_IDS, type ProductFamilyId } from './types';
 
 const catalogue = JSON.parse(fs.readFileSync(path.resolve('public/api/v1/catalogue/products.json'), 'utf8')) as ProductSummary[];
@@ -16,12 +16,12 @@ const survey = JSON.parse(fs.readFileSync(path.resolve('scripts/studio/data/orig
 const customisable = catalogue.filter((p) => p.isCustomizable);
 
 describe('product-family registry: coverage', () => {
-  it('assigns every catalogue product to exactly one family, with the catalogue product id', () => {
+  it('assigns every catalogue product (by slug, the catalogue key) to exactly one family', () => {
     expect(registeredSlugs().sort()).toEqual(catalogue.map((p) => p.slug).sort());
     for (const product of catalogue) {
       const workflow = productWorkflow(product.slug);
       expect(workflow, product.slug).not.toBeNull();
-      expect(workflow!.productId, product.slug).toBe(product.id);
+      expect(workflow!.slug).toBe(product.slug);
       expect(familyIdForSlug(product.slug)).toBe(workflow!.family.id);
     }
   });
@@ -176,5 +176,15 @@ describe('product-family registry: option definitions', () => {
     const card = productWorkflow('business-card-classic')!.options.find((o) => o.id === 'catalogue-other');
     expect(shirt?.behaviour.editableInStudio).toBe(true);
     expect(card?.behaviour.editableInStudio).toBe(false);
+  });
+
+  it('offers the substrate colour without a catalogue colour, the custom colour with one (live: jute tote vs backpack)', () => {
+    const ids = (slug: string) => applicableOptions(productWorkflow(slug)!, readProduct(slug)).map((o) => o.id);
+    expect(ids('bag-jute-tote')).toContain('substrate-colour');
+    expect(ids('bag-jute-tote')).not.toContain('custom-product-colour');
+    expect(ids('bag-backpack-american-tourister')).toContain('custom-product-colour');
+    expect(ids('bag-backpack-american-tourister')).not.toContain('substrate-colour');
+    expect(ids('apparel-tshirt-classic-cotton')).toContain('custom-product-colour');
+    expect(ids('sign-poster-standard')).toContain('substrate-colour');
   });
 });

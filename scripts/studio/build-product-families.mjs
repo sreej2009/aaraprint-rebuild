@@ -129,10 +129,10 @@ async function main() {
       problems.push(`${product.slug}: family ${family} opens on ${FAMILY_WORKSPACE[family]}, original opened ${observed.workspace}`);
     }
     counts[family] = (counts[family] ?? 0) + 1;
+    // Slug-keyed; the catalogue holds ids and categories (kept out to keep the Studio and product
+    // page bundles small — this file ships to the browser).
     products[product.slug] = {
-      productId: product.id,
       family,
-      category: product.categorySlug,
       ...(observed.designIt
         ? {
             observed: {

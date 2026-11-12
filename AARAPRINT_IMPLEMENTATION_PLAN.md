@@ -2579,7 +2579,8 @@ Its §19 gives the recommended order. Phases and milestones above are history an
 | Milestone | Status |
 |-----------|--------|
 | M1 Schema v3 and product family registry | Done |
-| M2… Product options panel, entry dialog, Review/Approve, product-first workspaces | Not started (audit §18) |
+| M2 Product options UI (product page) | Done |
+| M3… Entry dialog, product-first Studio workspaces, Review/Approve | Not started (audit §18) |
 
 ### M1 — Schema v3 and product family registry
 
@@ -2692,3 +2693,102 @@ New suites:
 - `studio/persistence/product-configuration.test.ts`: autosave, restore, versions, v2 records and versions.
 
 Existing fixtures were updated only where they encoded schema v2 (expected blank-design shape, migration chain, template wrapper, saved-design fixture).
+
+### M2 — Product options UI
+
+**Scope:** the product page shows and edits the design's v3 product configuration, driven by the M1 registry. Out of scope (later milestones): the entry dialog, the product-first Studio workspace, mockups, Review/Approve, sign-in, cart, checkout, 3D.
+
+#### Architecture: one state system
+
+The page's options **are** the product's design configuration. There is no separate page state for options.
+
+`src/features/product-options/session.ts` (`useProductDesignSession`) runs the same Studio store (`createStudioStore`) and save controller the Studio uses, on the product's design draft:
+
+1. **First render:** a new design from the default variant, with the registry's default orientation (Horizontal). This is what the pre-rendered HTML shows. The product loader now also reads the product's Studio profile at build time (`profile/profile.server.ts`).
+2. **In the browser:** the saving code loads after the page is interactive (repository, restore, save controller and validator, through a dynamic import). It then:
+   - restores the latest saved design for the product, unless the customer has already changed something on this visit;
+   - applies a `?variantId=` link through `syncProductVariant`, a correction rather than an undo step, as in the Studio.
+3. **Saving:**
+   - Nothing is written until the customer changes something.
+   - Changes autosave with the design and its versions in this browser.
+   - "Start designing" opens the Studio, which restores the same design and therefore the same choices.
+4. **Products ordered without a design** (no Studio profile: `card-accessory-metal-holder`) use the same store and commands on a configuration-only document kept in memory.
+
+The route keeps `?variantId=` on the resolved variant, so a page can be reloaded or shared as chosen.
+
+#### Rendering from the registry (`product-options.tsx`, `studio-option-field.tsx`)
+
+Options come from `productWorkflow(slug).options`, bound to the product's catalogue groups with `bindCatalogueOptions`. No product slugs appear in the UI.
+
+| Option source | Control | Command |
+|---|---|---|
+| entry: orientation | chips; "Required before you design" | `setOrientation` |
+| catalogue groups (colour, size, quantity tier, lid, ink, pockets…) | existing `OptionGroupField`: tiers, swatches, chips or select, with unavailable combinations marked | `setProductOption` |
+| order quantity | `QuantityStepper`, 1–99; "Number of sets" for tiered products | `setOrderQuantity` |
+| studio: format, feature | chips with price deltas | `setStudioChoice` |
+| studio: part, substrate and custom colours | `ColorField` with the original palette, "Original" and custom hex; one field per part. Only the final colour is committed, not live picker moves. | `setStudioChoice` (`<option>:<part>`) |
+| studio: dimensions | preset chips + custom width/height, checked against the registry range | `setStudioChoice` |
+| same-design switch | `Switch`, only where the registry has it (187 products), default from the registry | `setSameDesignBothSides` |
+
+- **Unknown values:** values the registry marks `unknown` are shown as "Not available to choose online yet", with the audit's reason. Gift and gift-frame part colours are per product, so they show that state. Preset sizes the registry doesn't list fall back to a custom size only. Nothing is invented.
+- Entry and Studio-only options are hidden for products ordered without a design.
+- `applicableOptions` (registry) applies the audit rule for colours: the substrate colour ("Fabric colour", "Paper colour"…) only when the product has no catalogue colour (jute tote, posters); the custom colour only when it has one (t-shirts, caps, backpacks).
+
+#### Validation (`product-workflow/validation.ts`)
+
+`validateConfiguration(product, workflow, configuration)` returns issues; components only display them, next to the option they concern.
+
+| Issue | Message |
+|---|---|
+| A required entry option is missing (orientation) | "Choose an orientation." |
+| A required catalogue option is missing or retired | "Choose the size." |
+| Every option is chosen but no variant exists | "This combination isn't available…" |
+| Quantity outside 1–99 | (quantity issue) |
+
+While issues remain, **Start designing** and **Upload your file** are replaced by a disabled button and a summary of what to fix. Every product's starting configuration is valid (tested for all 533). The realistic invalid case is a design saved before v3 or by the Studio, which has no orientation.
+
+#### Variant and price
+
+- The price shown is `resolvePrice` (M1): the resolved variant price with its quantity tier, plus saved Studio adjustments, times the quantity.
+- The panel shows the total, units and price each for tiered products, "unit × quantity", each adjustment ("Includes Size: #10 … (+₹42)"), and the SKU.
+- An incomplete or impossible selection shows "Choose your options to see the price" and no SKU; nothing is guessed.
+- The page's old `priceSummary` was removed. Its exact-SKU tests (every SKU of all 533 products) now run against `resolvePrice`.
+- The original's B1/B2 pricing bugs are not reproduced.
+
+#### Undo and redo
+
+- Each change is one store `execute` (one history entry, labelled, e.g. "Change Size"). The section header has **Undo** / **Redo** buttons naming the step.
+- Restoring a saved design and following `?variantId=` are not undo steps.
+
+#### Changes to existing behaviour
+
+- **Quantity stepper:** now 1–99 (the original and M1 limit) instead of 50 sets / 500 units.
+- **Registry data:** `product-families.json` no longer carries product ids or categories (slug is the key; the catalogue holds both). This keeps the browser bundle small; `ProductWorkflow.productId` was dropped.
+
+#### Product page weight
+
+- Initial JS for a product page, gzipped: **220.8 KB → 250.9 KB** (+30 KB):
+  - registry and family definitions ≈ 15 KB, much of it the audit evidence notes;
+  - store and commands ≈ 8 KB;
+  - the options UI.
+- The saving code loads after first paint.
+- The storefront budget (§13: 170 KB) was already exceeded before M2.
+- **Follow-ups:** move the evidence notes out of the shipped definitions; split the design system per route.
+
+#### Known limitations
+
+- Studio-only options that need "Confirm selection" or "Apply size" in the original apply immediately on the product page (one command each). Resizing the artwork to a new size is a later milestone.
+- Options the registry leaves `unknown` stay unavailable: gift parts, gift presets, drinkware presets, card-orientation format sizes.
+- A change made in the instant before the saving code loads is written as soon as it arrives (manual save).
+
+#### Tests
+
+- `product-options/product-options.test.tsx` (17 tests): registry-driven rendering per family, unknown values, one command per change, variant/SKU/price/link updates, quantity, Studio format price, part colour, custom size range, the switch, undo/redo, validation, and autosave/restore through the save controller.
+- `product-workflow/validation.test.ts` (6 tests): all 533 starting configurations valid; orientation, missing option, no-variant and quantity rules.
+- `e2e/product-options.spec.ts`:
+  - one product per family (all 26): render, price, SKU, no console errors, no sideways scroll;
+  - the switch;
+  - envelope price with undo;
+  - choices kept across reload and carried into the Studio;
+  - an old saved design asking for an orientation.
+- `e2e/catalogue.spec.ts`: the SKU-equals-price walk now covers catalogue options only. Studio formats add a saved adjustment, which the new spec checks.

@@ -32,9 +32,7 @@ interface ObservedFacts {
 }
 
 interface MembershipEntry {
-  productId: string;
   family: string;
-  category: string | null;
   observed: ObservedFacts | null;
 }
 
@@ -60,8 +58,8 @@ export function familyIdForSlug(slug: string): ProductFamilyId | null {
 }
 
 export interface ProductWorkflow {
+  /** The catalogue product's slug (the registry's key; ids live in the catalogue). */
   slug: string;
-  productId: string;
   family: ProductFamilyDefinition;
   /** Has "Design it" in the original. */
   customizable: boolean;
@@ -117,7 +115,6 @@ export function productWorkflow(slug: string): ProductWorkflow | null {
   const sameDesignAvailable = observed ? observed.sameDesignSwitch : family.sameDesignBothSides.available;
   return {
     slug,
-    productId: entry.productId,
     family,
     customizable: observed !== null,
     initialStudio: { tool: observed?.tool ?? family.initialStudio.tool, workspace: family.initialStudio.workspace, view: family.initialStudio.views[0] ?? 'print-area' },
@@ -172,4 +169,21 @@ export function bindCatalogueOptions(workflow: Pick<ProductWorkflow, 'options'>,
 /** The catalogue group playing a role (product colour, size…) for this product, if any. */
 export function catalogueGroupForRole(workflow: Pick<ProductWorkflow, 'options'>, product: Pick<Product, 'optionGroups'>, role: ProductOptionDefinition['role']): OptionGroup | undefined {
   return bindCatalogueOptions(workflow, product).find((b) => b.definition.role === role)?.group;
+}
+
+/**
+ * The workflow's options that apply to this catalogue product (Phase 4 M2). A family's options
+ * can depend on what the product itself offers (audit §7, live):
+ * - the substrate colour ("Fabric colour", "Paper colour"…) is shown when the product has no
+ *   catalogue colour (jute tote, posters, labels);
+ * - the custom colour ("saved as the colour to produce") goes with a catalogue colour (t-shirts,
+ *   caps, backpacks).
+ */
+export function applicableOptions(workflow: Pick<ProductWorkflow, 'options'>, product: Pick<Product, 'optionGroups'>): ProductOptionDefinition[] {
+  const hasColour = catalogueGroupForRole(workflow, product, 'product-colour') !== undefined;
+  return workflow.options.filter((option) => {
+    if (option.role === 'substrate-colour') return !hasColour;
+    if (option.role === 'custom-product-colour') return hasColour;
+    return true;
+  });
 }

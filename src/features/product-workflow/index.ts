@@ -4,7 +4,7 @@
  */
 export * from './types';
 export { PRODUCT_FAMILIES, ORIGINAL_PRICING_BEHAVIOURS } from './families';
-export { bindCatalogueOptions, catalogueGroupForRole, familyDefinition, familyIdForSlug, listFamilies, productWorkflow, registeredSlugs, type BoundCatalogueOption, type ProductWorkflow } from './registry';
+export { applicableOptions, bindCatalogueOptions, catalogueGroupForRole, familyDefinition, familyIdForSlug, listFamilies, productWorkflow, registeredSlugs, type BoundCatalogueOption, type ProductWorkflow } from './registry';
 export {
   clampQuantity,
   emptyConfiguration,
@@ -20,3 +20,4 @@ export {
   type StudioChoice,
 } from './configuration';
 export { resolvePrice, studioAdjustments, variantForConfiguration, type CatalogueForPricing, type PriceAdjustment, type ResolvedPrice } from './pricing';
+export { issuesFor, validateConfiguration, type ConfigurationIssue, type ConfigurationIssueKind } from './validation';

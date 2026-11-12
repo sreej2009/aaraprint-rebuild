@@ -1,14 +1,15 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef } from 'react';
 import { data, isRouteErrorResponse, Link, useSearchParams, type ShouldRevalidateFunctionArgs } from 'react-router';
 import { SearchX } from 'lucide-react';
+import { useStore } from 'zustand';
 import { Breadcrumbs, Button, EmptyState } from '@/design-system';
 import { ProductCard } from '@/features/catalogue/product-card';
 import { ProductDetails } from '@/features/product/product-details';
 import { ProductGallery } from '@/features/product/product-gallery';
 import { PurchasePanel } from '@/features/product/purchase-panel';
-import { selectionForVariant } from '@/features/product/selection';
+import { useProductDesignSession } from '@/features/product-options/session';
+import { getStudioProfile } from '@/features/studio/profile/profile.server';
 import { getCategories, getProduct, getProductSummaries } from '@/lib/catalogue/catalogue.server';
-import { defaultSelection, type Selection } from '@/lib/pricing';
 import { seo } from '@/lib/seo';
 import type { Route } from './+types/product';
 
@@ -17,14 +18,14 @@ const RELATED_COUNT = 4;
 export async function loader({ params }: Route.LoaderArgs) {
   const product = await getProduct(params.productSlug);
   if (!product) throw data('Product not found', { status: 404 });
-  const [categories, summaries] = await Promise.all([getCategories(), getProductSummaries()]);
+  const [categories, summaries, profile] = await Promise.all([getCategories(), getProductSummaries(), product.isCustomizable ? getStudioProfile(product.slug) : null]);
   const category = categories.find((c) => c.slug === product.categorySlug) ?? null;
   // Same type first, then the rest of the category; bestsellers before others.
   const related = summaries
     .filter((p) => p.categorySlug === product.categorySlug && p.slug !== product.slug)
     .sort((a, b) => Number(b.typeSlug === product.typeSlug) - Number(a.typeSlug === product.typeSlug) || Number(b.isFeatured) - Number(a.isFeatured))
     .slice(0, RELATED_COUNT);
-  return { product, category: category ? { slug: category.slug, name: category.name } : null, related };
+  return { product, profile, category: category ? { slug: category.slug, name: category.name } : null, related };
 }
 
 /** Option changes only update `?variantId=` — no need to reload the product. */
@@ -70,32 +71,29 @@ export const meta: Route.MetaFunction = ({ loaderData, location }) => {
 };
 
 export default function ProductPage({ loaderData }: Route.ComponentProps) {
-  const { product, category, related } = loaderData;
-  // Remount per product so selection state never leaks between products.
-  return <ProductView key={product.slug} product={product} category={category} related={related} />;
+  const { product, profile, category, related } = loaderData;
+  // Remount per product so a design session never leaks between products.
+  return <ProductView key={product.slug} product={product} profile={profile} category={category} related={related} />;
 }
 
-function ProductView({ product, category, related }: Route.ComponentProps['loaderData']) {
+function ProductView({ product, profile, category, related }: Route.ComponentProps['loaderData']) {
   const [params, setParams] = useSearchParams();
-  // Start from the default (matches the pre-rendered HTML), then apply a ?variantId= deep link.
-  const [selection, setSelection] = useState<Selection>(() => defaultSelection(product));
-  const [sets, setSets] = useState(1);
-  const linkedVariant = params.get('variantId');
-  useEffect(() => {
-    const linked = selectionForVariant(product, linkedVariant);
-    if (linked) setSelection(linked);
-    // Only on first load: later changes to ?variantId= come from this page itself.
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  // The product's design session (Phase 4 M2): the options shown are its product configuration.
+  // It starts from the default variant (the pre-rendered HTML), then restores the saved design and
+  // applies a ?variantId= deep link in the browser.
+  const session = useProductDesignSession({ product, profile, linkedVariantId: params.get('variantId') });
 
-  const changeOption = (groupId: string, valueId: string) => {
-    const next = { ...selection, [groupId]: valueId };
-    setSelection(next);
-    const variant = product.variants.find((v) => product.optionGroups.every((g) => v.optionValueIds.includes(next[g.id] ?? '')));
-    const nextParams = new URLSearchParams(params);
-    if (variant) nextParams.set('variantId', variant.id);
-    setParams(nextParams, { replace: true, preventScrollReset: true });
-  };
+  // Keep ?variantId= on the resolved variant, so the page can be shared and reloaded as chosen.
+  const variantId = useStore(session.store, (s) => s.document.product.variantId);
+  const shown = useRef(variantId);
+  useEffect(() => {
+    if (variantId === shown.current) return;
+    shown.current = variantId;
+    if (!variantId || params.get('variantId') === variantId) return;
+    const next = new URLSearchParams(params);
+    next.set('variantId', variantId);
+    setParams(next, { replace: true, preventScrollReset: true });
+  }, [variantId, params, setParams]);
 
   return (
     <div className="container-page flex flex-col gap-8 py-6 pb-28 md:py-10 lg:pb-10">
@@ -110,14 +108,7 @@ function ProductView({ product, category, related }: Route.ComponentProps['loade
         <div className="lg:sticky lg:top-[calc(var(--header-height)+1.5rem)]">
           <ProductGallery product={product} />
         </div>
-        <PurchasePanel
-          product={product}
-          categoryName={category?.name ?? null}
-          selection={selection}
-          onSelectionChange={changeOption}
-          sets={sets}
-          onSetsChange={setSets}
-        />
+        <PurchasePanel product={product} categoryName={category?.name ?? null} session={session} />
       </div>
       <ProductDetails product={product} />
       {related.length > 0 && (
