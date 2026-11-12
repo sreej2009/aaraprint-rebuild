@@ -1,6 +1,6 @@
 import AxeBuilder from '@axe-core/playwright';
 import type { Page, TestInfo } from '@playwright/test';
-import { expect, test, settleAnimations } from './fixtures';
+import { expect, test, settleAnimations, confirmEntry } from './fixtures';
 
 /** Design Studio page and layouts (Phase 3 M4). Runs on desktop, tablet (820 × 1180) and phone. */
 
@@ -22,6 +22,7 @@ test.describe('opening the Studio', () => {
     const variantId = new URL(href, 'http://x').searchParams.get('variantId');
     expect(variantId).toBeTruthy();
     await start.click();
+    await confirmEntry(page);
 
     await expect(page).toHaveURL(new RegExp(`/products/business-card-classic/design\\?variantId=${variantId}`));
     await expect(page.getByRole('heading', { level: 1, name: 'Design Studio: Classic Visiting Cards' })).toBeAttached();
@@ -95,6 +96,7 @@ test.describe('tools and panels', () => {
   test('“Upload your design” opens the Uploads tool', async ({ page }, info) => {
     await page.goto('/products/business-card-classic');
     await page.getByRole('link', { name: /Upload/ }).first().click();
+    await confirmEntry(page, { confirm: 'Continue to upload' });
     await expect(page).toHaveURL(/mode=upload/);
     if (layoutOf(info) === 'mobile') await expect(page.getByRole('dialog', { name: 'Uploads' })).toBeVisible();
     else await expect(page.getByRole('complementary', { name: 'Uploads' })).toBeVisible();

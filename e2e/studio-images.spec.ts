@@ -1,6 +1,6 @@
 import type { Page } from '@playwright/test';
 import type KonvaNamespace from 'konva';
-import { expect, test } from './fixtures';
+import { confirmEntry, expect, test } from './fixtures';
 
 /**
  * Uploaded images in the browser (Phase 3 M12), with the real IndexedDB and the browser's own
@@ -190,6 +190,7 @@ test.describe('desktop: uploading and placing', () => {
   test('the product page’s “Upload your file” opens the Studio at Uploads', async ({ page }) => {
     await page.goto('/products/business-card-classic');
     await page.getByRole('link', { name: 'Upload your file' }).first().click();
+    await confirmEntry(page, { confirm: 'Continue to upload' });
     await expect(page).toHaveURL(/\/design\?.*mode=upload/);
     await expect(panel(page).getByRole('button', { name: 'Upload image' })).toBeVisible();
   });

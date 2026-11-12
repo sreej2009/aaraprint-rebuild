@@ -21,3 +21,4 @@ export {
 } from './configuration';
 export { resolvePrice, studioAdjustments, variantForConfiguration, type CatalogueForPricing, type PriceAdjustment, type ResolvedPrice } from './pricing';
 export { issuesFor, validateConfiguration, type ConfigurationIssue, type ConfigurationIssueKind } from './validation';
+export { applyEntryDraft, draftIssues, entryDraftFrom, entryIssues, entryRequirements, needsEntry, nonEntryIssues, type EntryDraft, type EntryRequirement } from './entry';

@@ -9,6 +9,7 @@ export { addAsset, removeAssets, renameDesign, setVariant, MAX_DESIGN_NAME } fro
 export { addElement, duplicateElement, removeElements, updateElement } from './elements';
 export {
   resolveProductVariant,
+  setEntryOptions,
   setOrderQuantity,
   setOrientation,
   setProductColour,

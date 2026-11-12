@@ -2,7 +2,7 @@ import AxeBuilder from '@axe-core/playwright';
 import type { Page } from '@playwright/test';
 import { readFileSync } from 'node:fs';
 import type KonvaNamespace from 'konva';
-import { expect, settleAnimations, test } from './fixtures';
+import { expect, settleAnimations, test, confirmEntry } from './fixtures';
 import { clearedStandIn, INDIGO, near, PEN_RGB, PHOTO_RGB, placed } from './product-fixtures';
 
 /**
@@ -49,6 +49,7 @@ async function startDesigning(page: Page, slug: string, press: 'click' | 'tap' =
   const link = page.getByRole('link', { name: /Start designing/ }).first();
   await link.scrollIntoViewIfNeeded();
   await link[press]();
+  await confirmEntry(page, { press });
   await expect(page).toHaveURL(new RegExp(`/products/${slug}/design`));
   await page.waitForFunction(() => Boolean(window.Konva?.stages.some((st) => st.container().closest('#studio-canvas'))));
 }

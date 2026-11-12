@@ -28,7 +28,7 @@ function sessionFor(slug: string, change?: (doc: DesignDocument) => DesignDocume
   const workflow = productWorkflow(slug);
   const store = createSessionStore(product, product.isCustomizable ? readProfile(slug) : null, workflow);
   if (change) store.getState().actions.replaceDocument(change(store.getState().document));
-  return { product, session: { store, workflow, controller: null, persistence: 'memory' } };
+  return { product, session: { store, workflow, controller: null, persistence: 'memory', flush: async () => {} } };
 }
 
 function renderPanel(slug: string, change?: (doc: DesignDocument) => DesignDocument) {
@@ -53,7 +53,9 @@ describe('registry-driven options', () => {
     const region = options();
     expect(within(region).getByRole('radiogroup', { name: 'Product Orientation' })).toBeInTheDocument();
     expect(within(region).getByText('Required before you design')).toBeInTheDocument();
-    expect(within(region).getByRole('radio', { name: /Horizontal/ })).toHaveAttribute('aria-checked', 'true');
+    // Not chosen yet: the "Design it" entry step asks for it (M3).
+    expect(within(region).getByRole('radio', { name: /Horizontal/ })).toHaveAttribute('aria-checked', 'false');
+    expect(within(region).getByRole('radio', { name: /Vertical/ })).toHaveAttribute('aria-checked', 'false');
     expect(within(region).getByRole('radiogroup', { name: 'Quantity' })).toBeInTheDocument();
     expect(within(region).getByRole('radiogroup', { name: 'Ink Style' })).toBeInTheDocument();
     expect(within(region).getByRole('spinbutton', { name: 'Number of sets' })).toHaveValue('1');
@@ -187,15 +189,11 @@ describe('choosing options: product commands, variant and price', () => {
 });
 
 describe('validation before designing', () => {
-  it('a missing orientation is flagged next to it and blocks Start designing until chosen', async () => {
-    const { user } = renderPanel('business-card-classic', (doc) => ({ ...doc, product: { ...doc.product, configuration: { ...doc.product.configuration, orientation: null } } }));
-    expect(within(options()).getByText('Choose an orientation.')).toBeInTheDocument();
-    expect(startLink()).toBeUndefined();
-    expect(screen.getByRole('button', { name: /Start designing/ })).toBeDisabled();
-    expect(document.querySelector('[data-choices-needed]')).toHaveTextContent('Choose an orientation.');
-    await user.click(screen.getByRole('radio', { name: 'Horizontal' }));
-    expect(screen.queryByText('Choose an orientation.')).not.toBeInTheDocument();
+  it('a missing orientation does not block the page: the "Design it" entry step asks for it (M3)', () => {
+    renderPanel('business-card-classic', (doc) => ({ ...doc, product: { ...doc.product, configuration: { ...doc.product.configuration, orientation: null } } }));
+    expect(within(options()).queryByText('Choose an orientation.')).not.toBeInTheDocument();
     expect(startLink()).toBeDefined();
+    expect(document.querySelector('[data-choices-needed]')).toBeNull();
   });
 
   it('an impossible combination resolves to no variant, with no price and no Start designing', () => {

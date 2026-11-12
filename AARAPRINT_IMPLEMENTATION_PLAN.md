@@ -2580,7 +2580,8 @@ Its §19 gives the recommended order. Phases and milestones above are history an
 |-----------|--------|
 | M1 Schema v3 and product family registry | Done |
 | M2 Product options UI (product page) | Done |
-| M3… Entry dialog, product-first Studio workspaces, Review/Approve | Not started (audit §18) |
+| M3 "Design it" entry workflow | Done |
+| M4… Product-first Studio workspaces, Review/Approve | Not started (audit §18) |
 
 ### M1 — Schema v3 and product family registry
 
@@ -2704,7 +2705,7 @@ The page's options **are** the product's design configuration. There is no separ
 
 `src/features/product-options/session.ts` (`useProductDesignSession`) runs the same Studio store (`createStudioStore`) and save controller the Studio uses, on the product's design draft:
 
-1. **First render:** a new design from the default variant, with the registry's default orientation (Horizontal). This is what the pre-rendered HTML shows. The product loader now also reads the product's Studio profile at build time (`profile/profile.server.ts`).
+1. **First render:** a new design from the default variant, with no orientation yet (since M3: the entry step asks for it; M2 used the registry default, Horizontal). This is what the pre-rendered HTML shows. The product loader now also reads the product's Studio profile at build time (`profile/profile.server.ts`).
 2. **In the browser:** the saving code loads after the page is interactive (repository, restore, save controller and validator, through a dynamic import). It then:
    - restores the latest saved design for the product, unless the customer has already changed something on this visit;
    - applies a `?variantId=` link through `syncProductVariant`, a correction rather than an undo step, as in the Studio.
@@ -2792,3 +2793,77 @@ While issues remain, **Start designing** and **Upload your file** are replaced b
   - choices kept across reload and carried into the Studio;
   - an old saved design asking for an orientation.
 - `e2e/catalogue.spec.ts`: the SKU-equals-price walk now covers catalogue options only. Studio formats add a saved adjustment, which the new spec checks.
+
+### M3 — "Design it" entry workflow
+
+**Scope:** the step between the product page and the Studio. Out of scope (later milestones): the product-first Studio workspace, mockups, Review/Approve, sign-in, cart, checkout.
+
+#### What the original did (audit §3.2)
+
+- **Design it** opened a dialog for every customisable product (532/532).
+- The dialog asked **Product Orientation\*** (reset to Horizontal on every opening), plus a **Quantity** select when the catalogue has a "Quantity" group with two or more numeric values (532/532 agree). Nothing else.
+- **Next** opened the Studio with `orientation` and `variantId` in the URL.
+
+#### What we do
+
+Product page → **Start designing** / **Upload your file** →
+- if an entry choice is **missing or invalid**: the entry dialog → confirm → saved → the Studio;
+- otherwise: saved → the Studio directly.
+
+Deliberate differences from the original (from the M3 brief):
+- **Valid choices are kept:** the dialog preloads them; the original reset them each time.
+- **No guessing:** the dialog opens only when it has something to ask. A new design has no orientation yet, so the first entry always asks, as the original did.
+- **Nothing pre-selected:** Horizontal is not pre-selected in the dialog, so a missing orientation is chosen explicitly.
+
+#### Domain (`src/features/product-workflow/entry.ts`)
+
+| Function | Role |
+|---|---|
+| `entryRequirements(workflow, product)` | The registry's entry option (`source: 'entry'`, orientation) for customisable products, plus the catalogue quantity tier under the original's rule. Some tiers, e.g. "Single Piece", have no unit count in our catalogue, so the rule is looser than `quantityGroup`. Matches the live survey for all 532 products and all 26 families. |
+| `entryIssues` / `nonEntryIssues` | `validateConfiguration` split in two. Entry issues open the dialog. Other issues (a missing size, no variant) stay on the product page and block **Start designing** as in M2. |
+| `needsEntry` | Is there an entry issue? |
+| `entryDraftFrom`, `applyEntryDraft`, `draftIssues` | The dialog's draft: the design's still-valid choices, previewed and validated as if applied. A missing variant also blocks confirming. |
+
+#### Dialog (`src/features/product-options/entry-dialog.tsx`)
+
+- **Primitives:** existing Radix dialog primitives (`Dialog`, `DialogContent`). Accessible name = product name. Focus moves inside. Escape or Cancel closes, and focus returns to the link that opened it.
+- **Controls:** registry-driven: orientation chips "Product Orientation (required)", and the existing `OptionGroupField` for the quantity tier.
+- **Validation:** issues appear next to the field, through the group's description. The confirm button is disabled while issues remain, with a screen-reader summary.
+- **Price:** from `resolvePrice` (M1) for the draft, with the SKU. An impossible combination shows "No price yet" and cannot be confirmed.
+- **Draft semantics:** opening, changing and cancelling don't touch the design. No undo step, no autosave, no version. The dialog remounts on each opening.
+- **Confirm label:** "Start designing", or "Continue to upload" from **Upload your file**.
+
+#### Confirmation and handoff
+
+- **One undo step:** confirming calls the store's `applyEntryOptions(draft)`, which wraps the new pure command `setEntryOptions` in one `execute` ("Confirm design options"). Orientation, the quantity tier and the re-resolved variant/SKU change together.
+- **Saved before navigating:** the panel then awaits `session.flush()`, which waits for the lazily loaded saving code and writes pending changes, before navigating to `/products/:slug/design?variantId=…` (with `mode=upload` from Upload).
+- **The Studio:** it restores the latest design for the product (unchanged Studio code), which is this design with exactly the confirmed configuration. The URL's `variantId` equals the design's, so the Studio's variant sync is a no-op. Orientation lives only in the design document, not in the URL.
+- **Links kept:** the buttons remain links with the same `href` (for sharing and opening in a new tab); a click goes through the entry check.
+
+#### Changes to M2 behaviour
+
+- **New drafts:** they start with **no orientation** (`null`, M1's "not chosen") instead of a pre-selected Horizontal. The inline orientation chips show no selection until chosen.
+- **Missing orientation:** it no longer shows an error or disables **Start designing** on the page; the entry dialog asks for it.
+
+#### Backward compatibility
+
+- **v2 designs** (no orientation): the dialog asks for it. Artwork, the saved variant and other choices are kept.
+- **A retired quantity tier whose saved variant still exists:** the variant's own values fill the configuration on restore (M1 `syncProductVariant`), so nothing needs asking.
+- **A retired tier with no surviving variant:** the dialog asks for the quantity again and keeps the valid orientation.
+- **Unknown values:** never replaced with invented ones.
+
+#### Bundle
+
+The product page's initial JS went from 250.9 KB to **252.4 KB** gzipped (+1.5 KB). The dialog reuses the design system and the M1/M2 domain, and no Studio code loads before entry.
+
+#### Tests
+
+- `product-workflow/entry.test.ts` (9): entry requirements match the live dialog for every customisable product (orientation, tier counts exactly) across all 26 families; when entry is needed; drafts; no-variant.
+- `product-options/entry-dialog.test.tsx` (10): registry questions only; nothing guessed; draft-only changes; Cancel and Escape change nothing, save nothing and return focus; Confirm is one product command, saved before the Studio opens, and the Studio's lookup restores exactly it; no dialog when valid; upload mode; v2 and retired-tier designs.
+- `commands/product.test.ts`: `setEntryOptions` and the single undo step.
+- `e2e/entry.spec.ts`:
+  - all 26 families;
+  - flows A–F, including reading the Studio's own save to prove it holds the confirmed slug, product id, family, variant, SKU, quantity, orientation and options;
+  - keyboard and axe;
+  - G at 1440, 1280, 820, 390 and 360 px, completing the flow to the Studio on phones.
+- Existing Studio specs go through the entry step via the shared `confirmEntry` helper (`e2e/fixtures.ts`). The M2 "older design" e2e moved to flow E.

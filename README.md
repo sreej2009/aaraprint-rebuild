@@ -53,7 +53,8 @@ src/
   features/product-workflow/ product families (26), their options and capabilities, the product configuration
                            saved in designs, and variant/price resolution (data and pure functions; plan §21)
   features/product-options/ product options UI on the product page: registry-driven options bound to the
-                           product design draft (Studio store + save controller), validation and price (plan §21 M2)
+                           product design draft (Studio store + save controller), validation and price (plan §21 M2);
+                           the "Design it" entry dialog before the Studio (M3)
   features/studio/         Design Studio (Phase 3): print geometry, profiles, design schema & commands,
                            store & undo history, shell (layouts, panels, sheets), Konva canvas, zoom/pan, guides,
                            selection, move/resize/rotate, editing shortcuts, inspector and layers panel
@@ -121,7 +122,7 @@ e2e/                       Playwright specs (routing, navigation, keyboard, axe 
 | 1 | Foundations — tokens, components, shell, routing + pre-rendering, data layer, tests, asset recovery | ✅ Done |
 | 2 | Catalogue, product pages and content pages | ✅ Done |
 | 3 | Design Studio core — all customisable products, flat artwork view, desktop/tablet/phone | ✅ Done (plan §18.19) |
-| 4 | Studio advanced (snapping, QR, preflight, on-product apparel & wrap modes, options panel) | In progress: M1 product view, M2 on-product workspace, M3 product colour, M4 pens and mugs done (plan §19); workflow parity track M1 schema v3 + product family registry and M2 product options UI done (plan §21) |
+| 4 | Studio advanced (snapping, QR, preflight, on-product apparel & wrap modes, options panel) | In progress: M1 product view, M2 on-product workspace, M3 product colour, M4 pens and mugs done (plan §19); workflow parity track M1 schema v3 + product family registry , M2 product options UI and M3 "Design it" entry workflow done (plan §21) |
 | 5 | 3D previews and remaining product modes | — |
 | 6 | Cart, checkout (pay on delivery), accounts, tracking — needs backend | — |
 | 7 | Polish, performance, SEO and launch | — |

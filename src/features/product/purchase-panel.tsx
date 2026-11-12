@@ -1,14 +1,15 @@
 import { CircleCheck, PenTool, RefreshCcw, Truck, Upload, Wallet } from 'lucide-react';
-import { useEffect, useMemo, useRef, useState } from 'react';
-import { Link } from 'react-router';
+import { useEffect, useMemo, useRef, useState, type MouseEvent } from 'react';
+import { Link, useNavigate } from 'react-router';
 import { useStore } from 'zustand';
 import { Badge, Button, Callout, Price } from '@/design-system';
 import { business } from '@/config/business';
 import { designHref } from '@/features/catalogue/links';
+import { EntryDialog } from '@/features/product-options/entry-dialog';
 import { ProductOptions } from '@/features/product-options/product-options';
 import type { ProductDesignSession } from '@/features/product-options/session';
 import { resolvePrice } from '@/features/product-workflow/pricing';
-import { validateConfiguration } from '@/features/product-workflow/validation';
+import { needsEntry, nonEntryIssues, type EntryDraft } from '@/features/product-workflow/entry';
 import type { Product } from '@/lib/catalogue/types';
 import { formatINR } from '@/lib/format';
 
@@ -30,9 +31,35 @@ export function PurchasePanel({ product, categoryName, session }: PurchasePanelP
   const configuration = useStore(store, (s) => s.document.product.configuration);
   // Price and validity come from the product-workflow domain only (M1 resolver, M2 validation).
   const price = useMemo(() => resolvePrice(product, workflow, configuration), [product, workflow, configuration]);
-  const issues = useMemo(() => (workflow ? validateConfiguration(product, workflow, configuration) : []), [product, workflow, configuration]);
+  // Entry choices (orientation, quantity tier) are asked by the "Design it" step (M3); anything
+  // else that is missing or unavailable is fixed here on the page first.
+  const issues = useMemo(() => (workflow ? nonEntryIssues(product, workflow, configuration) : []), [product, workflow, configuration]);
   const variantId = price.status === 'priced' ? price.variantId : undefined;
-  const ready = issues.length === 0 && Boolean(variantId);
+  const ready = issues.length === 0;
+  const navigate = useNavigate();
+  const [entry, setEntry] = useState<'design' | 'upload' | null>(null);
+  // The link that opened the entry step gets focus back when it closes.
+  const opener = useRef<HTMLElement | null>(null);
+
+  // "Design it": save what's pending (so the Studio restores exactly this design), then open it.
+  const enterStudio = async (mode: 'design' | 'upload') => {
+    await session.flush();
+    const resolved = store.getState().document.product.variantId ?? undefined;
+    void navigate(designHref(product.slug, resolved, mode === 'upload' ? 'upload' : undefined));
+  };
+  const startDesigning = (mode: 'design' | 'upload') => (event: MouseEvent<HTMLElement>) => {
+    event.preventDefault();
+    opener.current = event.currentTarget;
+    if (workflow && needsEntry(product, workflow, store.getState().document.product.configuration)) setEntry(mode);
+    else void enterStudio(mode);
+  };
+  const confirmEntry = (draft: EntryDraft) => {
+    const mode = entry ?? 'design';
+    // One product command (one undo step) for the whole confirmation.
+    store.getState().actions.applyEntryOptions(draft);
+    setEntry(null);
+    void enterStudio(mode);
+  };
   const units = price.status === 'priced' && price.piecesPerUnit ? price.piecesPerUnit * price.quantity : null;
   const persistenceNote = product.isCustomizable ? PERSISTENCE_NOTE[session.persistence] : null;
   const ctaRef = useRef<HTMLDivElement>(null);
@@ -98,12 +125,12 @@ export function PurchasePanel({ product, categoryName, session }: PurchasePanelP
             ready ? (
               <div className="flex flex-col gap-2 sm:flex-row">
                 <Button asChild size="lg" className="flex-1">
-                  <Link to={designHref(product.slug, variantId)}>
+                  <Link to={designHref(product.slug, variantId)} onClick={startDesigning('design')}>
                     <PenTool aria-hidden="true" /> Start designing
                   </Link>
                 </Button>
                 <Button asChild size="lg" variant="secondary" className="flex-1">
-                  <Link to={designHref(product.slug, variantId, 'upload')}>
+                  <Link to={designHref(product.slug, variantId, 'upload')} onClick={startDesigning('upload')}>
                     <Upload aria-hidden="true" /> Upload your file
                   </Link>
                 </Button>
@@ -160,13 +187,31 @@ export function PurchasePanel({ product, categoryName, session }: PurchasePanelP
           {price.status === 'priced' ? <Price amount={price.totalPriceCents} size="md" /> : <span className="text-body-sm text-fg-muted">Choose your options</span>}
           {product.isCustomizable && ready && (
             <Button asChild tabIndex={ctaVisible ? -1 : undefined}>
-              <Link to={designHref(product.slug, variantId)} tabIndex={ctaVisible ? -1 : undefined}>
+              <Link to={designHref(product.slug, variantId)} tabIndex={ctaVisible ? -1 : undefined} onClick={startDesigning('design')}>
                 Start designing
               </Link>
             </Button>
           )}
         </div>
       </div>
+      {workflow && product.isCustomizable && (
+        <EntryDialog
+          open={entry !== null}
+          onOpenChange={(open) => {
+            if (!open) setEntry(null); // Cancel, Escape or the close button: nothing changes.
+          }}
+          product={product}
+          workflow={workflow}
+          configuration={configuration}
+          confirmLabel={entry === 'upload' ? 'Continue to upload' : 'Start designing'}
+          onConfirm={confirmEntry}
+          onCloseAutoFocus={(event) => {
+            if (!opener.current?.isConnected) return;
+            event.preventDefault();
+            opener.current.focus();
+          }}
+        />
+      )}
     </div>
   );
 }

@@ -1,5 +1,5 @@
 import type { Page } from '@playwright/test';
-import { expect, test } from './fixtures';
+import { confirmEntry, expect, test } from './fixtures';
 
 /**
  * Product options UI (Phase 4 M2): registry-driven options on the product page, bound to the
@@ -103,67 +103,10 @@ test.describe('product options on the product page', () => {
     const variant = product.variants.find((v: { sku: string }) => v.sku === sku);
     expect(variant, sku).toBeDefined();
     await page.getByRole('link', { name: /Start designing/ }).first().click();
+    // Orientation has not been chosen yet: the entry step asks for it (M3).
+    await confirmEntry(page);
     await expect(page).toHaveURL(new RegExp(`/products/apparel-tshirt-classic-cotton/design\\?variantId=${variant.id}`));
     // The Studio's top bar names the choices (the phone layout has no room for it).
     if (!isMobile) await expect(page.getByText(/XL · White · Front & Back/).first()).toBeVisible();
-  });
-
-  test('an older saved design without an orientation asks for one before designing', async ({ page }) => {
-    await page.goto('/products/business-card-classic');
-    const product = await (await page.request.get('/api/v1/catalogue/products/business-card-classic.json')).json();
-    const variant = product.variants.find((v: { isDefault: boolean }) => v.isDefault) ?? product.variants[0];
-    // A design saved before schema v3 (no product configuration), as this browser may still have.
-    await page.evaluate(
-      async ({ productId, variantId }) => {
-        const now = new Date().toISOString();
-        const print = { widthPx: 1050, heightPx: 600, dpi: 300, bleedPx: 18, safeZonePx: 24, trim: { shape: 'rectangle', cornerRadiusPx: 0 } };
-        const document = {
-          format: 'aaraprint.design',
-          schemaVersion: 2,
-          id: 'design_old',
-          name: 'Saved earlier',
-          product: { slug: 'business-card-classic', productId, variantId },
-          surfaces: [
-            { id: 'front', label: 'Front', print, background: { color: null }, elements: [] },
-            { id: 'back', label: 'Back', print, background: { color: null }, elements: [] },
-          ],
-          assets: {},
-          meta: { createdAt: now, updatedAt: now, revision: 1 },
-        };
-        const db = await new Promise<IDBDatabase>((resolve, reject) => {
-          const request = indexedDB.open('aaraprint-studio');
-          request.onsuccess = () => resolve(request.result);
-          request.onerror = () => reject(request.error);
-        });
-        await new Promise<void>((resolve, reject) => {
-          const tx = db.transaction('designs', 'readwrite');
-          tx.objectStore('designs').put({
-            designId: document.id,
-            productSlug: 'business-card-classic',
-            productId,
-            variantId,
-            name: document.name,
-            schemaVersion: 2,
-            createdAt: Date.now(),
-            updatedAt: Date.now(),
-            revision: 1,
-            fingerprint: 'old',
-            currentVersionId: null,
-            document,
-          });
-          tx.oncomplete = () => resolve();
-          tx.onerror = () => reject(tx.error);
-        });
-        db.close();
-      },
-      { productId: product.id, variantId: variant.id },
-    );
-
-    await page.goto('/products/business-card-classic');
-    await expect(page.getByText('Choose an orientation.').first()).toBeVisible();
-    await expect(page.getByRole('button', { name: /Start designing/ }).first()).toBeDisabled();
-    await page.getByRole('radio', { name: 'Vertical' }).click();
-    await expect(page.getByText('Choose an orientation.')).toHaveCount(0);
-    await expect(page.getByRole('link', { name: /Start designing/ }).first()).toBeVisible();
   });
 });

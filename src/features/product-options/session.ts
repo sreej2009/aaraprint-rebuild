@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { emptyConfiguration } from '@/features/product-workflow/configuration';
 import { familyIdForSlug, productWorkflow, type ProductWorkflow } from '@/features/product-workflow/registry';
 import type { DesignRepository } from '@/features/studio/persistence/repository';
@@ -16,7 +16,7 @@ import type { Product } from '@/lib/catalogue/types';
  * designs and versions, and the Studio opens the same design when "Start designing" is pressed.
  *
  * - The first render uses a new design from the product's default variant (what the pre-rendered
- *   HTML shows). In the browser the latest saved design for the product is then restored — unless
+ *   HTML shows), with no orientation yet: it is asked by the "Design it" entry step (M3). In the browser the latest saved design for the product is then restored — unless
  *   the customer already changed something — and a `?variantId=` link wins over it, as in the Studio.
  * - Nothing is written until the customer changes something.
  * - Saving code (repository, restore, save controller, validator) loads after the page is
@@ -37,6 +37,11 @@ export interface ProductDesignSession {
   workflow: ProductWorkflow | null;
   controller: SaveController | null;
   persistence: SessionPersistence;
+  /**
+   * Write any pending change now, waiting for the saving code if it is still loading — before
+   * the Studio opens, so it restores exactly this design (M3). Resolves even if saving fails.
+   */
+  flush(): Promise<void>;
 }
 
 export interface ProductDesignSessionOptions {
@@ -70,7 +75,7 @@ function defaultVariantId(product: Product): string | null {
 export function createSessionStore(product: Product, profile: StudioProfile | null, workflow: ProductWorkflow | null): StudioStore {
   const designable = product.isCustomizable && profile !== null;
   const document = designable
-    ? createBlankDesign(profile, { variantId: defaultVariantId(product), catalogue: product, orientation: workflow?.entry.orientation.defaultValue ?? null })
+    ? createBlankDesign(profile, { variantId: defaultVariantId(product), catalogue: product })
     : configurationDocument(product);
   const store = createStudioStore({ document, catalogue: product, workflow, measureText: null });
   // Not an undo step: the configuration starts from the default variant's own values.
@@ -83,6 +88,18 @@ export function useProductDesignSession({ product, profile, linkedVariantId, rep
   const [store] = useState(() => createSessionStore(product, profile, workflow));
   const [controller, setController] = useState<SaveController | null>(null);
   const [persistence, setPersistence] = useState<SessionPersistence>('starting');
+  // Settles once the session knows where it saves (with the controller in use, or none).
+  const settled = useRef<{ promise: Promise<void>; resolve: () => void } | null>(null);
+  if (!settled.current) {
+    let resolve = () => {};
+    const promise = new Promise<void>((r) => (resolve = r));
+    settled.current = { promise, resolve };
+  }
+  const controllerRef = useRef<SaveController | null>(null);
+  const flush = useCallback(async () => {
+    await settled.current?.promise;
+    await controllerRef.current?.flush();
+  }, []);
 
   useEffect(() => {
     const { actions } = store.getState();
@@ -92,6 +109,7 @@ export function useProductDesignSession({ product, profile, linkedVariantId, rep
     const designable = product.isCustomizable && profile !== null;
     if (!designable || injected === null || (injected === undefined && typeof globalThis.indexedDB === 'undefined')) {
       setPersistence('memory');
+      settled.current?.resolve();
       return;
     }
 
@@ -104,6 +122,7 @@ export function useProductDesignSession({ product, profile, linkedVariantId, rep
         const start = (record: Parameters<typeof createSaveController>[0]['record'] = null) => {
           const controller = createSaveController({ studio: store, repository, productSlug: product.slug, productId: product.id, record });
           stopCurrent = controller.start();
+          controllerRef.current = controller;
           setController(controller);
           return controller;
         };
@@ -115,6 +134,7 @@ export function useProductDesignSession({ product, profile, linkedVariantId, rep
         if (!live) return;
         if (result.kind === 'new' && result.storageError) {
           setPersistence('memory');
+          settled.current?.resolve();
           return;
         }
         // Continue the saved design, unless the customer already started choosing on this visit.
@@ -125,9 +145,11 @@ export function useProductDesignSession({ product, profile, linkedVariantId, rep
           start(result.record);
         }
         setPersistence('device');
+        settled.current?.resolve();
       },
       () => {
         if (live) setPersistence('memory');
+        settled.current?.resolve();
       },
     );
 
@@ -139,5 +161,5 @@ export function useProductDesignSession({ product, profile, linkedVariantId, rep
     // oxlint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  return { store, workflow, controller, persistence };
+  return { store, workflow, controller, persistence, flush };
 }

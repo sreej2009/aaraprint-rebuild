@@ -165,3 +165,13 @@ export function setProductSize(document: DesignDocument, product: CatalogueProdu
   if (!option) throw new DesignCommandError(`"${product.slug}" has no Studio size option`);
   return setStudioChoice(document, option.id, { type: 'dimensions', widthMm: size.widthMm, heightMm: size.heightMm, presetId: size.presetId ?? null });
 }
+
+/**
+ * Confirm the "Design it" entry choices (Phase 4 M3) as one change: the orientation and the
+ * catalogue entry options (quantity tier) together, re-resolving the variant and SKU. Same
+ * document back when nothing changes.
+ */
+export function setEntryOptions(document: DesignDocument, product: CatalogueProduct, entry: { orientation: Orientation | null; options: Record<string, string> }): DesignDocument {
+  const withOptions = Object.keys(entry.options).length > 0 ? setProductOptions(document, product, entry.options) : document;
+  return entry.orientation === null ? withOptions : setOrientation(withOptions, entry.orientation);
+}

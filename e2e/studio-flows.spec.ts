@@ -2,7 +2,7 @@ import AxeBuilder from '@axe-core/playwright';
 import type { Download, Page } from '@playwright/test';
 import { readFileSync } from 'node:fs';
 import type KonvaNamespace from 'konva';
-import { expect, test } from './fixtures';
+import { expect, test, confirmEntry } from './fixtures';
 
 /**
  * Phase 3 hardening (M16): whole-Studio flows that cross milestones — product page to saved design,
@@ -139,6 +139,7 @@ test.describe('desktop flows', () => {
   test('A · product page to a saved design: text and shape, move and resize, undo and redo, save, reload', async ({ page }) => {
     await page.goto('/products/business-card-classic');
     await page.getByRole('link', { name: 'Start designing' }).first().click();
+    await confirmEntry(page);
     await page.waitForFunction(() => Boolean(window.Konva?.stages.some((st) => st.container().closest('#studio-canvas'))));
     await addHeading(page, 'Asha Rao');
     await tool(page, 'Shapes');

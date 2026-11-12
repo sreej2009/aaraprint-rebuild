@@ -27,3 +27,17 @@ export async function settleAnimations(page: Page): Promise<void> {
   // Endless ones (spinners) never finish, so they don't count.
   await page.waitForFunction(() => document.getAnimations().every((a) => a.playState !== 'running' || a.effect?.getTiming().iterations === Infinity));
 }
+
+/**
+ * The "Design it" entry step (Phase 4 M3): after "Start designing" on a product page, a new design
+ * is asked for its required entry choices. Choose Horizontal and confirm, as a customer does.
+ */
+export async function confirmEntry(
+  page: Page,
+  { orientation = 'Horizontal', press = 'click', confirm = 'Start designing' }: { orientation?: 'Horizontal' | 'Vertical'; press?: 'click' | 'tap'; confirm?: string } = {},
+): Promise<void> {
+  const dialog = page.getByRole('dialog');
+  await expect(dialog).toBeVisible();
+  await dialog.getByRole('radio', { name: orientation })[press]();
+  await dialog.getByRole('button', { name: confirm })[press]();
+}

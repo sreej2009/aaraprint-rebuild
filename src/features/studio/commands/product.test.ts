@@ -13,6 +13,7 @@ import {
   setProductColour,
   setProductOption,
   setProductOptions,
+  setEntryOptions,
   setProductSize,
   setSameDesignBothSides,
   setStudioChoice,
@@ -127,6 +128,17 @@ describe('product configuration commands', () => {
     expect(syncProductVariant(synced, product, 'unknown-variant')).toBe(synced);
   });
 
+  it('confirms the entry choices (orientation + quantity tier) as one change, resolving the variant', () => {
+    const { product, doc } = designFor('business-card-classic');
+    const tier = group(product, 'Quantity');
+    const entered = setEntryOptions(doc, product, { orientation: 'vertical', options: { [tier.id]: value(product, 'Quantity', '500 cards') } });
+    expect(entered.product.configuration.orientation).toBe('vertical');
+    expect(entered.product.sku).toBe('BUSINESS-CARD-CLASSIC-QTY-500-INK-CLASSIC-BLACK');
+    expect(entered.surfaces).toBe(doc.surfaces);
+    expect(setEntryOptions(entered, product, { orientation: 'vertical', options: { [tier.id]: value(product, 'Quantity', '500 cards') } })).toBe(entered);
+    expect(setEntryOptions(doc, product, { orientation: null, options: {} })).toBe(doc);
+  });
+
   it('the low-level setVariant drops a SKU that belonged to another variant', () => {
     const { doc } = designFor('business-card-classic');
     expect(setVariant(doc, 'variant_other').product).toMatchObject({ variantId: 'variant_other', sku: null });
@@ -185,6 +197,15 @@ describe('product configuration in the store', () => {
     expect(bare.getState().actions.setProductOption('g', 'v')).toBe(false);
     expect(bare.getState().actions.setProductColour('v')).toBe(false);
     expect(bare.getState().history.past).toHaveLength(0);
+  });
+
+  it('confirming the entry step is a single undo step', () => {
+    const { product, studio } = storeFor('business-card-classic');
+    const before = studio.getState().document.product;
+    studio.getState().actions.applyEntryOptions({ orientation: 'horizontal', options: { [group(product, 'Quantity').id]: value(product, 'Quantity', '250 cards') } });
+    expect(studio.getState().history.past.map((e) => e.label)).toEqual(['Confirm design options']);
+    studio.getState().actions.undo();
+    expect(studio.getState().document.product).toEqual(before);
   });
 
   it('following the product page variant is a correction, not an undo step', () => {

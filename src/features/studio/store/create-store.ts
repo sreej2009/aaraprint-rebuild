@@ -120,6 +120,8 @@ export interface StudioActions {
   setOrientation(orientation: Orientation): boolean;
   setStudioChoice(key: string, choice: StudioChoice | null): boolean;
   setSameDesignBothSides(on: boolean): boolean;
+  /** Confirm the entry step (orientation + quantity tier) as one undo step (Phase 4 M3). */
+  applyEntryOptions(entry: { orientation: Orientation | null; options: Record<string, string> }): boolean;
   /** Load a different document (restored draft, version). Clears history and selection. */
   replaceDocument(document: DesignDocument, surfaceId?: string): void;
   /**
@@ -431,6 +433,11 @@ export function createStudioStore(options: CreateStudioStoreOptions): StudioStor
 
       setSameDesignBothSides(on) {
         return actions.execute(on ? 'Same design on both sides' : 'Separate designs per side', (d) => cmd.setSameDesignBothSides(d, on));
+      },
+
+      applyEntryOptions(entry) {
+        if (!catalogue) return false;
+        return actions.execute('Confirm design options', (d) => cmd.setEntryOptions(d, catalogue, entry));
       },
 
       replaceDocument(document, surfaceId) {
