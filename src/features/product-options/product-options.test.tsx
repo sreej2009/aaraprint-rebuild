@@ -209,8 +209,8 @@ describe('validation before designing', () => {
 });
 
 describe('persistence through the Studio save controller', () => {
-  function Harness({ product, repository, onSession }: { product: Product; repository: MemoryRepository; onSession(s: ProductDesignSession): void }) {
-    const session = useProductDesignSession({ product, profile: readProfile(product.slug), linkedVariantId: null, repository });
+  function Harness({ product, repository, onSession, linkedVariantId = null }: { product: Product; repository: MemoryRepository; onSession(s: ProductDesignSession): void; linkedVariantId?: string | null }) {
+    const session = useProductDesignSession({ product, profile: readProfile(product.slug), linkedVariantId, repository });
     onSession(session);
     return (
       <MemoryRouter>
@@ -240,6 +240,37 @@ describe('persistence through the Studio save controller', () => {
     expect(price()).toHaveTextContent('₹449');
     // Restoring isn't an undo step.
     expect(session!.store.getState().history.past).toHaveLength(0);
+  });
+
+  it('a saved colour is the source of truth: a stale ?variantId= link (e.g. browser Back) never overwrites it (M4-C)', async () => {
+    const product = readProduct('umbrella-golf');
+    const repository = createMemoryRepository();
+    let session: ProductDesignSession | null = null;
+    const user = userEvent.setup();
+    const first = render(<Harness product={product} repository={repository} onSession={(s) => (session = s)} />);
+    await waitFor(() => expect(session!.persistence).toBe('device'));
+    await user.click(screen.getByRole('radio', { name: /^Navy/ }));
+    await waitFor(() => expect(([...repository.designs.values()][0]?.document as DesignDocument | undefined)?.product.sku).toBe('UMBRELLA-GOLF-COLOUR-NAVY'), { timeout: 3000 });
+    first.unmount();
+
+    // Back to the page with the link it had before (Black).
+    const black = product.variants.find((v) => v.sku === 'UMBRELLA-GOLF-COLOUR-BLACK')!;
+    render(<Harness product={product} repository={repository} linkedVariantId={black.id} onSession={(s) => (session = s)} />);
+    await waitFor(() => expect(screen.getByRole('radio', { name: /^Navy/ })).toHaveAttribute('aria-checked', 'true'));
+    expect(session!.store.getState().document.product.sku).toBe('UMBRELLA-GOLF-COLOUR-NAVY');
+    await act(async () => {
+      await new Promise((resolve) => setTimeout(resolve, 1300)); // past the autosave delay
+    });
+    expect(([...repository.designs.values()][0]!.document as DesignDocument).product.sku).toBe('UMBRELLA-GOLF-COLOUR-NAVY');
+  });
+
+  it('a ?variantId= link still seeds a new design when nothing is saved', async () => {
+    const product = readProduct('umbrella-golf');
+    const red = product.variants.find((v) => v.sku === 'UMBRELLA-GOLF-COLOUR-RED')!;
+    let session: ProductDesignSession | null = null;
+    render(<Harness product={product} repository={createMemoryRepository()} linkedVariantId={red.id} onSession={(s) => (session = s)} />);
+    await waitFor(() => expect(session!.persistence).toBe('device'));
+    expect(screen.getByRole('radio', { name: /^Red/ })).toHaveAttribute('aria-checked', 'true');
   });
 
   it('nothing is written until the customer changes something', async () => {

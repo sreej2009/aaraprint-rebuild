@@ -110,14 +110,16 @@ interface EditorSessionProps extends StudioAppProps {
  */
 function EditorSession({ product, profile, variantId, initialSurface, initialTool, opened, repository, onStartNew, decodeImage }: EditorSessionProps) {
   const restored = opened.kind === 'restored' ? opened : null;
-  // The options chosen on the product page win; otherwise the design keeps its own.
-  const effectiveVariantId = resolveStudioVariant(product, variantId ?? restored?.document.product.variantId ?? null)?.id ?? null;
+  // The saved design is the single source of truth for its product (M4-C): a restored design keeps
+  // its own variant (colour, size…); `?variantId=` only seeds a new design. The product page saves
+  // its choices into the same design before opening the Studio, so they always agree.
+  const effectiveVariantId = resolveStudioVariant(product, restored?.document.product.variantId ?? variantId ?? null)?.id ?? null;
   const [store] = useState(() => {
     const blank = createBlankDesign(profile, { variantId: effectiveVariantId, catalogue: product });
     const document = restored ? restored.document : opened.kind === 'sample' ? sampleDesignFor(blank) : blank;
     const studio = createStudioStore({ document, catalogue: product, ...(initialSurface ? { surfaceId: initialSurface } : {}) });
-    // Not an undo step: the variant follows the product page (as in M3), and its options and SKU
-    // fill the product configuration (a design saved before schema v3 has none yet).
+    // Not an undo step: the design's own variant fills the product configuration (a design saved
+    // before schema v3 has none yet); a saved choice is never replaced by a default.
     if (restored) studio.getState().actions.syncProductVariant(effectiveVariantId);
     return studio;
   });

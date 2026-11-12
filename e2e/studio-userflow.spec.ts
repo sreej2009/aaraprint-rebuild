@@ -90,17 +90,14 @@ async function flow(page: Page, slug: string, photo: 'ok' | 'pen', expectPhoto: 
   const [frontBox, backBox] = profile.sides.map((s) => boxOf(s.placement));
   await clearedStandIn(page, slug, { photo });
   await startDesigning(page, slug);
-  // 3 · product-first (Phase 4 M4): the Studio opens on the product; Flat is there for precise work.
-  await expect(canvasChoice(page).getByRole('radio', { name: 'On the product' })).toHaveAttribute('aria-checked', 'true');
+  // 3 · on the product only (Phase 4 M4-C): the Studio opens on the product, with no Flat switch.
   await expect(region(page)).toHaveAttribute('data-view', 'product');
-  await canvasChoice(page).getByRole('radio', { name: 'Flat' }).click();
-  await expect(region(page)).toHaveAttribute('data-view', 'flat');
+  await expect(canvasChoice(page)).toHaveCount(0);
   // Some artwork: a background colour on the front.
   await page.getByRole('navigation', { name: 'Design tools' }).getByRole('button', { name: 'Background' }).click();
   await page.getByRole('complementary', { name: 'Background' }).getByRole('button', { name: 'Deep indigo' }).click();
-  const flat = await editor(page);
+  const flat = await editor(page); // the artwork as designed (print px), to compare after the Preview
   // 4–6 · On the product: the photo behind, the artwork exactly over the print area.
-  await canvasChoice(page).getByRole('radio', { name: 'On the product' }).click();
   await expect(region(page)).toHaveAttribute('data-view', 'product');
   await page.waitForFunction(() =>
     Boolean(
@@ -130,7 +127,7 @@ async function flow(page: Page, slug: string, photo: 'ok' | 'pen', expectPhoto: 
   // 9–10 · the Preview: the same photo and placement.
   await page.getByTestId('preview-button').click();
   const dialog = page.getByRole('dialog', { name: 'Preview' });
-  await dialog.getByRole('radiogroup', { name: 'Preview view' }).getByRole('radio', { name: 'On the product' }).click();
+  await expect(dialog.getByRole('radiogroup', { name: 'Preview view' })).toHaveCount(0);
   await expect(dialog.getByTestId('preview-area')).toHaveAttribute('data-view', 'product');
   await page.waitForFunction(() => window.Konva.stages.some((s) => s.container().classList.contains('studio-product-stage')));
   const inPreview = await page.evaluate(() => {
@@ -193,7 +190,7 @@ test.describe('desktop: the product view from the product page', () => {
 test.describe('tablet and phone: the product view from the product page', () => {
   test.skip(({ hasTouch }) => !hasTouch, 'touch layouts');
 
-  test('umbrella and pen by touch: Start designing → On the product; the photo draws; axe; no sideways scroll', async ({ page }) => {
+  test('umbrella and pen by touch: Start designing opens on the product; the photo draws; axe; no sideways scroll', async ({ page }) => {
     test.setTimeout(60_000);
     for (const [slug, photo] of [
       ['umbrella-photo-custom', 'ok'],
@@ -201,7 +198,7 @@ test.describe('tablet and phone: the product view from the product page', () => 
     ] as const) {
       await clearedStandIn(page, slug, { photo });
       await startDesigning(page, slug, 'tap');
-      await canvasChoice(page).getByRole('radio', { name: 'On the product' }).tap();
+      await expect(canvasChoice(page), slug).toHaveCount(0); // on the product only (M4-C)
       await expect(region(page), slug).toHaveAttribute('data-view', 'product');
       await page.waitForFunction(() =>
         Boolean(

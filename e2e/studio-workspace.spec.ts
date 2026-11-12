@@ -46,14 +46,15 @@ async function open(page: Page, url = SAMPLE) {
 
 const region = (page: Page) => page.getByRole('region', { name: /^Design canvas: / });
 const viewChoice = (page: Page) => page.getByRole('radiogroup', { name: 'Canvas view' });
-const option = (page: Page, name: 'Flat' | 'On the product') => viewChoice(page).getByRole('radio', { name });
 const side = (page: Page, name: 'Front' | 'Back') => page.getByRole('radiogroup', { name: 'Side' }).getByRole('radio', { name: new RegExp(`^${name}`) });
 const inspector = (page: Page) => page.getByRole('complementary', { name: 'Layers and properties' });
 const rail = (page: Page) => page.getByRole('navigation', { name: 'Design tools' });
 
-async function onTheProduct(page: Page, press: 'click' | 'tap' = 'click') {
-  await option(page, 'On the product')[press]();
+/** Photo-frame products are on the product only (M4-C): no Flat switch, no flat state. */
+async function onTheProduct(page: Page) {
   await expect(region(page)).toHaveAttribute('data-view', 'product');
+  await expect(viewChoice(page)).toHaveCount(0);
+  await expect(page.getByRole('radio', { name: 'Flat' })).toHaveCount(0);
   await page.waitForFunction(() => {
     const st = window.Konva.stages.find((s) => s.container().closest('#studio-canvas'));
     const photo = st?.findOne<KonvaNamespace.Image>('.product-mockup');
@@ -158,8 +159,8 @@ test.describe('desktop: editing on the product', () => {
     await clearedStandIn(page);
     await open(page, UMBRELLA);
     await setBackground(page, 'Deep indigo');
-    // Product-first (M4): the umbrella opens on its photo; only the side shown is loaded.
-    await expect(option(page, 'On the product')).toHaveAttribute('aria-checked', 'true');
+    // On the product only (M4-C): the umbrella opens on its photo, with no switch; only the side shown is loaded.
+    await expect(viewChoice(page)).toHaveCount(0);
     expect(mediaRequests.filter((p) => p.includes('studio-fixtures'))).toEqual(['/media/studio-fixtures/umbrella-golf-front.png']);
     await onTheProduct(page);
     const photo = bounds(BOXES.front);
@@ -244,7 +245,7 @@ test.describe('desktop: editing on the product', () => {
     await page.keyboard.press('Control+y');
     expect((await boxOf(page, id)).x).toBeCloseTo(moved.x, 6);
     await expect(region(page)).toHaveAttribute('data-view', 'product');
-    await expect(option(page, 'On the product')).toHaveAttribute('aria-checked', 'true');
+    await expect(viewChoice(page)).toHaveCount(0);
   });
 
   test('B · C · add text, a shape and an image on the product; they draw in the print area', async ({ page }) => {
@@ -315,20 +316,20 @@ test.describe('desktop: editing on the product', () => {
     await page.reload();
     await page.waitForFunction(() => Boolean(window.Konva?.stages.some((st) => st.container().closest('#studio-canvas')?.querySelector('canvas'))));
     await expect.poll(async () => (await boxOf(page, id)).x).toBeCloseTo(box.x, 6);
-    // A new session opens in the family's workspace (on the product, M4): the view was never saved.
+    // A new session opens in the family's workspace (on the product only, M4-C): the view was never saved.
     await expect(region(page)).toHaveAttribute('data-view', 'product');
-    await expect(option(page, 'On the product')).toHaveAttribute('aria-checked', 'true');
+    await expect(viewChoice(page)).toHaveCount(0);
   });
 
-  test('switching views is not an edit: no undo step, no autosave, no version, same design', async ({ page }) => {
+  test('viewing the product is not an edit: zoom and sides add no undo step, no autosave, no version', async ({ page }) => {
     await clearedStandIn(page);
     await open(page, UMBRELLA);
     await setBackground(page, 'Deep indigo');
     await saved(page);
     const before = JSON.stringify(await storedDesigns(page));
     await onTheProduct(page);
-    await option(page, 'Flat').click();
-    await onTheProduct(page);
+    await side(page, 'Back').click();
+    await side(page, 'Front').click();
     await page.keyboard.press('Control+=');
     await page.waitForTimeout(1600); // past the autosave delay: nothing may be written (a negative check)
     expect(JSON.stringify(await storedDesigns(page))).toBe(before);
@@ -338,8 +339,6 @@ test.describe('desktop: editing on the product', () => {
   });
 
   test('F · the proof made on the product is the flat print file, byte for byte', async ({ page }) => {
-    await clearedStandIn(page);
-    await open(page);
     const proof = async () => {
       await page.getByTestId('print-check-button').click();
       const dialog = page.getByRole('dialog', { name: 'Print check and proof' });
@@ -353,7 +352,13 @@ test.describe('desktop: editing on the product', () => {
       expect([file.readUInt32BE(16), file.readUInt32BE(20)]).toEqual([Number(planned[1]), Number(planned[2])]);
       return file;
     };
+    // The same sample where the photo can't be shown (real photos: rights unconfirmed) is flat...
+    await open(page);
+    await expect(region(page)).toHaveAttribute('data-view', 'flat');
     const flat = await proof();
+    // ...and on the product with a cleared stand-in: the proof is identical.
+    await clearedStandIn(page);
+    await open(page);
     await onTheProduct(page);
     const onProduct = await proof();
     expect(onProduct.subarray(1, 4).toString()).toBe('PNG');
@@ -390,10 +395,10 @@ test.describe('desktop: editing on the product', () => {
 
     await clearedStandIn(page, 'umbrella-golf', { photo: 'missing' });
     await open(page);
-    await option(page, 'On the product').click();
     await expect(page.getByTestId('canvas-product-unavailable')).toHaveText('On-product view unavailable for this product.');
     await expect(region(page)).toHaveAttribute('data-view', 'flat');
     expect((await stage(page)).photo).toBeNull();
+    await expect(viewChoice(page)).toHaveCount(0); // a fallback, never a switch
     // Still a working editor.
     await tool(page, 'Shapes');
     await page.getByRole('button', { name: 'Add rectangle', exact: true }).click();
@@ -418,23 +423,21 @@ test.describe('desktop: editing on the product', () => {
     await expect.poll(async () => (await stage(page)).scale).toBeCloseTo(fitted.scale, 6);
   });
 
-  test('axe: the Studio flat and on the product', async ({ page }) => {
+  test('axe: the Studio on the product', async ({ page }) => {
     test.setTimeout(60_000);
     await clearedStandIn(page);
     await open(page);
-    for (const view of ['Flat', 'On the product'] as const) {
-      if (view === 'On the product') await onTheProduct(page);
-      await settleAnimations(page);
-      const results = await new AxeBuilder({ page }).withTags(TAGS).analyze();
-      expect(results.violations.map((v) => `${view} ${v.id}: ${v.nodes.map((n) => n.target.join(' ')).join(' | ')}`)).toEqual([]);
-    }
+    await onTheProduct(page);
+    await settleAnimations(page);
+    const results = await new AxeBuilder({ page }).withTags(TAGS).analyze();
+    expect(results.violations.map((v) => `${v.id}: ${v.nodes.map((n) => n.target.join(' ')).join(' | ')}`)).toEqual([]);
   });
 });
 
 test.describe('I · every width', () => {
   test.skip(({ hasTouch, isMobile }) => hasTouch || isMobile, 'sizes set here');
 
-  test('1440 to 360 px: the photo fits, the choice and zoom are on screen, artwork is selectable, nothing scrolls sideways', async ({ page }) => {
+  test('1440 to 360 px: the photo fits, the sides are on screen, there is no view switch, artwork is selectable, nothing scrolls sideways', async ({ page }) => {
     test.setTimeout(90_000);
     await clearedStandIn(page);
     await open(page);
@@ -443,11 +446,10 @@ test.describe('I · every width', () => {
       await page.setViewportSize({ width, height: width < 768 ? 800 : 900 });
       await expect(region(page), `${width}px`).toHaveAttribute('data-view', 'product');
       await expect.poll(() => page.evaluate(() => document.documentElement.scrollWidth - window.innerWidth), { message: `${width}px` }).toBeLessThanOrEqual(0);
-      for (const control of [option(page, 'Flat'), option(page, 'On the product')]) {
-        const box = (await control.boundingBox())!;
-        expect(box.x, `${width}px`).toBeGreaterThanOrEqual(-0.5);
-        expect(box.x + box.width, `${width}px`).toBeLessThanOrEqual(width + 0.5);
-      }
+      await expect(viewChoice(page), `${width}px`).toHaveCount(0);
+      const sides = (await side(page, 'Back').boundingBox())!; // the side choice stays on screen
+      expect(sides.x, `${width}px`).toBeGreaterThanOrEqual(-0.5);
+      expect(sides.x + sides.width, `${width}px`).toBeLessThanOrEqual(width + 0.5);
       // Fitted: the whole photo is in the canvas area.
       await page.keyboard.press('Shift+Digit1');
       const area = (await page.getByTestId('canvas-area').boundingBox())!;
@@ -469,12 +471,11 @@ test.describe('I · every width', () => {
 test.describe('tablet: on the product by touch', () => {
   test.skip(({ hasTouch, isMobile }) => !hasTouch || isMobile, 'tablet');
 
-  test('tap the choice, tap and drag artwork: it moves in print px; touch targets; axe', async ({ page }) => {
+  test('on the product with no switch; tap and drag artwork: it moves in print px; axe', async ({ page }) => {
     test.setTimeout(60_000);
     await clearedStandIn(page);
     await open(page);
-    for (const name of ['Flat', 'On the product'] as const) expect((await option(page, name).boundingBox())!.height).toBeGreaterThanOrEqual(44);
-    await onTheProduct(page, 'tap');
+    await onTheProduct(page);
     // The largest shape (at Fit the print area is small on screen); a second touch on text this soon
     // would be a double-tap, which edits the text.
     const shapes = await Promise.all((await firstOf(page, 'shape')).map(async (shapeId) => ({ shapeId, box: await boxOf(page, shapeId) })));
@@ -504,12 +505,11 @@ test.describe('tablet: on the product by touch', () => {
 test.describe('phone: on the product', () => {
   test.skip(({ isMobile }) => !isMobile, 'phone');
 
-  test('the choice is in the canvas footer; the photo draws behind the artwork; axe; no sideways scroll', async ({ page }) => {
+  test('on the product with no switch; the photo draws behind the artwork; axe; no sideways scroll', async ({ page }) => {
     test.setTimeout(60_000);
     await clearedStandIn(page);
     await open(page);
-    expect(await viewChoice(page).evaluate((el) => el.closest('footer') !== null)).toBe(true);
-    await onTheProduct(page, 'tap');
+    await onTheProduct(page);
     const s = await stage(page);
     expect(s.photo).not.toBeNull();
     expect(s.layers.map((l) => l.name)).toEqual(['workspace', 'artwork', 'guides']);

@@ -43,10 +43,12 @@ export function PreviewButton({ iconOnly }: { iconOnly: boolean }) {
 
 function PreviewDialog() {
   const document = useStudio((s) => s.document);
-  const { profile } = useStudioSession();
+  const { profile, workspace } = useStudioSession();
   const studio = useStudioStoreApi();
   // Flat (the finished piece, as in Phase 3) or on the product photo (Phase 4 M1); kept on retry.
-  const [view, setView] = useState<PreviewMode>('flat');
+  // Photo-frame families have only the product (M4-C).
+  const productOnly = workspace?.productOnly ?? false;
+  const [view, setView] = useState<PreviewMode>(productOnly ? 'product' : 'flat');
   // Starts on the side being edited; switching here never changes the editor's side.
   const [sideId, setSideId] = useState(() => studio.getState().editor.activeSurfaceId);
   const surface = document.surfaces.find((s) => s.id === sideId) ?? document.surfaces[0]!;
@@ -66,7 +68,7 @@ function PreviewDialog() {
         }}
         className="fixed inset-0 z-50 flex flex-col bg-surface-sunken outline-none data-[state=open]:animate-fade-in"
       >
-        <PreviewBody key={attempt} document={document} surface={surface} profile={profile} view={view} onView={setView} onSide={setSideId} onRetry={() => setAttempt((n) => n + 1)} />
+        <PreviewBody key={attempt} document={document} surface={surface} profile={profile} view={productOnly ? 'product' : view} productOnly={productOnly} onView={setView} onSide={setSideId} onRetry={() => setAttempt((n) => n + 1)} />
       </DialogPrimitive.Content>
     </DialogPrimitive.Portal>
   );
@@ -85,12 +87,14 @@ interface BodyProps {
   surface: SurfaceDesign;
   profile: StudioProfile;
   view: PreviewMode;
+  /** The product is the only view (photo-frame families): no Flat switch. */
+  productOnly?: boolean;
   onView(view: PreviewMode): void;
   onSide(id: string): void;
   onRetry(): void;
 }
 
-function PreviewBody({ document, surface, profile, view, onView, onSide, onRetry }: BodyProps) {
+function PreviewBody({ document, surface, profile, view, productOnly = false, onView, onSide, onRetry }: BodyProps) {
   const ready = usePreviewReady(document.surfaces);
   // Phones keep the header short: sides and zoom move to the bottom bar (and the view toggle on tablets too).
   const layout = useStudioUi().layout;
@@ -228,9 +232,9 @@ function PreviewBody({ document, surface, profile, view, onView, onSide, onRetry
   const notes = [
     status,
     wanted && !onProduct ? PRODUCT_VIEW_UNAVAILABLE : null,
-    onProduct && colourOffered && colourUnavailable(product.view, colour, product.tint) ? COLOUR_UNAVAILABLE : null,
+    onProduct && colourUnavailable(product.view, colour, product.tint) ? COLOUR_UNAVAILABLE : null,
   ].filter((n): n is string => n !== null);
-  const toggle = offered && (
+  const toggle = offered && !productOnly && (
     <>
       <ProductViewToggle label="Preview view" testId="preview-view-toggle" value={view} onChange={switchView} />
     </>

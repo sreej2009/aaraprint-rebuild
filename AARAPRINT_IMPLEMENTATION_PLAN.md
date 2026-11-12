@@ -2582,6 +2582,7 @@ Its §19 gives the recommended order. Phases and milestones above are history an
 | M2 Product options UI (product page) | Done |
 | M3 "Design it" entry workflow | Done |
 | M4 Product-first Studio workspace | Done |
+| M4-C Photo-frame Studio workflow (correction) | Done |
 | M5… Review/Approve | Not started (audit §18) |
 
 ### M1 — Schema v3 and product family registry
@@ -2891,7 +2892,7 @@ The product page's initial JS went from 250.9 KB to **252.4 KB** gzipped (+1.5 K
 
 | Family group | Original | This Studio |
 |---|---|---|
-| Umbrella, rainwear, drinkware, pen, mug (photo frame) | Product photo with the print area on it | Opens **on the product** (existing M1–M4 product view). Real photos stay rights-blocked: production shows the flat print area with the note "The product photo isn't available here: you're designing the flat print area." The Studio's existing Flat view is kept as a switch for precise work. |
+| Umbrella, rainwear, drinkware, pen, mug (photo frame) | Product photo with the print area on it | Opens **on the product** (existing M1–M4 product view). Real photos stay rights-blocked: production shows the flat print area with the note "The product photo isn't available here: you're designing the flat print area." M4 kept the Studio's Flat view as a switch; **M4-C removed it** (on the product only). |
 | Apparel, bags, caps, signs, marketing print, labels, packaging, posters, gifts, stamps (perspective) | "On product" perspective with a Flat artwork switch | The perspective faces are quads with clip polygons (388 entries in the original's source), not affine placements, so they can't be drawn faithfully with the current product view. **Not imported:** these open on the flat print area with "On-product view for this product isn't available yet: you're designing the flat print area." |
 | Gift frames, round mouse pad | Gift frame | Not imported, as above. |
 | Polo | Drawn polo stage (2D Edit / 3D Preview) | Not imported (2D flat print area, note). No 3D. |
@@ -2948,3 +2949,54 @@ Gzipped JS loaded on entry, measured from the build manifest against the M3 comm
 **Results:** lint and typecheck clean; 890 unit and component tests passed (79 files); production build passes. Full browser suite on the final build: 412 passed, 1 failed, 414 skipped (each because it is for a different device layout or width loop). The failure was the desktop skip-link tab-order check in `studio.spec.ts`, under full-suite load. It passed 6 of 6 when repeated alone and again when `studio.spec.ts` and `entry.spec.ts` were re-run on every device (46 passed), so it is a timing flake, not a regression.
 
 **Not in M4:** perspective, gift-frame and polo product views (their geometry is in the original's source but not imported); 3D; resizing artwork when a size option changes; Review and Approve.
+
+### M4-C — Photo-frame Studio workflow (correction)
+
+**Scope:** two corrections to M4, nothing else. (1) Photo-frame products (umbrella, rainwear, drinkware, pen, mug) are on the product only: M4 kept the Studio's Flat view as a switch for them, which the original never had. (2) The saved product colour is the single source of truth: no URL or default variant may overwrite it, and the product visual follows it.
+
+#### On the product only
+
+- `resolveWorkspace()` (still family-driven, from the registry) gains `productOnly`: the representation is the product photo and the original had no flat view (`views` is `['product']`). That is every photo-frame family with a usable photo.
+- `toggle` is back to the original's rule: both views exist and the product can be shown. No family has that today (perspective faces aren't imported), so no switch renders anywhere.
+- **Canvas:** for `productOnly` the canvas always wants the product; the viewport's `productView` is not consulted, so there is no flat state to fall into, and no switch in the DOM.
+- **Preview:** for `productOnly` it opens on the product and has no "Preview view" switch.
+- **Kept:** if the photo can't be shown (rights-blocked real photos, a photo that fails to load, a side with no placement), the existing fallback still shows the flat print area with its note. That is a fallback, not a view choice, and there is no switch there either. Artwork editing, front/back, masks, placements and print geometry are unchanged; proofs are byte-for-byte the same file.
+
+#### Colour: root cause and fix
+
+The colour is the catalogue colour option in the design's v3 configuration (M1/M2), changed through the shared Product options component (M1 product commands). Tracing it end to end:
+
+| Step | Finding |
+|---|---|
+| Product options → command → configuration → variant/SKU → price | Correct: one `setProductOption` undo step re-resolves the variant and SKU; `resolvePrice` follows. |
+| Autosave | Correct: the configuration and SKU are saved with the design. |
+| Studio → photo and mask | Correct for umbrellas and rainwear: `useProductColour` reads the configuration; `tintFor` recolours through the side's mask. |
+| **Studio initialisation** | **Bug.** `StudioApp` resolved the variant as `?variantId= ?? saved design`, then synced the restored design to it. Any `?variantId=` in the URL overwrote the saved colour, so a bookmark or an older link reset Navy back to Black. M4 fixed only the loader filling in the default variant when the URL had none. |
+| **Product page restore** | **Same bug.** `useProductDesignSession` applied `linkedVariantId ?? saved design` on restore. Browser Back from the Studio to `/products/x?variantId=<old colour>` reset the saved design to the old colour, and autosave then wrote it. The Studio then opened in the old colour. |
+
+**Fix:** the saved design wins in both places. A restored design keeps its own variant. `?variantId=` only seeds a new design (nothing saved yet), and the URL is then kept in step with the design (`VariantInUrl` in the Studio, the existing effect on the product page). The product page saves its choices into the same design before opening the Studio, so the two always agree.
+
+**What the photo can show:**
+- **Umbrellas and rainwear:** the original's palette and fabric masks (M3). The photo is recoloured immediately on the canvas and in the Preview, and kept on reload and through undo/redo. The real masks are still rights-unconfirmed, so in production the photo is the flat fallback anyway. With a cleared photo but an unconfirmed mask, choosing a colour the photo isn't in now says "Colour preview unavailable for this side." (previously silent).
+- **Pens, mugs, drinkware:** their Studio colours are part colours (body, clip, handle…: Studio reference choices, saved and undoable, no variant or price change). The original drew them with part masks that are not imported, so the photo can't show them and nothing is invented. Once a part colour is chosen, the canvas says "Your product colours are saved with the design; the photo doesn't show part colours yet."
+
+#### Skip-link timing (M4 report)
+
+The desktop skip-link tab-order test pressed Tab right after `goto`. The Studio first looks up this browser's saved designs in IndexedDB, which network idle doesn't wait for. Under full-suite load the Tab could land on the loading screen, which has nothing to focus, and was lost. The test now waits for the Studio (the design name) before pressing Tab, as the other tests in the file do. The app's tab order is unchanged.
+
+#### Tests
+
+- `workspace/workspace.test.ts` (36): every photo-frame product resolves to on-product only (`views` `['product']`, `productOnly`, no switch); the switch rule for every family; part-colour note rule.
+- `product-options/product-options.test.tsx`: a saved colour survives a stale `?variantId=` link (fails without the fix); a link still seeds a new design.
+- `shell/product-colour.test.tsx`: the saved colour survives Studio initialisation without a variant and with a stale/default `?variantId=` (fails without the fix); the colour-unavailable note.
+- `shell/pens-mugs-view.test.tsx`: pen part colours are one undo step, saved, with the note.
+- Updated to the corrected requirement (they asserted the M4 switch): `product-workspace.test.tsx`, `pens-mugs-view.test.tsx`, `preview-dialog.test.tsx`, `product-colour.test.tsx`. The same behaviour is still checked: sides, keyboard, fallbacks, nothing reaching the design, zoom at real size, and proof equality against the same design shown flat.
+- `e2e/studio-photoframe.spec.ts` (new): umbrella, rainwear, drinkware, pen and mug from the product page:
+  - **A:** Start designing opens on the product with no Flat switch.
+  - **B:** colour change (configuration, SKU, catalogue price, photo pixels for masked products; part colour plus note for the others; artwork intact).
+  - **C:** reload keeps the colour and the photo.
+  - **D:** undo/redo.
+  - **E:** all five at 1440, 1280, 820, 390 and 360 px, canvas and Preview, no switch, no horizontal overflow.
+- Browser specs updated to the corrected requirement: `studio-workspace`, `studio-colour`, `studio-penmug`, `studio-product`, `studio-userflow`, `studio-workspaces` (no switch; proofs compared with the same design shown flat), and `studio.spec` (skip-link wait).
+
+**Results:** lint and typecheck clean; 897 unit and component tests passed (79 files); production build passes (Studio route 306.9 KB gzipped, +0.3 KB; product page unchanged at 232.0 KB). Full browser suite: 419 passed, 0 failed, 426 skipped (each for a different device layout, or a spec that sets its own widths). Run separately: `studio.spec.ts` + `entry.spec.ts` on every device 46 passed; the skip-link test 10 of 10 on desktop and tablet; `studio-photoframe.spec.ts` 6 passed.

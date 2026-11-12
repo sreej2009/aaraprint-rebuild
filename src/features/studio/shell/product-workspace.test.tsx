@@ -74,7 +74,6 @@ function renderStudio({ product = umbrella, profile = cleared(), width = 1440 } 
 
 const canvas = () => screen.getByRole('region', { name: /^Design canvas: / });
 const viewChoice = () => screen.queryByRole('radiogroup', { name: 'Canvas view' });
-const option = (name: 'Flat' | 'On the product') => within(viewChoice()!).getByRole('radio', { name });
 const fixturePhotos = () => photos.requested.filter((url) => url.includes('studio-fixtures'));
 const layerRows = () => [...(screen.queryByRole('list', { name: 'Layers' })?.querySelectorAll('[data-layer-row]') ?? [])].map((row) => row.getAttribute('aria-label'));
 const sideRadio = (name: 'Front' | 'Back') => within(screen.getByRole('radiogroup', { name: 'Side' })).getByRole('radio', { name: new RegExp(`^${name}`) });
@@ -102,12 +101,13 @@ describe('which products offer it', () => {
   });
 });
 
-describe('flat and on the product', () => {
-  it('starts on the product (M4): the photo behind the artwork, front and back; Flat and back again', async () => {
+describe('on the product only (photo-frame, M4-C)', () => {
+  it('opens and stays on the product: no Flat switch anywhere; front and back each on their photo', async () => {
     const user = renderStudio();
     await ready();
-    expect(viewChoice()!.closest('footer')).not.toBeNull();
-    expect(option('On the product')).toHaveAttribute('aria-checked', 'true');
+    expect(viewChoice()).not.toBeInTheDocument();
+    expect(screen.queryByRole('radio', { name: 'Flat' })).not.toBeInTheDocument();
+    expect(screen.queryByRole('radio', { name: 'On the product' })).not.toBeInTheDocument();
     expect(screen.queryByTestId('canvas-workspace-note')).not.toBeInTheDocument();
     expect(canvas()).toHaveAttribute('data-view', 'product');
     expect(canvas()).toHaveAccessibleName(/^Design canvas: Front, .+, on the product$/);
@@ -116,49 +116,44 @@ describe('flat and on the product', () => {
 
     await user.click(sideRadio('Back'));
     expect(canvas()).toHaveAccessibleName(/^Design canvas: Back, .+, on the product$/);
-    await waitFor(() => expect(fixturePhotos()).toEqual(['/media/studio-fixtures/umbrella-front.png', '/media/studio-fixtures/umbrella-back.png']));
-
-    await user.click(option('Flat'));
-    expect(canvas()).toHaveAttribute('data-view', 'flat');
-    expect(canvas()).toHaveAccessibleName(/^Design canvas: Back, [^,]+$/);
-    await user.click(option('On the product'));
     expect(canvas()).toHaveAttribute('data-view', 'product');
+    await waitFor(() => expect(fixturePhotos()).toEqual(['/media/studio-fixtures/umbrella-front.png', '/media/studio-fixtures/umbrella-back.png']));
+    await user.click(sideRadio('Front'));
+    expect(canvas()).toHaveAttribute('data-view', 'product');
+    expect(viewChoice()).not.toBeInTheDocument();
   });
 
-  it('works from the keyboard; Delete on the choice never deletes the selected artwork', async () => {
+  it('works from the keyboard on the product; Delete on the side choice never deletes the selected artwork', async () => {
     const user = renderStudio();
     await ready();
     const layers = layerRows();
     await user.click(within(screen.getByRole('list', { name: 'Layers' })).getAllByRole('button')[0]!);
-    option('On the product').focus();
-    await user.keyboard('{ArrowLeft}');
-    expect(option('Flat')).toHaveFocus();
-    await user.keyboard(' ');
-    expect(canvas()).toHaveAttribute('data-view', 'flat');
-    await user.keyboard('{ArrowRight} ');
-    expect(canvas()).toHaveAttribute('data-view', 'product');
+    sideRadio('Front').focus();
     await user.keyboard('{Delete}');
     await user.keyboard('{Backspace}');
     expect(layerRows()).toEqual(layers);
+    await user.keyboard('{ArrowRight} ');
+    expect(canvas()).toHaveAccessibleName(/^Design canvas: Back, .+, on the product$/);
+    expect(canvas()).toHaveAttribute('data-view', 'product');
   });
 
-  it('falls back to the flat sheet, with a note, when the photo can’t load or a side has no placement', async () => {
+  it('falls back to the flat sheet, with a note, when the photo can’t load or a side has no placement — still with no switch', async () => {
     photos.failing.add('/media/studio-fixtures/umbrella-front.png');
     const user = renderStudio({ profile: cleared((side) => (side.id === 'back' ? { placement: null } : {})) });
     await ready();
     expect(await screen.findByTestId('canvas-product-unavailable')).toHaveTextContent('On-product view unavailable for this product.');
     expect(canvas()).toHaveAttribute('data-view', 'flat');
+    expect(viewChoice()).not.toBeInTheDocument();
     await user.click(sideRadio('Back'));
     expect(canvas()).toHaveAttribute('data-view', 'flat');
     expect(screen.getByTestId('canvas-product-unavailable')).toBeInTheDocument();
     expect(fixturePhotos()).toEqual(['/media/studio-fixtures/umbrella-front.png']); // the back's photo is never requested
-    await user.click(option('Flat'));
-    expect(screen.queryByTestId('canvas-product-unavailable')).not.toBeInTheDocument();
+    expect(viewChoice()).not.toBeInTheDocument();
   });
 });
 
 describe('nothing about the view reaches the design', () => {
-  it('switching views and sides adds no undo step, no layer and no save; edits on the product work as usual', async () => {
+  it('switching sides on the product adds no undo step, no layer and no save; edits on the product work as usual', async () => {
     const user = renderStudio();
     await ready();
     const status = screen.getByTestId('save-status').getAttribute('data-status');
@@ -167,8 +162,6 @@ describe('nothing about the view reaches the design', () => {
 
     await user.click(sideRadio('Back'));
     await user.click(sideRadio('Front'));
-    await user.click(option('Flat'));
-    await user.click(option('On the product'));
     // Past the autosave delay: still nothing to save.
     await new Promise((resolve) => setTimeout(resolve, 1300));
     expect(screen.getByTestId('save-status')).toHaveAttribute('data-status', status!);
@@ -189,10 +182,8 @@ describe('nothing about the view reaches the design', () => {
     expect(canvas()).toHaveAttribute('data-view', 'product'); // undo never changes the view
   });
 
-  it('the proof is the same print file on the product as on the flat sheet', async () => {
-    const user = renderStudio();
-    await ready();
-    const facts = async () => {
+  it('the proof made on the product is the same print file as the flat print area of the same design', async () => {
+    const facts = async (user: ReturnType<typeof userEvent.setup>) => {
       await user.click(screen.getByTestId('print-check-button'));
       const dialog = await screen.findByRole('dialog', { name: 'Print check and proof' });
       const text = within(dialog).getByTestId('proof-facts').textContent;
@@ -200,19 +191,27 @@ describe('nothing about the view reaches the design', () => {
       await waitFor(() => expect(screen.queryByRole('dialog')).not.toBeInTheDocument());
       return text;
     };
-    const onProduct = await facts();
-    await user.click(option('Flat'));
-    const flat = await facts();
+    let user = renderStudio();
+    await ready();
+    expect(canvas()).toHaveAttribute('data-view', 'product');
+    const onProduct = await facts(user);
+    document.body.innerHTML = '';
+    // The same sample design where the photo can't be shown (real photos, rights unconfirmed): flat.
+    user = renderStudio({ profile: umbrellaProfile });
+    await ready();
+    expect(canvas()).toHaveAttribute('data-view', 'flat');
+    const flat = await facts(user);
     expect(onProduct).toBe(flat);
     expect(flat).toMatch(/Proof image\d+ × \d+ px/);
   });
 
-  it('sits in the canvas footer on tablets and phones too', async () => {
+  it('stays on the product with no switch on tablets and phones too', async () => {
     for (const width of [820, 390]) {
       document.body.innerHTML = '';
       renderStudio({ width });
       await ready();
-      expect(viewChoice()!.closest('footer')).not.toBeNull();
+      expect(canvas()).toHaveAttribute('data-view', 'product');
+      expect(viewChoice()).not.toBeInTheDocument();
     }
   });
 });

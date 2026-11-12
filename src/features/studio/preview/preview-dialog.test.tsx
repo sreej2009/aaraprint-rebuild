@@ -264,8 +264,13 @@ describe('on the product (Phase 4 M1)', () => {
   afterEach(() => setImageLoaderForTests(null));
 
   const viewChoice = () => within(dialog()).queryByRole('radiogroup', { name: 'Preview view' });
-  const option = (name: 'Flat' | 'On the product') => within(viewChoice()!).getByRole('radio', { name });
   const productDrawing = () => within(dialog()).getByTestId('product-canvas');
+  /** Umbrellas are on the product only (M4-C): the Preview opens on it, with no Flat switch. */
+  const openProductPreview = async (user: ReturnType<typeof userEvent.setup>) => {
+    await user.click(previewButton());
+    await screen.findByRole('dialog', { name: 'Preview' });
+    await within(dialog()).findByTestId('product-canvas');
+  };
   const fixturePhotos = () => photos.requested.filter((url) => url.includes('studio-fixtures'));
 
   it('is not offered for a business card, or for an umbrella whose photos aren’t cleared: Preview stays flat', async () => {
@@ -284,17 +289,11 @@ describe('on the product (Phase 4 M1)', () => {
     expect(photos.requested.filter((url) => url.includes('umbrellas-rainwear-2d'))).toEqual([]);
   });
 
-  it('starts Flat; On the product shows the photo with the artwork in its place, front and back', async () => {
+  it('shows the product straight away, with no Flat switch: the photo with the artwork in its place, front and back', async () => {
     const user = renderStudio({ studioProduct: umbrella, profile: cleared() });
-    await openPreview(user);
-    expect(option('Flat')).toHaveAttribute('aria-checked', 'true');
-    expect(option('On the product')).toHaveAttribute('aria-checked', 'false');
-    expect(within(dialog()).getByTestId('preview-area')).toHaveAttribute('data-view', 'flat');
-    // The canvas behind is product-first (M4), so only the front photo it shows has been loaded.
-    expect(fixturePhotos()).toEqual(['/media/studio-fixtures/umbrella-front.png']);
-
-    await user.click(option('On the product'));
-    expect(option('On the product')).toHaveAttribute('aria-checked', 'true');
+    await openProductPreview(user);
+    expect(viewChoice()).not.toBeInTheDocument();
+    expect(within(dialog()).queryByRole('radio', { name: 'Flat' })).not.toBeInTheDocument();
     await waitFor(() => expect(productDrawing()).toHaveAttribute('data-side', 'front'));
     expect(within(dialog()).queryByTestId('preview-canvas')).not.toBeInTheDocument();
     expect(within(dialog()).getByTestId('preview-area')).toHaveAttribute('data-view', 'product');
@@ -310,21 +309,12 @@ describe('on the product (Phase 4 M1)', () => {
     await waitFor(() => expect(productDrawing()).toHaveAttribute('data-side', 'back'));
     expect(productDrawing()).toHaveAttribute('data-placed', '468.0,186.7,182.0,242.7');
     expect(fixturePhotos()).toEqual(['/media/studio-fixtures/umbrella-front.png', '/media/studio-fixtures/umbrella-back.png']);
-
-    await user.click(option('Flat'));
-    expect(drawing()).toHaveAttribute('data-side', 'back');
-    expect(within(dialog()).queryByTestId('product-canvas')).not.toBeInTheDocument();
-    expect(dialog()).toHaveAccessibleDescription(/will look once printed and trimmed/);
+    expect(viewChoice()).not.toBeInTheDocument();
   });
 
-  it('works from the keyboard and zooms like the flat preview (100 % = real size)', async () => {
+  it('zooms on the product like the flat preview (100 % = real size), from the keyboard too', async () => {
     const user = renderStudio({ studioProduct: umbrella, profile: cleared() });
-    await openPreview(user);
-    option('Flat').focus();
-    await user.keyboard('{ArrowRight}');
-    expect(option('On the product')).toHaveFocus();
-    await user.keyboard(' ');
-    await waitFor(() => expect(productDrawing()).toBeInTheDocument());
+    await openProductPreview(user);
     expect(within(dialog()).getByTestId('preview-area')).toHaveAttribute('data-zoom', 'fit');
     await user.click(within(dialog()).getByRole('button', { name: /, zoom options$/ }));
     await user.click(await screen.findByRole('menuitem', { name: /^Actual size \(100%\)/ }));
@@ -332,16 +322,13 @@ describe('on the product (Phase 4 M1)', () => {
     expect(Number(productDrawing().dataset.scale)).toBeCloseTo(96 / (300 * (170 / 1800)), 3);
     await user.keyboard('{Shift>}!{/Shift}');
     expect(within(dialog()).getByTestId('preview-area')).toHaveAttribute('data-zoom', 'fit');
-    // Back to Flat starts fitted on the piece again.
-    await user.click(option('Flat'));
-    expect(within(dialog()).getByTestId('preview-area')).toHaveAttribute('data-zoom', 'fit');
   });
 
-  it('falls back to flat, with a note, when the photo can’t be loaded or a side has no placement', async () => {
+  it('falls back to flat, with a note and still no switch, when the photo can’t be loaded or a side has no placement', async () => {
     photos.failing.add('/media/studio-fixtures/umbrella-front.png');
     const user = renderStudio({ studioProduct: umbrella, profile: cleared((side) => (side.id === 'back' ? { placement: null } : {})) });
     await openPreview(user);
-    await user.click(option('On the product'));
+    expect(viewChoice()).not.toBeInTheDocument();
     expect(await within(dialog()).findByTestId('preview-product-unavailable')).toHaveTextContent('On-product preview unavailable for this product.');
     expect(drawing()).toHaveAttribute('data-side', 'front');
     expect(within(dialog()).getByTestId('preview-area')).toHaveAttribute('data-view', 'flat');
@@ -351,17 +338,14 @@ describe('on the product (Phase 4 M1)', () => {
     expect(drawing()).toHaveAttribute('data-side', 'back');
     expect(within(dialog()).getByTestId('preview-product-unavailable')).toBeInTheDocument();
     expect(fixturePhotos()).toEqual(['/media/studio-fixtures/umbrella-front.png']);
-    await user.click(option('Flat'));
-    expect(within(dialog()).queryByTestId('preview-product-unavailable')).not.toBeInTheDocument();
+    expect(viewChoice()).not.toBeInTheDocument();
   });
 
   it('changes nothing in the design: no undo steps, same layers after closing', async () => {
     const user = renderStudio({ studioProduct: umbrella, profile: cleared() });
     const layers = layerCount();
     expect(screen.getByRole('button', { name: 'Undo' })).toBeDisabled();
-    await openPreview(user);
-    await user.click(option('On the product'));
-    await waitFor(() => expect(productDrawing()).toBeInTheDocument());
+    await openProductPreview(user);
     await user.click(within(dialog()).getByRole('button', { name: 'Zoom in' }));
     await user.keyboard('{Control>}z{/Control}');
     await user.click(within(dialog()).getByRole('radio', { name: /^Back/ }));
@@ -371,16 +355,13 @@ describe('on the product (Phase 4 M1)', () => {
     expect(screen.getByRole('button', { name: 'Undo' })).toBeDisabled();
   });
 
-  it('sits in the header on desktop and in the bottom bar on tablets and phones', async () => {
-    for (const [width, place] of [
-      [1440, 'HEADER'],
-      [820, 'FOOTER'],
-      [390, 'FOOTER'],
-    ] as const) {
+  it('has no view switch on desktop, tablets or phones: always the product', async () => {
+    for (const width of [1440, 820, 390]) {
       document.body.innerHTML = '';
       const user = renderStudio({ studioProduct: umbrella, profile: cleared(), width });
-      await openPreview(user);
-      expect(viewChoice()!.closest('header, footer')!.tagName).toBe(place);
+      await openProductPreview(user);
+      expect(viewChoice()).not.toBeInTheDocument();
+      expect(within(dialog()).getByTestId('preview-area')).toHaveAttribute('data-view', 'product');
       await user.keyboard('{Escape}');
       await waitFor(() => expect(screen.queryByRole('dialog')).not.toBeInTheDocument());
     }

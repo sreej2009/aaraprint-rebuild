@@ -170,6 +170,9 @@ test.describe('keyboard and accessibility', () => {
   test('the skip link jumps to the canvas; the top bar and rail come first in tab order', async ({ page }, info) => {
     test.skip(layoutOf(info) === 'mobile', 'keyboard');
     await page.goto(STUDIO);
+    // The Studio opens after it looks up this browser's saved designs (IndexedDB), which network
+    // idle doesn't wait for: a Tab pressed on the loading screen has nothing to focus and is lost.
+    await page.getByText('Classic Visiting Cards design').waitFor();
     await page.keyboard.press('Tab');
     await expect(page.getByRole('link', { name: 'Skip to content' })).toBeFocused();
     await page.keyboard.press('Tab');

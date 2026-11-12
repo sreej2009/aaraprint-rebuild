@@ -44,7 +44,6 @@ async function open(page: Page, url = UMBRELLA) {
 
 const preview = (page: Page) => page.getByRole('dialog', { name: 'Preview' });
 const viewChoice = (page: Page) => preview(page).getByRole('radiogroup', { name: 'Preview view' });
-const option = (page: Page, name: 'Flat' | 'On the product') => viewChoice(page).getByRole('radio', { name });
 const sideRadio = (page: Page, name: 'Front' | 'Back') =>
   preview(page)
     .getByRole('radiogroup', { name: 'Side to preview' })
@@ -56,9 +55,10 @@ async function openPreview(page: Page) {
   await expect(page.getByTestId('preview-loading')).toHaveCount(0, { timeout: 10_000 });
 }
 
-async function onTheProduct(page: Page, press: 'click' | 'tap' = 'click') {
-  await option(page, 'On the product')[press]();
+/** Umbrellas are on the product only (M4-C): the Preview shows it straight away, with no Flat switch. */
+async function onTheProduct(page: Page) {
   await expect(preview(page).getByTestId('preview-area')).toHaveAttribute('data-view', 'product');
+  await expect(viewChoice(page)).toHaveCount(0);
   await expect(page.getByTestId('preview-loading')).toHaveCount(0, { timeout: 10_000 });
   await page.waitForFunction(() => window.Konva.stages.some((s) => s.container().classList.contains('studio-product-stage')));
 }
@@ -117,17 +117,14 @@ async function storedDesign(page: Page) {
 test.describe('desktop: on the product', () => {
   test.skip(({ hasTouch, isMobile }) => hasTouch || isMobile, 'mouse and keyboard');
 
-  test('1 · a cleared stand-in: the Preview starts Flat, then the photo with the artwork in the original place (pixels), front and back', async ({ page }) => {
+  test('1 · a cleared stand-in: the Preview shows the photo with the artwork in the original place (pixels), front and back; no Flat switch', async ({ page }) => {
     await clearedStandIn(page);
     await open(page);
     await setBackground(page, 'Deep indigo');
     await openPreview(page);
-    await expect(option(page, 'Flat')).toHaveAttribute('aria-checked', 'true');
-    await expect(preview(page).getByTestId('preview-area')).toHaveAttribute('data-view', 'flat');
-    // The canvas behind opens on the product (M4), so only its front photo has been loaded.
-    expect(mediaRequests.filter((p) => p.includes('studio-fixtures'))).toEqual(['/media/studio-fixtures/umbrella-golf-front.png']);
-
     await onTheProduct(page);
+    // The canvas behind is on the product too: only the front photo has been loaded.
+    expect(mediaRequests.filter((p) => p.includes('studio-fixtures'))).toEqual(['/media/studio-fixtures/umbrella-golf-front.png']);
     const front = placed(BOXES.front);
     const inset = 3;
     const shown = await productStage(page, [
@@ -167,19 +164,7 @@ test.describe('desktop: on the product', () => {
     expect(backShown.artworkPixels[0]![3]).toBe(0); // the back has no background colour: the product shows through, no white box
     expect(backShown.artworkPixels[1]![3]).toBe(0);
     expect(mediaRequests.filter((p) => p.includes('studio-fixtures'))).toEqual(['/media/studio-fixtures/umbrella-golf-front.png', '/media/studio-fixtures/umbrella-golf-back.png']);
-
-    await option(page, 'Flat').click();
-    await expect(preview(page).getByTestId('preview-area')).toHaveAttribute('data-view', 'flat');
-    await expect
-      .poll(() =>
-        page.evaluate(() =>
-          window.Konva.stages
-            .find((s) => s.container().classList.contains('studio-preview-stage'))
-            ?.getLayers()
-            .map((l) => l.name()),
-        ),
-      )
-      .toEqual(['preview-shadow', 'artwork']);
+    await expect(viewChoice(page)).toHaveCount(0);
   });
 
   test('zoom and pan on the product: 100 % is the artwork at real size; keys and drag move it', async ({ page }) => {
@@ -204,7 +189,7 @@ test.describe('desktop: on the product', () => {
     await clearedStandIn(page, 'umbrella-golf', { photo: 'missing' });
     await open(page);
     await openPreview(page);
-    await option(page, 'On the product').click();
+    await expect(viewChoice(page)).toHaveCount(0); // a fallback, never a switch
     await expect(preview(page).getByTestId('preview-product-unavailable')).toHaveText('On-product preview unavailable for this product.');
     await expect(preview(page).getByTestId('preview-area')).toHaveAttribute('data-view', 'flat');
     await page.waitForFunction(() => window.Konva.stages.some((s) => s.container().classList.contains('studio-preview-stage') && !s.container().classList.contains('studio-product-stage')));
@@ -288,35 +273,31 @@ test.describe('desktop: on the product', () => {
     expect(second.equals(first)).toBe(true);
   });
 
-  test('axe: Flat and On the product', async ({ page }) => {
+  test('axe: the Preview on the product', async ({ page }) => {
     test.setTimeout(60_000);
     await clearedStandIn(page);
     await open(page, `${UMBRELLA}?sample=1`);
     await openPreview(page);
-    for (const view of ['Flat', 'On the product'] as const) {
-      if (view === 'On the product') await onTheProduct(page);
-      const results = await new AxeBuilder({ page }).include('[data-testid="studio-preview"]').withTags(TAGS).analyze();
-      expect(results.violations.map((v) => `${view} ${v.id}: ${v.nodes.map((n) => n.target.join(' ')).join(' | ')}`)).toEqual([]);
-    }
+    await onTheProduct(page);
+    const results = await new AxeBuilder({ page }).include('[data-testid="studio-preview"]').withTags(TAGS).analyze();
+    expect(results.violations.map((v) => `${v.id}: ${v.nodes.map((n) => n.target.join(' ')).join(' | ')}`)).toEqual([]);
   });
 });
 
 test.describe('6 · every width', () => {
   test.skip(({ hasTouch, isMobile }) => hasTouch || isMobile, 'sizes set here');
 
-  test('1440 to 360 px: the choice fits, the photo draws, nothing scrolls sideways', async ({ page }) => {
+  test('1440 to 360 px: the photo draws, the controls fit, there is no view switch, nothing scrolls sideways', async ({ page }) => {
     test.setTimeout(90_000);
     await clearedStandIn(page);
     await open(page, `${UMBRELLA}?sample=1`);
     for (const width of [1440, 1280, 1024, 820, 768, 600, 430, 390, 375, 360]) {
       await page.setViewportSize({ width, height: width < 768 ? 800 : 900 });
       await openPreview(page);
-      for (const view of ['Flat', 'On the product'] as const) {
-        if (view === 'On the product') await onTheProduct(page);
+      for (const view of ['On the product'] as const) {
+        await onTheProduct(page);
         await expect.poll(() => page.evaluate(() => document.documentElement.scrollWidth - window.innerWidth), { message: `${width}px ${view}` }).toBeLessThanOrEqual(0);
         for (const control of [
-          option(page, 'Flat'),
-          option(page, 'On the product'),
           preview(page).getByRole('button', { name: 'Close preview' }),
           preview(page).getByRole('button', { name: /, zoom options$/ }),
         ]) {
@@ -328,7 +309,6 @@ test.describe('6 · every width', () => {
         const area = (await preview(page).getByTestId('preview-area').boundingBox())!;
         expect(area.height, `${width}px ${view}`).toBeGreaterThan(200);
       }
-      await option(page, 'Flat').click();
       await page.keyboard.press('Escape');
       await expect(preview(page)).toHaveCount(0);
     }
@@ -338,14 +318,14 @@ test.describe('6 · every width', () => {
 test.describe('tablet: on the product by touch', () => {
   test.skip(({ hasTouch, isMobile }) => !hasTouch || isMobile, 'tablet');
 
-  test('tap the choice and the sides; the targets are touch-sized; axe passes', async ({ page }) => {
+  test('on the product with no switch; tap the sides; axe passes', async ({ page }) => {
     test.setTimeout(60_000);
     await clearedStandIn(page);
     await open(page, `${UMBRELLA}?sample=1`);
     await page.getByTestId('preview-button').tap();
     await expect(page.getByTestId('preview-loading')).toHaveCount(0, { timeout: 10_000 });
-    for (const name of ['Flat', 'On the product'] as const) expect((await option(page, name).boundingBox())!.height).toBeGreaterThanOrEqual(44);
-    await onTheProduct(page, 'tap');
+    await onTheProduct(page);
+    expect((await sideRadio(page, 'Back').boundingBox())!.height).toBeGreaterThanOrEqual(44);
     await sideRadio(page, 'Back').tap();
     await expect.poll(async () => (await productStage(page)).group.y).toBeCloseTo(placed(BOXES.back).y, 6);
     const results = await new AxeBuilder({ page }).include('[data-testid="studio-preview"]').withTags(TAGS).analyze();
@@ -357,14 +337,13 @@ test.describe('tablet: on the product by touch', () => {
 test.describe('phone: on the product', () => {
   test.skip(({ isMobile }) => !isMobile, 'phone');
 
-  test('the choice sits in the bottom bar; the photo draws; axe passes', async ({ page }) => {
+  test('on the product with no switch; the photo draws; axe passes', async ({ page }) => {
     test.setTimeout(60_000);
     await clearedStandIn(page);
     await open(page, `${UMBRELLA}?sample=1`);
     await page.getByTestId('preview-button').tap();
     await expect(page.getByTestId('preview-loading')).toHaveCount(0, { timeout: 10_000 });
-    expect(await viewChoice(page).evaluate((el) => el.closest('header, footer')?.tagName)).toBe('FOOTER');
-    await onTheProduct(page, 'tap');
+    await onTheProduct(page);
     const results = await new AxeBuilder({ page }).include('[data-testid="studio-preview"]').withTags(TAGS).analyze();
     expect(results.violations.map((v) => `${v.id}: ${v.nodes.map((n) => n.target.join(' ')).join(' | ')}`)).toEqual([]);
     expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBe(true);

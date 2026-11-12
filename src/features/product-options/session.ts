@@ -17,7 +17,9 @@ import type { Product } from '@/lib/catalogue/types';
  *
  * - The first render uses a new design from the product's default variant (what the pre-rendered
  *   HTML shows), with no orientation yet: it is asked by the "Design it" entry step (M3). In the browser the latest saved design for the product is then restored — unless
- *   the customer already changed something — and a `?variantId=` link wins over it, as in the Studio.
+ *   the customer already changed something. A `?variantId=` link seeds a new design only: a saved
+ *   design keeps its own choices (M4-C), so a stale link (browser Back after changing the colour in
+ *   the Studio) can never overwrite them.
  * - Nothing is written until the customer changes something.
  * - Saving code (repository, restore, save controller, validator) loads after the page is
  *   interactive, so it never weighs on the product page's first load.
@@ -103,7 +105,7 @@ export function useProductDesignSession({ product, profile, linkedVariantId, rep
 
   useEffect(() => {
     const { actions } = store.getState();
-    // A `?variantId=` link wins (not an undo step), as in the Studio.
+    // A `?variantId=` link seeds the new design (not an undo step) until a saved one is restored.
     if (linkedVariantId) actions.syncProductVariant(linkedVariantId);
 
     const designable = product.isCustomizable && profile !== null;
@@ -141,7 +143,8 @@ export function useProductDesignSession({ product, profile, linkedVariantId, rep
         if (result.kind === 'restored' && store.getState().history.past.length === 0) {
           stopCurrent();
           store.getState().actions.replaceDocument(result.document);
-          store.getState().actions.syncProductVariant(linkedVariantId ?? result.document.product.variantId);
+          // The saved design's own variant (M4-C): the single source of truth for its choices.
+          store.getState().actions.syncProductVariant(result.document.product.variantId ?? linkedVariantId);
           start(result.record);
         }
         setPersistence('device');

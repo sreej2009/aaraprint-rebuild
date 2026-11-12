@@ -4,7 +4,7 @@ import { describe, expect, it } from 'vitest';
 import { familyIdForSlug, productWorkflow, registeredSlugs } from '@/features/product-workflow/registry';
 import { PRODUCT_FAMILY_IDS, type ProductFamilyId } from '@/features/product-workflow/types';
 import type { StudioProfile } from '../profile/types';
-import { resolveWorkspace, workspaceNote, type StudioWorkspace } from './workspace';
+import { PART_COLOURS_NOT_SHOWN, partColoursNote, resolveWorkspace, workspaceNote, type StudioWorkspace } from './workspace';
 
 /**
  * Workspace resolution (Phase 4 M4): from the design's persisted family (or, for a design saved
@@ -38,7 +38,20 @@ describe('every family', () => {
       expect(ws.singleSurface).toBe(workflow.surfaces.length === 1);
       // The product is shown only where it can be: otherwise the flat print area, never a guess.
       expect(ws.initialView).toBe(ws.representation === 'product-photo' ? 'product' : 'flat');
-      expect(ws.toggle).toBe(ws.representation === 'product-photo');
+      // The switch only where the original had both views and the product can be shown; never for
+      // a family whose only view is the product (M4-C).
+      expect(ws.toggle).toBe(ws.views.includes('product') && ws.views.includes('flat') && ws.representation === 'product-photo');
+      expect(ws.productOnly).toBe(ws.representation === 'product-photo' && !ws.views.includes('flat'));
+      expect(ws.productOnly && ws.toggle).toBe(false);
+    }
+  });
+
+  it('photo-frame families are on the product only: no flat view, no switch (M4-C), for every one of their products', () => {
+    for (const family of PHOTO_FRAME) {
+      for (const slug of slugsOf(family)) {
+        const ws = resolve(slug, withPhoto);
+        expect([slug, ws.kind, ws.views, ws.representation, ws.initialView, ws.toggle, ws.productOnly]).toEqual([slug, 'photo-frame', ['product'], 'product-photo', 'product', false, true]);
+      }
     }
   });
 
@@ -46,11 +59,11 @@ describe('every family', () => {
     for (const family of PHOTO_FRAME) {
       const slug = slugsOf(family)[0]!;
       const ws = resolve(slug, withPhoto);
-      expect([family, ws.kind, ws.representation, ws.initialView, ws.toggle]).toEqual([family, 'photo-frame', 'product-photo', 'product', true]);
+      expect([family, ws.kind, ws.representation, ws.initialView, ws.toggle, ws.productOnly]).toEqual([family, 'photo-frame', 'product-photo', 'product', false, true]);
       expect(ws.initialTool).toBe('product-options');
       // Without placements (e.g. the paper pen): flat print area, said plainly.
       const flat = resolve(slug, noPhoto);
-      expect([flat.representation, flat.initialView, flat.toggle]).toEqual(['not-imported', 'flat', false]);
+      expect([flat.representation, flat.initialView, flat.toggle, flat.productOnly]).toEqual(['not-imported', 'flat', false, false]);
       expect(workspaceNote(flat, false, false)).toMatch(/isn’t available yet/);
     }
   });
@@ -65,7 +78,7 @@ describe('every family', () => {
     ];
     for (const [family, kind, flatLabel] of cases) {
       const ws = resolve(slugsOf(family)[0]!, withPhoto);
-      expect([family, ws.kind, ws.representation, ws.initialView, ws.toggle, ws.flatLabel]).toEqual([family, kind, 'not-imported', 'flat', false, flatLabel]);
+      expect([family, ws.kind, ws.representation, ws.initialView, ws.toggle, ws.productOnly, ws.flatLabel]).toEqual([family, kind, 'not-imported', 'flat', false, false, flatLabel]);
       expect(workspaceNote(ws, false, false)).toBe('On-product view for this product isn’t available yet: you’re designing the flat print area.');
     }
     expect(resolve(slugsOf('marketing-print')[0]!).views).toEqual(['product', 'flat']);
@@ -86,7 +99,7 @@ describe('every family', () => {
 describe('fails safe', () => {
   it('an unknown product gets the plain flat print area', () => {
     const ws = resolveWorkspace({ slug: 'not-a-product', familyId: null }, withPhoto);
-    expect(ws).toMatchObject({ familyId: null, workflow: null, kind: 'flat', views: ['flat'], initialView: 'flat', representation: 'none', toggle: false, singleSurface: false });
+    expect(ws).toMatchObject({ familyId: null, workflow: null, kind: 'flat', views: ['flat'], initialView: 'flat', representation: 'none', toggle: false, productOnly: false, singleSurface: false });
     expect(workspaceNote(ws, false, false)).toBeNull();
   });
 
@@ -100,7 +113,7 @@ describe('fails safe', () => {
   });
 
   it('a null profile never shows a product photo', () => {
-    expect(resolveWorkspace({ slug: 'umbrella-golf', familyId: 'umbrella' }, null)).toMatchObject({ representation: 'not-imported', initialView: 'flat', toggle: false });
+    expect(resolveWorkspace({ slug: 'umbrella-golf', familyId: 'umbrella' }, null)).toMatchObject({ representation: 'not-imported', initialView: 'flat', toggle: false, productOnly: false });
   });
 });
 
@@ -110,5 +123,15 @@ describe('notes', () => {
     expect(workspaceNote(ws, true, true)).toBeNull();
     expect(workspaceNote(ws, false, true)).toBeNull(); // chose Flat themselves
     expect(workspaceNote(ws, false, false)).toBe('The product photo isn’t available here: you’re designing the flat print area.');
+  });
+});
+
+describe('part colours (pens, mugs, drinkware)', () => {
+  it('say the photo doesn’t show them once one is chosen; never for products without part colours', () => {
+    const pen = resolve('pen-gold-click', withPhoto);
+    expect(partColoursNote(pen, { studio: {} })).toBeNull();
+    expect(partColoursNote(pen, { studio: { 'part-colour:body': { type: 'colour', valueId: null, hex: '#123456' } } })).toBe(PART_COLOURS_NOT_SHOWN);
+    expect(partColoursNote(resolve('umbrella-golf', withPhoto), { studio: { 'part-colour:body': { type: 'colour', valueId: null, hex: '#123456' } } })).toBeNull();
+    expect(partColoursNote(undefined, { studio: {} })).toBeNull();
   });
 });

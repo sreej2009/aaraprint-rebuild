@@ -83,7 +83,7 @@ for (const f of FAMILIES) {
 }
 
 test.describe('on the product (cleared stand-in)', () => {
-  test('a photo-frame product opens straight on the product, with no flat first, at every width', async ({ page }) => {
+  test('a photo-frame product opens straight on the product, with no flat first and no switch, at every width', async ({ page }) => {
     await clearedStandIn(page);
     // Every value the canvas's view ever takes, from its first render.
     await page.addInitScript(() => {
@@ -100,8 +100,8 @@ test.describe('on the product (cleared stand-in)', () => {
       await expect(region(page)).toHaveAccessibleName(/on the product$/);
       expect(await page.evaluate(() => window.__views), `${width}`).toEqual(['product']);
       await expect(page.getByTestId('canvas-workspace-note')).toHaveCount(0);
-      // The Studio's Flat view is kept for precise work.
-      await expect(page.getByRole('radiogroup', { name: 'Canvas view' })).toBeVisible();
+      // On the product only (M4-C): no Flat switch.
+      await expect(page.getByRole('radiogroup', { name: 'Canvas view' })).toHaveCount(0);
       expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBe(true);
     }
   });

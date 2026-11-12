@@ -87,16 +87,18 @@ const canvasChoice = () => screen.queryByRole('radiogroup', { name: 'Canvas view
 const sideRadio = (name: 'Front' | 'Back') => within(screen.getByRole('radiogroup', { name: 'Side' })).getByRole('radio', { name: new RegExp(`^${name}`) });
 const layerRows = () => [...(screen.queryByRole('list', { name: 'Layers' })?.querySelectorAll('[data-layer-row]') ?? [])].map((row) => row.getAttribute('aria-label'));
 
-async function onTheProduct(user: ReturnType<typeof userEvent.setup>) {
+/** Pens and mugs are on the product only (M4-C): it opens there, with no Flat switch. */
+async function onTheProduct() {
   await screen.findByRole('region', { name: /^Design canvas: / });
-  await user.click(within(canvasChoice()!).getByRole('radio', { name: 'On the product' }));
   await waitFor(() => expect(canvas()).toHaveAttribute('data-view', 'product'));
+  expect(canvasChoice()).toBeNull();
 }
 
+/** The Preview shows the product straight away, with no Flat switch either. */
 async function openPreviewOnProduct(user: ReturnType<typeof userEvent.setup>) {
   await user.click(screen.getByRole('button', { name: 'Preview' }));
   const dialog = await screen.findByRole('dialog', { name: 'Preview' });
-  await user.click(within(dialog).getByRole('radio', { name: 'On the product' }));
+  expect(within(dialog).queryByRole('radiogroup', { name: 'Preview view' })).toBeNull();
   return { dialog, drawing: () => within(dialog).getByTestId('product-canvas') };
 }
 
@@ -135,10 +137,27 @@ describe('pens', () => {
   });
 });
 
+describe('pen part colours (M4-C)', () => {
+  it('are saved with the design as one undo step; the photo can’t show them, and the canvas says so', async () => {
+    const user = renderStudio('pen-gold-click');
+    await onTheProduct();
+    expect(screen.queryByTestId('canvas-part-colours')).toBeNull();
+    const panel = screen.getByRole('complementary', { name: 'Product options' });
+    const parts = within(panel).getByRole('group', { name: 'Product colours' });
+    await user.click(within(within(parts).getByRole('list', { name: /Body presets/ })).getByRole('button', { name: 'Black' }));
+    expect(screen.getByTestId('canvas-part-colours')).toHaveTextContent('Your product colours are saved with the design; the photo doesn’t show part colours yet.');
+    expect(canvas()).toHaveAttribute('data-view', 'product');
+    await user.click(screen.getByRole('button', { name: 'Undo' }));
+    expect(screen.queryByTestId('canvas-part-colours')).toBeNull();
+    await user.click(screen.getByRole('button', { name: 'Redo' }));
+    expect(screen.getByTestId('canvas-part-colours')).toBeInTheDocument();
+  });
+});
+
 describe('mugs', () => {
   it('one paired photo for both sides: the Preview cuts the front from its left half and the back from its right', async () => {
     const user = renderStudio('gift-mug-custom-black');
-    await onTheProduct(user);
+    await onTheProduct();
     const { dialog, drawing } = await openPreviewOnProduct(user);
     await waitFor(() => expect(drawing()).toHaveAttribute('data-frame', '900x1086'));
     expect(JSON.parse(drawing().dataset.draw!)).toEqual({ crop: { x: 0, y: 0, width: 724, height: 1086 }, at: { x: 0, y: 0, width: 724, height: 1086 } });
@@ -163,17 +182,18 @@ describe('mugs', () => {
 });
 
 describe('nothing reaches the design', () => {
-  it('switching views and sides on a pen or a mug adds no undo step, no layer and no save', async () => {
+  it('switching sides on a pen or a mug (always on the product) adds no undo step, no layer and no save', async () => {
     for (const slug of ['pen-gold-click', 'gift-mug-custom-decorative']) {
       document.body.innerHTML = '';
       const user = renderStudio(slug);
       await screen.findByRole('region', { name: /^Design canvas: / });
       const status = screen.getByTestId('save-status').getAttribute('data-status');
       const layers = layerRows();
-      await onTheProduct(user);
+      await onTheProduct();
       await user.click(sideRadio('Back'));
       await user.click(sideRadio('Front'));
-      await user.click(within(canvasChoice()!).getByRole('radio', { name: 'Flat' }));
+      expect(canvasChoice()).toBeNull();
+      expect(canvas()).toHaveAttribute('data-view', 'product');
       await new Promise((resolve) => setTimeout(resolve, 1300)); // past the autosave delay
       expect(screen.getByTestId('save-status')).toHaveAttribute('data-status', status!);
       expect(screen.getByRole('button', { name: 'Undo' })).toBeDisabled();

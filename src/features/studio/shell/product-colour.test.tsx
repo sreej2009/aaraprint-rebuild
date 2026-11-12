@@ -7,6 +7,7 @@ import { setGraphicsLibraryForTests } from '../assets/graphics';
 import { setImageLoaderForTests } from '../assets/image-cache';
 import { setPreviewRendererForTests, type PreviewCanvasProps, type ProductCanvasProps } from '../preview/renderer';
 import { setTintRendererForTests, type TintRequest } from '../product-view/tint-renderer';
+import { createMemoryRepository, type MemoryRepository } from '../persistence/repository';
 import type { StudioProfile } from '../profile/types';
 import { readProduct, readProfile } from '../testing/catalogue-fixtures';
 import { StudioApp } from './studio-app';
@@ -66,7 +67,7 @@ afterEach(() => {
   setPreviewRendererForTests(null);
 });
 
-function renderStudio({ product = umbrella, profile = stand(), width = 1440, variantId = null as string | null } = {}) {
+function renderStudio({ product = umbrella, profile = stand(), width = 1440, variantId = null as string | null, repository = null as MemoryRepository | null } = {}) {
   window.matchMedia = ((query: string) => ({
     matches: width >= Number(/min-width: (\d+)px/.exec(query)?.[1] ?? 0),
     media: query,
@@ -79,7 +80,7 @@ function renderStudio({ product = umbrella, profile = stand(), width = 1440, var
         path: '/products/:slug/design',
         element: (
           <TooltipProvider>
-            <StudioApp product={product} profile={profile} variantId={variantId} initialSurface={null} initialTool={null} sample />
+            <StudioApp product={product} profile={profile} variantId={variantId} initialSurface={null} initialTool={null} {...(repository ? { repository } : { sample: true })} />
           </TooltipProvider>
         ),
       },
@@ -249,7 +250,8 @@ describe('shared with the Preview', () => {
     await waitFor(() => expect(canvas()).toHaveAttribute('data-tint', 'applied'));
     await user.click(screen.getByRole('button', { name: 'Preview' }));
     const dialog = await screen.findByRole('dialog', { name: 'Preview' });
-    await user.click(within(dialog).getByRole('radio', { name: 'On the product' }));
+    // On the product only (M4-C): no view switch to press.
+    expect(within(dialog).queryByRole('radiogroup', { name: 'Preview view' })).toBeNull();
     await waitFor(() => expect(within(dialog).getByTestId('product-canvas')).toHaveAttribute('data-photo', '#243052'));
     expect(within(dialog).queryByRole('radiogroup', { name: /colou?r/i })).toBeNull();
     expect(tints.requests).toHaveLength(1); // the canvas's tint, reused
@@ -263,5 +265,42 @@ describe('shared with the Preview', () => {
       await openProductOptions(user);
       expect(colours()).not.toBeNull();
     }
+  });
+});
+
+describe('the saved colour is the single source of truth (M4-C)', () => {
+  const sku = (repository: MemoryRepository) => ([...repository.designs.values()][0]?.document as { product: { sku: string | null } } | undefined)?.product.sku;
+  const black = () => umbrella.variants.find((v) => v.sku === 'UMBRELLA-GOLF-COLOUR-BLACK')!;
+
+  it('survives Studio initialisation: reopened without a variant, or with a stale/default ?variantId=, it is still Navy on the photo', async () => {
+    const repository = createMemoryRepository();
+    const user = renderStudio({ repository });
+    await onTheProduct();
+    await openProductOptions(user);
+    await user.click(swatch('Navy'));
+    await waitFor(() => expect(sku(repository)).toBe('UMBRELLA-GOLF-COLOUR-NAVY'), { timeout: 4000 });
+
+    for (const variantId of [null, black().id]) {
+      document.body.innerHTML = '';
+      const again = renderStudio({ repository, variantId });
+      await onTheProduct();
+      await waitFor(() => expect(canvas()).toHaveAttribute('data-tint', 'applied'));
+      expect(tints.requests.at(-1)?.hex).toBe('#243052');
+      await openProductOptions(again);
+      expect(swatch('Navy')).toHaveAttribute('aria-checked', 'true');
+      expect(screen.getByTestId('studio-product-facts').textContent).toMatch(/UMBRELLA-GOLF-COLOUR-NAVY/);
+    }
+    // Nothing reset it in storage either.
+    expect(sku(repository)).toBe('UMBRELLA-GOLF-COLOUR-NAVY');
+  });
+
+  it('a colour that can’t be drawn on this side (mask not cleared) says so instead of looking unchanged', async () => {
+    const user = renderStudio({ profile: stand(() => 'unconfirmed') });
+    await onTheProduct();
+    expect(screen.queryByTestId('canvas-colour-unavailable')).toBeNull(); // Black: the photo's own colour
+    await openProductOptions(user);
+    await user.click(swatch('Navy'));
+    expect(canvas()).toHaveAttribute('data-tint', 'none');
+    expect(screen.getByTestId('canvas-colour-unavailable')).toHaveTextContent('Colour preview unavailable for this side.');
   });
 });

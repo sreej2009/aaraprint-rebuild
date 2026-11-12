@@ -76,9 +76,10 @@ async function closeSheet(page: Page) {
 const side = (page: Page, name: 'Front' | 'Back') => page.getByRole('radiogroup', { name: 'Side' }).getByRole('radio', { name: new RegExp(`^${name}`) });
 const inspector = (page: Page) => page.getByRole('complementary', { name: 'Layers and properties' });
 
-async function onTheProduct(page: Page, press: 'click' | 'tap' = 'click') {
-  await page.getByRole('radiogroup', { name: 'Canvas view' }).getByRole('radio', { name: 'On the product' })[press]();
+/** Umbrellas are on the product only (M4-C): it opens there, with no Flat switch. */
+async function onTheProduct(page: Page) {
   await expect(region(page)).toHaveAttribute('data-view', 'product');
+  await expect(page.getByRole('radiogroup', { name: 'Canvas view' })).toHaveCount(0);
   await page.waitForFunction(() => {
     const photo = window.Konva.stages.find((s) => s.container().closest('#studio-canvas'))?.findOne<KonvaNamespace.Image>('.product-mockup');
     return Boolean(photo?.image());
@@ -311,7 +312,7 @@ test.describe('desktop: product colour', () => {
     const inEditor = await photoPixels(page, Object.values(POINTS));
     await page.getByTestId('preview-button').click();
     const dialog = page.getByRole('dialog', { name: 'Preview' });
-    await dialog.getByRole('radiogroup', { name: 'Preview view' }).getByRole('radio', { name: 'On the product' }).click();
+    await expect(dialog.getByRole('radiogroup', { name: 'Preview view' })).toHaveCount(0);
     await expect(dialog.getByTestId('preview-area')).toHaveAttribute('data-tint', 'applied');
     await expect(dialog.getByRole('radiogroup', { name: /colou?r/i })).toHaveCount(0);
     await page.waitForFunction(() => window.Konva.stages.some((s) => s.container().classList.contains('studio-product-stage')));
@@ -322,7 +323,7 @@ test.describe('desktop: product colour', () => {
     await choose(page, 'Navy');
     await tinted(page);
     await page.getByTestId('preview-button').click();
-    await dialog.getByRole('radiogroup', { name: 'Preview view' }).getByRole('radio', { name: 'On the product' }).click();
+    await expect(dialog.getByRole('radiogroup', { name: 'Preview view' })).toHaveCount(0);
     await expect.poll(async () => closeTo((await photoPixels(page, [POINTS.mid], 'studio-product-stage'))[0]!, NAVY)).toBe(true);
   });
 
@@ -362,8 +363,6 @@ test.describe('desktop: product colour', () => {
   });
 
   test('H · the proof is byte-for-byte the same flat, on the product, and in every colour', async ({ page }) => {
-    await clearedStandIn(page, 'umbrella-golf', { photo: 'fabric', mask: 'cleared' });
-    await open(page, `${UMBRELLA}?sample=1`);
     const proof = async () => {
       await page.getByTestId('print-check-button').click();
       const dialog = page.getByRole('dialog', { name: 'Print check and proof' });
@@ -375,7 +374,12 @@ test.describe('desktop: product colour', () => {
       await expect(dialog).toHaveCount(0);
       return file;
     };
+    // Flat: the same sample with the real (rights-blocked) photos.
+    await open(page, `${UMBRELLA}?sample=1`);
+    await expect(region(page)).toHaveAttribute('data-view', 'flat');
     const flat = await proof();
+    await clearedStandIn(page, 'umbrella-golf', { photo: 'fabric', mask: 'cleared' });
+    await open(page, `${UMBRELLA}?sample=1`);
     await onTheProduct(page);
     const black = await proof();
     await choose(page, 'Red');
@@ -399,7 +403,7 @@ test.describe('desktop: product colour', () => {
     expect(results.violations.map((v) => `studio ${v.id}: ${v.nodes.map((n) => n.target.join(' ')).join(' | ')}`)).toEqual([]);
     await page.getByTestId('preview-button').click();
     const dialog = page.getByRole('dialog', { name: 'Preview' });
-    await dialog.getByRole('radiogroup', { name: 'Preview view' }).getByRole('radio', { name: 'On the product' }).click();
+    await expect(dialog.getByRole('radiogroup', { name: 'Preview view' })).toHaveCount(0);
     await expect(dialog.getByTestId('preview-area')).toHaveAttribute('data-tint', 'applied');
     await settleAnimations(page);
     results = await new AxeBuilder({ page }).include('[data-testid="studio-preview"]').withTags(TAGS).analyze();
@@ -442,7 +446,7 @@ test.describe('tablet: product colour by touch', () => {
     test.setTimeout(60_000);
     await clearedStandIn(page, 'umbrella-golf', { photo: 'fabric', mask: 'cleared' });
     await open(page, `${UMBRELLA}?sample=1`);
-    await onTheProduct(page, 'tap');
+    await onTheProduct(page);
     await openOptions(page, 'tap');
     for (const name of ['Black', 'Navy', 'Red']) expect((await swatch(page, name).boundingBox())!.height).toBeGreaterThanOrEqual(44);
     await choose(page, 'Red', 'tap');
@@ -462,7 +466,7 @@ test.describe('phone: product colour', () => {
     test.setTimeout(60_000);
     await clearedStandIn(page, 'umbrella-golf', { photo: 'fabric', mask: 'cleared' });
     await open(page, `${UMBRELLA}?sample=1`);
-    await onTheProduct(page, 'tap');
+    await onTheProduct(page);
     await choose(page, 'Navy', 'tap');
     await closeSheet(page);
     await tinted(page);

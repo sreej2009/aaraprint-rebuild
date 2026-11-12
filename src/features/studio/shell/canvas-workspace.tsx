@@ -18,7 +18,7 @@ import { formatSize } from '../profile/describe';
 import { COLOUR_UNAVAILABLE, colourUnavailable, photoRect } from '../product-view/product-view';
 import { useProductColour, useProductColourOffered, useProductView, useProductViewOffered } from '../product-view/use-product-view';
 import { ProductViewToggle } from '../product-view/view-toggle';
-import { workspaceNote } from '../workspace/workspace';
+import { PART_COLOURS_NOT_SHOWN, partColoursNote, workspaceNote } from '../workspace/workspace';
 import type { SurfaceDesign } from '../schema/types';
 import { selectActiveSurface, useStudio, useStudioStoreApi } from '../store';
 import { CANVAS_HELP_ID, CANVAS_REGION_ID } from './dom-ids';
@@ -83,7 +83,10 @@ export function CanvasWorkspace({ zoomPill = false, onStage }: CanvasWorkspacePr
   // product can be shown.
   const workspace = session?.workspace;
   const surfaces = useStudio((s) => s.document.surfaces);
-  const wantProduct = useViewport((s) => s.productView);
+  // On-product-only workspaces (photo-frame families) never leave the product: no flat state.
+  const productView = useViewport((s) => s.productView);
+  const wantProduct = workspace?.productOnly ? true : productView;
+  const configuration = useStudio((s) => s.document.product.configuration);
   // The workspace decides whether this family is shown on its product photo (rights still gate it).
   const photoAvailable = useProductViewOffered(profile, surfaces);
   const offered = photoAvailable && (!workspace || workspace.representation === 'product-photo');
@@ -94,11 +97,16 @@ export function CanvasWorkspace({ zoomPill = false, onStage }: CanvasWorkspacePr
   const onProduct = product.status === 'loading' || product.status === 'ready';
   // Where the photo (or, for mugs, the side's half of it) is drawn, in design px (M4).
   const drawn = useMemo(() => (product.view && product.placed ? { rect: photoRect(product.view, product.placed), crop: product.view.draw.crop } : null), [product.view, product.placed]);
-  const notes = [product.status === 'unavailable' ? CANVAS_PRODUCT_UNAVAILABLE : null, onProduct && colourOffered && colourUnavailable(product.view, colour, product.tint) ? COLOUR_UNAVAILABLE : null].filter(
+  const notes = [
+    product.status === 'unavailable' ? CANVAS_PRODUCT_UNAVAILABLE : null,
+    // The ordered colour can't be drawn on this side (no usable mask, or the tint failed): say so.
+    onProduct && colourUnavailable(product.view, colour, product.tint) ? COLOUR_UNAVAILABLE : null,
+    onProduct ? partColoursNote(workspace, configuration) : null,
+  ].filter(
     (note): note is string => note !== null,
   );
   const flatNote = workspace && product.status !== 'unavailable' ? workspaceNote(workspace, onProduct, offered) : null;
-  const showToggle = offered && (workspace ? workspace.toggle : true);
+  const showToggle = offered && (workspace ? workspace.toggle : true) && !workspace?.productOnly;
   const content = useMemo(() => (print ? (onProduct && product.bounds ? product.bounds : printBoxes(print).bleed) : null), [print, onProduct, product.bounds]);
   // Phones edit text in a bottom sheet (room for the keyboard); larger screens edit in place.
   const sheetEditing = useContext(StudioUiContext)?.layout === 'phone';
@@ -194,7 +202,7 @@ export function CanvasWorkspace({ zoomPill = false, onStage }: CanvasWorkspacePr
               <p
                 key={note}
                 className="w-fit max-w-full rounded-full bg-surface/95 px-3 py-1 text-center text-body-sm text-fg-muted shadow-1"
-                data-testid={note === CANVAS_PRODUCT_UNAVAILABLE ? 'canvas-product-unavailable' : 'canvas-colour-unavailable'}
+                data-testid={note === CANVAS_PRODUCT_UNAVAILABLE ? 'canvas-product-unavailable' : note === PART_COLOURS_NOT_SHOWN ? 'canvas-part-colours' : 'canvas-colour-unavailable'}
               >
                 {note}
               </p>

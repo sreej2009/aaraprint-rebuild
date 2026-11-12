@@ -52,9 +52,10 @@ const canvasChoice = (page: Page) => page.getByRole('radiogroup', { name: 'Canva
 const side = (page: Page, name: 'Front' | 'Back') => page.getByRole('radiogroup', { name: 'Side' }).getByRole('radio', { name: new RegExp(`^${name}`) });
 const inspector = (page: Page) => page.getByRole('complementary', { name: 'Layers and properties' });
 
-async function onTheProduct(page: Page, press: 'click' | 'tap' = 'click') {
-  await canvasChoice(page).getByRole('radio', { name: 'On the product' })[press]();
+/** Pens and mugs are on the product only (M4-C): they open there, with no Flat switch. */
+async function onTheProduct(page: Page) {
   await expect(region(page)).toHaveAttribute('data-view', 'product');
+  await expect(canvasChoice(page)).toHaveCount(0);
   await page.waitForFunction(() =>
     Boolean(
       window.Konva.stages
@@ -258,7 +259,7 @@ test.describe('desktop: mugs', () => {
     await open(page, `${MUG}?sample=1`);
     await page.getByTestId('preview-button').click();
     const dialog = page.getByRole('dialog', { name: 'Preview' });
-    await dialog.getByRole('radiogroup', { name: 'Preview view' }).getByRole('radio', { name: 'On the product' }).click();
+    await expect(dialog.getByRole('radiogroup', { name: 'Preview view' })).toHaveCount(0);
     await page.waitForFunction(() => window.Konva.stages.some((s) => s.container().classList.contains('studio-product-stage')));
     const preview = () =>
       page.evaluate(() => {
@@ -349,9 +350,12 @@ test.describe('desktop: rights, saving and proofs', () => {
       ['pen-ballpoint-classic', PEN],
       ['gift-mug-custom-black', MUG],
     ] as const) {
+      await page.unrouteAll({ behavior: 'ignoreErrors' });
+      await open(page, `${url}?sample=1`);
+      await expect(region(page), slug).toHaveAttribute('data-view', 'flat');
+      const flat = await proof(page);
       await clearedStandIn(page, slug, { photo: slug.startsWith('pen') ? 'pen' : 'mug' });
       await open(page, `${url}?sample=1`);
-      const flat = await proof(page);
       await onTheProduct(page);
       const onProduct = await proof(page);
       expect(flat.subarray(1, 4).toString(), slug).toBe('PNG');
@@ -372,7 +376,8 @@ test.describe('desktop: rights, saving and proofs', () => {
       let results = await new AxeBuilder({ page }).withTags(TAGS).analyze();
       expect(results.violations.map((v) => `${slug} studio ${v.id}: ${v.nodes.map((n) => n.target.join(' ')).join(' | ')}`)).toEqual([]);
       await page.getByTestId('preview-button').click();
-      await page.getByRole('dialog', { name: 'Preview' }).getByRole('radiogroup', { name: 'Preview view' }).getByRole('radio', { name: 'On the product' }).click();
+      await expect(page.getByRole('dialog', { name: 'Preview' }).getByRole('radiogroup', { name: 'Preview view' })).toHaveCount(0);
+      await page.waitForFunction(() => window.Konva.stages.some((s) => s.container().classList.contains('studio-product-stage')));
       await settleAnimations(page);
       results = await new AxeBuilder({ page }).include('[data-testid="studio-preview"]').withTags(TAGS).analyze();
       expect(results.violations.map((v) => `${slug} preview ${v.id}: ${v.nodes.map((n) => n.target.join(' ')).join(' | ')}`)).toEqual([]);
@@ -384,7 +389,7 @@ test.describe('desktop: rights, saving and proofs', () => {
 test.describe('I · every width', () => {
   test.skip(({ hasTouch, isMobile }) => hasTouch || isMobile, 'sizes set here');
 
-  test('1440 to 360 px, pen and mug: the photo fits, the choice is on screen, sides switch, nothing scrolls sideways', async ({ page }) => {
+  test('1440 to 360 px, pen and mug: the photo fits, there is no view switch, sides switch, nothing scrolls sideways', async ({ page }) => {
     test.setTimeout(120_000);
     for (const [slug, url, photo] of [
       ['pen-ballpoint-classic', PEN, 'pen'],
@@ -398,11 +403,8 @@ test.describe('I · every width', () => {
         await page.setViewportSize({ width, height: width < 768 ? 800 : 900 });
         const label = `${slug} ${width}px`;
         await expect.poll(() => page.evaluate(() => document.documentElement.scrollWidth - window.innerWidth), { message: label }).toBeLessThanOrEqual(0);
-        for (const name of ['Flat', 'On the product']) {
-          const b = (await canvasChoice(page).getByRole('radio', { name }).boundingBox())!;
-          expect(b.x + b.width, label).toBeLessThanOrEqual(width + 0.5);
-          expect(b.x, label).toBeGreaterThanOrEqual(-0.5);
-        }
+        await expect(canvasChoice(page), label).toHaveCount(0);
+        await expect(region(page), label).toHaveAttribute('data-view', 'product');
         await page.keyboard.press('Shift+Digit1');
         const area = (await page.getByTestId('canvas-area').boundingBox())!;
         const st = await page.evaluate(() => {
@@ -423,12 +425,11 @@ test.describe('I · every width', () => {
 test.describe('tablet: pens and mugs by touch', () => {
   test.skip(({ hasTouch, isMobile }) => !hasTouch || isMobile, 'tablet');
 
-  test('tap On the product and the sides; the photo draws; axe', async ({ page }) => {
+  test('on the product with no switch; tap the sides; the photo draws; axe', async ({ page }) => {
     test.setTimeout(60_000);
     await clearedStandIn(page, 'gift-mug-custom-black', { photo: 'mug' });
     await open(page, `${MUG}?sample=1`);
-    for (const name of ['Flat', 'On the product']) expect((await canvasChoice(page).getByRole('radio', { name }).boundingBox())!.height).toBeGreaterThanOrEqual(44);
-    await onTheProduct(page, 'tap');
+    await onTheProduct(page);
     await side(page, 'Back').tap();
     await expect.poll(async () => (await editor(page)).photo?.crop?.x).toBe(724);
     await settleAnimations(page);
@@ -441,12 +442,11 @@ test.describe('tablet: pens and mugs by touch', () => {
 test.describe('phone: pens and mugs', () => {
   test.skip(({ isMobile }) => !isMobile, 'phone');
 
-  test('a pen on the product from the canvas footer; the photo draws; axe; no sideways scroll', async ({ page }) => {
+  test('a pen opens on the product with no switch; the photo draws; axe; no sideways scroll', async ({ page }) => {
     test.setTimeout(60_000);
     await clearedStandIn(page, 'pen-ballpoint-classic', { photo: 'pen' });
     await open(page, `${PEN}?sample=1`);
-    expect(await canvasChoice(page).evaluate((el) => el.closest('footer') !== null)).toBe(true);
-    await onTheProduct(page, 'tap');
+    await onTheProduct(page);
     expect(near((await editor(page, [designPoint([1800, 600], PEN_BOX, PEN_PRINT)])).workspace[0]!, PEN_RGB.front)).toBe(true);
     await settleAnimations(page);
     const results = await new AxeBuilder({ page }).withTags(TAGS).analyze();
