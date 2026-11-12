@@ -1,3 +1,6 @@
+import { initialConfiguration, type Orientation } from '@/features/product-workflow/configuration';
+import { familyIdForSlug, productWorkflow } from '@/features/product-workflow/registry';
+import type { Product } from '@/lib/catalogue/types';
 import { createId, type IdFactory } from '../ids';
 import type { StudioProfile } from '../profile/types';
 import {
@@ -20,6 +23,13 @@ export function surfacePrintFromProfile(profile: StudioProfile): SurfacePrint {
 
 export interface BlankDesignOptions {
   variantId?: string | null;
+  /**
+   * The catalogue product, so the configuration records the variant's own option values and SKU.
+   * Without it the variant id is kept and the selection is filled in when the Studio has the product.
+   */
+  catalogue?: Pick<Product, 'optionGroups' | 'variants'> | null;
+  /** From the required-options dialog (later milestone); null = not chosen. */
+  orientation?: Orientation | null;
   name?: string;
   now?: Date;
   newId?: IdFactory;
@@ -30,12 +40,26 @@ export function createBlankDesign(profile: StudioProfile, options: BlankDesignOp
   const newId = options.newId ?? createId;
   const now = (options.now ?? new Date()).toISOString();
   const print = surfacePrintFromProfile(profile);
+  const variantId = options.variantId ?? null;
+  const variant = variantId ? options.catalogue?.variants.find((v) => v.id === variantId) : undefined;
   return {
     format: DESIGN_FORMAT,
     schemaVersion: CURRENT_SCHEMA_VERSION,
     id: newId('design'),
     name: options.name ?? `${profile.name} design`,
-    product: { slug: profile.slug, productId: profile.productId, variantId: options.variantId ?? null },
+    product: {
+      slug: profile.slug,
+      productId: profile.productId,
+      familyId: familyIdForSlug(profile.slug),
+      variantId,
+      sku: variant?.sku ?? null,
+      configuration: initialConfiguration({
+        workflow: productWorkflow(profile.slug),
+        catalogue: options.catalogue ?? null,
+        variant: variant ?? null,
+        orientation: options.orientation ?? null,
+      }),
+    },
     surfaces: profile.sides.map((side) => ({
       id: side.id,
       label: side.label,

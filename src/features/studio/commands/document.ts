@@ -10,8 +10,13 @@ export function renameDesign(document: DesignDocument, name: string): DesignDocu
   return value === document.name ? document : { ...document, name: value };
 }
 
+/**
+ * Low-level: point the design at a variant id without the catalogue. The SKU is cleared (it
+ * belonged to the old variant) — prefer `syncProductVariant`, which also records the variant's
+ * options and SKU.
+ */
 export function setVariant(document: DesignDocument, variantId: string | null): DesignDocument {
-  return document.product.variantId === variantId ? document : { ...document, product: { ...document.product, variantId } };
+  return document.product.variantId === variantId ? document : { ...document, product: { ...document.product, variantId, sku: null } };
 }
 
 /** Register an uploaded file. Only its reference and facts are stored — never the bytes. */

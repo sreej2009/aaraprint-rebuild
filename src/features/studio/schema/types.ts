@@ -1,5 +1,5 @@
 /**
- * Design document (schema version 2) — the only thing the Studio saves.
+ * Design document (schema version 3) — the only thing the Studio saves.
  *
  * - Application data, not Konva stage JSON: the canvas is rendered *from* this document.
  * - Every surface carries its own explicit print geometry (trim size, DPI, bleed, safe zone,
@@ -10,11 +10,14 @@
  * - Uploaded images are referenced by asset id; the bytes live in a blob store (IndexedDB now,
  *   cloud storage in Phase 6). Documents never embed base64 image data.
  * - Version 1 is the original site's format (imported in Phase 6). Version 2 is the first
- *   version of this app's format.
+ *   version of this app's format. Version 3 (Phase 4 M1) adds the product configuration —
+ *   what will be ordered — kept apart from the artwork (`surfaces`, `assets`).
  */
+import type { ProductConfiguration } from '@/features/product-workflow/configuration';
+import type { ProductFamilyId } from '@/features/product-workflow/types';
 
 export const DESIGN_FORMAT = 'aaraprint.design';
-export const CURRENT_SCHEMA_VERSION = 2;
+export const CURRENT_SCHEMA_VERSION = 3;
 
 /** Lower-case slug, e.g. "front", "back", "flap", "cover-front". */
 export type SurfaceId = string;
@@ -152,10 +155,20 @@ export interface DesignAsset {
   storage: AssetStorage;
 }
 
+/**
+ * The product a design is for and how it is configured (v3). Artwork lives in `surfaces` and
+ * `assets`; this is what will be ordered.
+ */
 export interface DesignProductRef {
   slug: string;
   productId: string;
+  /** Product family (product-workflow registry); null when the registry doesn't know the product. */
+  familyId: ProductFamilyId | null;
+  /** The catalogue variant the configuration resolves to; null = not resolved (never guessed). */
   variantId: string | null;
+  /** That variant's SKU, recorded with it; null when `variantId` is null or not yet looked up. */
+  sku: string | null;
+  configuration: ProductConfiguration;
 }
 
 export interface DesignMeta {

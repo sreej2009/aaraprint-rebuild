@@ -1,4 +1,17 @@
 import {
+  DIMENSION_RANGE_MM,
+  emptyConfiguration,
+  MAX_ORDER_QUANTITY,
+  MIN_ORDER_QUANTITY,
+  ORIENTATIONS,
+  STUDIO_CHOICE_KEY_PATTERN,
+  STUDIO_VALUE_ID_PATTERN,
+  type ProductConfiguration,
+  type StudioChoice,
+} from '@/features/product-workflow/configuration';
+import { familyIdForSlug } from '@/features/product-workflow/registry';
+import { isProductFamilyId } from '@/features/product-workflow/types';
+import {
   CURRENT_SCHEMA_VERSION,
   DESIGN_FORMAT,
   FONT_WEIGHTS,
@@ -47,8 +60,29 @@ export type ParseResult =
 /** Upgrades a raw document from version N to N + 1. */
 export type Migration = (raw: Record<string, unknown>) => Record<string, unknown>;
 
-/** Registered upgrades, keyed by the version they upgrade *from*. None yet: v2 is the first. */
-export const MIGRATIONS: ReadonlyMap<number, Migration> = new Map();
+/**
+ * v2 → v3 (Phase 4 M1): add the product configuration. The artwork is untouched. Nothing is
+ * invented: the variant id is kept as saved, the family comes from the registry (null for a
+ * product it doesn't know), and the selection, SKU, orientation and same-design switch start
+ * unknown — the Studio fills the selection and SKU from the saved variant once it has the
+ * catalogue product (`syncProductVariant`), as a correction rather than an edit.
+ */
+export function migrateV2ToV3(raw: Record<string, unknown>): Record<string, unknown> {
+  const product = raw.product;
+  if (!isRecord(product)) return raw; // reported by validation as a missing product
+  return {
+    ...raw,
+    product: {
+      ...product,
+      familyId: typeof product.slug === 'string' ? familyIdForSlug(product.slug) : null,
+      sku: null,
+      configuration: emptyConfiguration(),
+    },
+  };
+}
+
+/** Registered upgrades, keyed by the version they upgrade *from*. v2 is this app's first format. */
+export const MIGRATIONS: ReadonlyMap<number, Migration> = new Map([[2, migrateV2ToV3]]);
 
 /** Generous: a busy design is ~100 KB. Anything near this limit is almost certainly embedded data. */
 export const MAX_DOCUMENT_CHARS = 1_000_000;
@@ -176,12 +210,7 @@ function readDocument(c: Checker, raw: Record<string, unknown>): DesignDocument 
   const id = c.string('id', raw.id, { pattern: ID_PATTERN });
   const name = c.string('name', raw.name, { max: 120 });
 
-  const productRaw = c.record('product', raw.product);
-  const product = productRaw && {
-    slug: c.string('product.slug', productRaw.slug, { pattern: /^[a-z0-9-]{1,120}$/ }),
-    productId: c.string('product.productId', productRaw.productId, { pattern: ID_PATTERN }),
-    variantId: productRaw.variantId === null ? null : c.string('product.variantId', productRaw.variantId, { pattern: ID_PATTERN }),
-  };
+  const product = readProduct(c, raw.product);
 
   const metaRaw = c.record('meta', raw.meta);
   const meta = metaRaw && {
@@ -232,6 +261,82 @@ function readDocument(c: Checker, raw: Record<string, unknown>): DesignDocument 
     assets: assets!,
     meta: meta as DesignDocument['meta'],
   };
+}
+
+const SKU_PATTERN = /^[A-Za-z0-9][A-Za-z0-9._-]{0,119}$/;
+const MAX_OPTIONS = 40;
+const MAX_STUDIO_CHOICES = 100;
+
+function readProduct(c: Checker, raw: unknown): DesignDocument['product'] | undefined {
+  const p = c.record('product', raw);
+  if (!p) return undefined;
+  const errorsBefore = c.errors.length;
+  const slug = c.string('product.slug', p.slug, { pattern: /^[a-z0-9-]{1,120}$/ });
+  const productId = c.string('product.productId', p.productId, { pattern: ID_PATTERN });
+  const variantId = p.variantId === null ? null : c.string('product.variantId', p.variantId, { pattern: ID_PATTERN });
+  const familyId = p.familyId === null ? null : isProductFamilyId(p.familyId) ? p.familyId : c.fail('product.familyId', 'must be a known product family');
+  const sku = p.sku === null ? null : c.string('product.sku', p.sku, { pattern: SKU_PATTERN });
+  if (sku && variantId === null) c.fail('product.sku', 'needs a variant');
+  const configuration = readConfiguration(c, 'product.configuration', p.configuration);
+  if (c.errors.length !== errorsBefore) return undefined;
+  return { slug: slug!, productId: productId!, familyId: familyId ?? null, variantId: variantId ?? null, sku: sku ?? null, configuration: configuration! };
+}
+
+function readConfiguration(c: Checker, path: string, raw: unknown): ProductConfiguration | undefined {
+  const r = c.record(path, raw);
+  if (!r) return undefined;
+  const optionsRaw = c.record(`${path}.options`, r.options);
+  const options: Record<string, string> = {};
+  if (optionsRaw) {
+    const entries = Object.entries(optionsRaw);
+    if (entries.length > MAX_OPTIONS) c.fail(`${path}.options`, `must have at most ${MAX_OPTIONS} options`);
+    for (const [groupId, valueId] of entries) {
+      if (!ID_PATTERN.test(groupId)) c.fail(`${path}.options`, `has an invalid option group id "${groupId.slice(0, 40)}"`);
+      const value = c.string(`${path}.options.${groupId}`, valueId, { pattern: ID_PATTERN });
+      if (value !== undefined) options[groupId] = value;
+    }
+  }
+  const quantity = c.number(`${path}.quantity`, r.quantity, { min: MIN_ORDER_QUANTITY, max: MAX_ORDER_QUANTITY, integer: true });
+  const orientation = r.orientation === null ? null : c.oneOf(`${path}.orientation`, r.orientation, ORIENTATIONS);
+  const sameDesignBothSides = r.sameDesignBothSides === null ? null : c.boolean(`${path}.sameDesignBothSides`, r.sameDesignBothSides);
+  const studioRaw = c.record(`${path}.studio`, r.studio);
+  const studio: Record<string, StudioChoice> = {};
+  if (studioRaw) {
+    const entries = Object.entries(studioRaw);
+    if (entries.length > MAX_STUDIO_CHOICES) c.fail(`${path}.studio`, `must have at most ${MAX_STUDIO_CHOICES} choices`);
+    for (const [key, value] of entries) {
+      if (!STUDIO_CHOICE_KEY_PATTERN.test(key)) {
+        c.fail(`${path}.studio`, `has an invalid option id "${key.slice(0, 60)}"`);
+        continue;
+      }
+      const choice = readStudioChoice(c, `${path}.studio.${key}`, value);
+      if (choice) studio[key] = choice;
+    }
+  }
+  if (quantity === undefined || orientation === undefined || sameDesignBothSides === undefined || !optionsRaw || !studioRaw) return undefined;
+  return { options, quantity, orientation, studio, sameDesignBothSides };
+}
+
+function readStudioChoice(c: Checker, path: string, raw: unknown): StudioChoice | undefined {
+  const r = c.record(path, raw);
+  if (!r) return undefined;
+  const type = c.oneOf(`${path}.type`, r.type, ['choice', 'colour', 'dimensions'] as const);
+  if (type === 'choice') {
+    const valueId = c.string(`${path}.valueId`, r.valueId, { pattern: STUDIO_VALUE_ID_PATTERN });
+    return valueId === undefined ? undefined : { type, valueId };
+  }
+  if (type === 'colour') {
+    const valueId = r.valueId === null ? null : c.string(`${path}.valueId`, r.valueId, { pattern: STUDIO_VALUE_ID_PATTERN });
+    const hex = c.color(`${path}.hex`, r.hex);
+    return valueId === undefined || !hex ? undefined : { type, valueId, hex };
+  }
+  if (type === 'dimensions') {
+    const widthMm = c.number(`${path}.widthMm`, r.widthMm, DIMENSION_RANGE_MM);
+    const heightMm = c.number(`${path}.heightMm`, r.heightMm, DIMENSION_RANGE_MM);
+    const presetId = r.presetId === null ? null : c.string(`${path}.presetId`, r.presetId, { pattern: STUDIO_VALUE_ID_PATTERN });
+    return widthMm === undefined || heightMm === undefined || presetId === undefined ? undefined : { type, widthMm, heightMm, presetId };
+  }
+  return undefined;
 }
 
 function readTimestamp(c: Checker, path: string, value: unknown): string | undefined {

@@ -7,6 +7,20 @@
  */
 export { addAsset, removeAssets, renameDesign, setVariant, MAX_DESIGN_NAME } from './document';
 export { addElement, duplicateElement, removeElements, updateElement } from './elements';
+export {
+  resolveProductVariant,
+  setOrderQuantity,
+  setOrientation,
+  setProductColour,
+  setProductOption,
+  setProductOptions,
+  setProductSize,
+  setSameDesignBothSides,
+  setStudioChoice,
+  syncProductVariant,
+  type CatalogueProduct,
+  type ProductSize,
+} from './product';
 export { arrangeElement, moveElementTo, type ArrangeAction } from './order';
 export { DesignCommandError, findElement, getSurface } from './shared';
 export { clearSurface, copySurface, resizeSurface, setBackground, transformElement, type CopyMode, type ResizeMode, type Transform } from './surfaces';

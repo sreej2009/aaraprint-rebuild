@@ -17,6 +17,7 @@
     "assets:recover": "node scripts/recovery/recover-additional-assets.mjs",
     "content:import": "node scripts/content/import-content.mjs",
     "studio:profiles": "node scripts/studio/build-studio-profiles.mjs",
+    "studio:families": "node scripts/studio/build-product-families.mjs",
     "studio:graphics": "node scripts/studio/extract-graphics.mjs"
   },
   "dependencies": {

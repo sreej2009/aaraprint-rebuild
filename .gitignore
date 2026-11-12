@@ -43,3 +43,11 @@ desktop.ini
 
 # Note: the catalogue data in public/api/ and src/data/generated/ is committed on purpose.
 # The recovered asset folders live outside this repository (../recovered, ../recovered-additional).
+
+# Audit evidence of the original site (screenshots, raw survey logs; ~190 MB, local only).
+# The per-product matrix is kept: AARAPRINT_CLONE_WORKFLOW_AUDIT.md links to it.
+docs/research/aaraprint-original/*
+!docs/research/aaraprint-original/product-matrix.md
+
+# Local Claude Code skills
+.claude/

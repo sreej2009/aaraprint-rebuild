@@ -2572,3 +2572,123 @@ Its main corrections for future work:
 
 Its §19 gives the recommended order. Phases and milestones above are history and unchanged; Phase 4 M5 has not started.
 
+## 21. Phase 4 — workflow parity track
+
+`AARAPRINT_CLONE_WORKFLOW_AUDIT.md` (12 Nov 2026, approved) verified the original's workflow on all 533 catalogue products and supersedes `AARAPRINT_WORKFLOW_SPEC.md` where they differ. Implementation follows its §18 order as a new milestone sequence. **The milestone names below (M1, M2…) belong to this track**; the product-view milestones M1–M4 in §19 are earlier, separate work and stay as they are.
+
+| Milestone | Status |
+|-----------|--------|
+| M1 Schema v3 and product family registry | Done |
+| M2… Product options panel, entry dialog, Review/Approve, product-first workspaces | Not started (audit §18) |
+
+### M1 — Schema v3 and product family registry
+
+**Scope:** data model and registry only. No visible UI changes: no Product options panel, entry dialog, workspace change, Review/Approve, cart or 3D. Existing editor behaviour, product-view work, placement data and the asset-rights policy are unchanged.
+
+#### Schema v3 (`src/features/studio/schema/`)
+
+The design document's `product` block now holds what will be ordered, apart from the artwork (`surfaces`, `assets`):
+
+```ts
+product: {
+  slug, productId,                    // identity (unchanged)
+  familyId: ProductFamilyId | null,   // registry family; null = product unknown to the registry
+  variantId: string | null,           // catalogue variant the configuration resolves to; null = none (never guessed)
+  sku: string | null,                 // that variant's SKU, recorded with it
+  configuration: {
+    options: Record<groupId, valueId>,          // catalogue selection: colour, size, quantity tier, lid…
+    quantity: number,                           // 1–99: sets of the tier ("Batches") or units
+    orientation: 'horizontal' | 'vertical' | null,   // entry dialog; null = not chosen
+    studio: Record<optionId | 'optionId:partId', StudioChoice>,  // part/substrate colours, formats, dimensions, features
+    sameDesignBothSides: boolean | null,        // null = no switch on this product, or unknown
+  },
+}
+StudioChoice = { type: 'choice', valueId } | { type: 'colour', valueId | null, hex } | { type: 'dimensions', widthMm, heightMm, presetId | null }
+```
+
+- **Validation** (`validate.ts`): the product block is rebuilt from known fields only. It rejects, with a JSON path: an unknown family, a SKU without a variant, malformed ids, quantity outside 1–99 or fractional, unknown orientation, invalid option keys, unknown choice types, non-hex colours, dimensions outside 10–1000 mm, embedded data, and a missing configuration.
+- **Never stored:** mockups, photos, placements, editor state, zoom or selection.
+- **Persistence:** configuration is part of the document, so autosave, versions, restore and the fingerprint cover it. Restoring a version brings back its product choices. A version saved before v3 keeps the current choices instead of wiping them (`save-controller.ts`).
+
+#### Migration v2 → v3 (`migrateV2ToV3`)
+
+- Artwork, assets, id, name and meta are copied unchanged. The saved `variantId` is kept.
+- `familyId` comes from the registry, or null for an unknown slug. `sku: null`. The configuration is empty: no options, quantity 1, orientation null, no Studio choices, switch null. A v2 document without a `product` is still rejected.
+- On opening, the Studio calls `syncProductVariant(variantId)` (`studio-app.tsx`). This is a correction, not an undo step: the variant's own option values and SKU fill the configuration, and the save controller then writes the design back as v3.
+- Old IndexedDB records and versions are migrated when read (`parseDesign`), and nothing in storage is rewritten until the next save.
+
+#### Product family registry (`src/features/product-workflow/`)
+
+| File | Role |
+|------|------|
+| `types.ts` | Family, option, capability and evidence types; `PRODUCT_FAMILY_IDS` (26). |
+| `families.ts` | One definition per family: initial tool, workspace and views, surfaces, front/back, same-design switch, product picture, review preview, entry requirements, colour/size/quantity behaviour, options, capabilities, unknowns. `ORIGINAL_PRICING_BEHAVIOURS` records the original's pricing bugs (B1, B2) that we don't copy. |
+| `options.ts` | Behaviour presets (Studio variant, page variant, reference, priced format, dimensions); shared options (orientation, quantity tier, order quantity, substrate colour, custom colour); palettes and format values copied from the original's source. |
+| `registry.ts` | `productWorkflow(slug)`: family + per-product observed facts (initial tool, surfaces, 3D, switch, entry tiers). Also `bindCatalogueOptions` (registry options → the product's own option groups; every group bound exactly once) and `catalogueGroupForRole`. |
+| `configuration.ts` | `ProductConfiguration` / `StudioChoice` types, `initialConfiguration`, limits and patterns shared with the validator and commands. |
+| `pricing.ts` | `resolvePrice`: variant, SKU, adjustments, unit and total price. |
+
+**Membership** is generated by `npm run studio:families` (`scripts/studio/build-product-families.mjs`) into `src/data/generated/studio/product-families.json`. It reads the catalogue and the audit's committed live survey (`scripts/studio/data/original-studio-survey.json`, one entry per product). Rules use category and slug, plus observed behaviour where the original itself split products that way (mugs vs other gifts, invitations vs other stationery). Generation fails if any product is unassigned or a family's members don't share one workspace. The data ships only in the Studio's lazily loaded chunk.
+
+**Coverage (533 products, 26 families):** apparel 30, bag 24, cap 11, drinkware 48, envelope 2, folder 4, gift 21, gift-frame 14, invitation 18, label 34, letterhead 4, marketing-print 33, mouse-pad 1, mug 9, notebook 10, packaging 26, pen 50, polo 43, poster 2, rainwear 20, round-mouse-pad 1, sign 34, stamp 17, stationery 29, umbrella 15, visiting-card 33 (including the one non-customisable card holder).
+
+**Initial Studio (agrees with the live survey for every product):**
+- Initial tool: Product options 455/532, Text 73, Uploads 4.
+- Workspaces: perspective 232 (stamps' Seal design view included), flat 100, photo frame 142 (pen 50, drinkware 48, umbrella/rainwear 35, mug 9), gift frame 15, polo stage 43.
+- "Same design on both sides" on 187 products, default on.
+
+#### Option model
+
+Each option has: id, label, role (product colour, size, quantity tier, lid type, ink colour, preset text, print placement, pockets, envelope size, format size, fold, substrate colour, part colour, feature…), value type, source, values, default, and behaviour flags (`required`, `affectsVariant`, `affectsPrice`, `savedInDesign`, `undoable`, `editableInStudio`, `requiresConfirm`). It also records the **original's** behaviour with its evidence level.
+
+The four sources:
+- **entry:** orientation.
+- **catalogue:** values per product; named group or `all-other`.
+- **order:** quantity, 1–99.
+- **studio:** values listed, or `unknown`.
+
+#### Variant and price model (`pricing.ts`)
+
+`unit price = resolved variant price (tier included) + saved Studio price adjustments` and `total = unit × quantity`. If the selection is incomplete or the combination doesn't exist, the result is `no-variant` (never guessed).
+
+Deliberate differences from the original (audit §20):
+- **B2:** the original's Studio showed base price + deltas, ignoring the tier.
+- **B1:** the original's envelope/invitation/folder formats changed the shown price only. Folder pockets now set the catalogue variant; envelope and invitation formats are saved, undoable price adjustments.
+
+#### Store integration (`create-store.ts`, `commands/product.ts`)
+
+- New options: `catalogue` and `workflow`. The Studio passes the catalogue product; the workflow defaults to the registry's.
+- **Undoable actions** (one step each, through `execute`, so autosaved and versioned like any edit): `setProductOption`, `setProductOptions`, `setProductColour`, `setProductSize` (catalogue size, or Studio dimensions), `resolveProductVariant`, `setOrderQuantity`, `setOrientation`, `setStudioChoice`, `setSameDesignBothSides`.
+- **Not undoable:** `syncProductVariant`, which follows the route variant. The old `setVariant` now clears a stale SKU.
+- Commands that change the selection re-resolve the variant and SKU in the same step. They share the artwork objects untouched.
+- No UI calls these actions yet.
+
+#### Known unknowns (from the audit; marked `unknown` in the data, not guessed)
+
+- Studio format sizes for the 13 card-orientation invitation products.
+- Gift size presets and colour parts per product.
+- Drinkware body/cap presets per product.
+- Perspective face geometry.
+- The price effect of gift/mug "Apply size".
+- The orientation effect outside cards (swap) and posters/umbrellas (ignored).
+- Whether the original saved polo colours.
+- Seal geometry.
+
+#### Dependencies for later milestones
+
+- **Product options panel:** reads `productWorkflow().options` and `bindCatalogueOptions`, and calls the store actions above.
+- **Entry dialog:** `entry.orientation`, `entry.quantityTiers`, `setOrientation`.
+- **Product-first workspaces:** `initialStudio`, `productPicture`, `surfaces`. Profile sides are still front/back only; multi-surface documents (flap, covers, pockets) are a later change.
+- **Review/Approve/cart:** `resolvePrice`, and `product.variantId` / `sku` / `configuration`.
+- **Resizing artwork on size changes:** Studio dimensions, envelope and invitation formats.
+
+#### Tests
+
+New suites:
+- `product-workflow/registry.test.ts`: coverage, ownership, agreement with the live survey, option restrictions, catalogue binding for all 532 products.
+- `product-workflow/pricing.test.ts`.
+- `studio/commands/product.test.ts`: commands, store undo/redo, autosave signal.
+- `studio/schema/schema-v3.test.ts`: v3 validation, round trip, migration.
+- `studio/persistence/product-configuration.test.ts`: autosave, restore, versions, v2 records and versions.
+
+Existing fixtures were updated only where they encoded schema v2 (expected blank-design shape, migration chain, template wrapper, saved-design fixture).

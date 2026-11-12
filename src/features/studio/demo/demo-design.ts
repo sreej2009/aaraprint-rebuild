@@ -1,3 +1,4 @@
+import { emptyConfiguration } from '@/features/product-workflow/configuration';
 import { createImageElement, createShapeElement, createTextElement } from '../schema/create';
 import { CURRENT_SCHEMA_VERSION, DESIGN_FORMAT, type DesignDocument, type SurfacePrint } from '../schema/types';
 
@@ -15,7 +16,7 @@ export function demoDesign(): DesignDocument {
     schemaVersion: CURRENT_SCHEMA_VERSION,
     id: 'design_demo',
     name: 'Demo visiting card',
-    product: { slug: 'business-card-classic', productId: 'demo', variantId: null },
+    product: { slug: 'business-card-classic', productId: 'demo', familyId: 'visiting-card', variantId: null, sku: null, configuration: emptyConfiguration() },
     assets: {
       asset_logo: {
         id: 'asset_logo',

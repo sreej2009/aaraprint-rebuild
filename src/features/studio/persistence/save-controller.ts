@@ -337,7 +337,11 @@ export function createSaveController(options: SaveControllerOptions): SaveContro
       }
       const { actions } = studio.getState();
       actions.setEditingText(null);
-      const restored: DesignDocument = { ...parsed.document, id: current.id, product: current.product, meta: current.meta };
+      // The version's product choices come back with its artwork (schema v3). A version saved
+      // before v3 has none, so the current ones are kept rather than wiped.
+      const fromV3 = parsed.migratedFrom === null || parsed.migratedFrom >= 3;
+      const product = fromV3 ? { ...parsed.document.product, slug: current.product.slug, productId: current.product.productId } : current.product;
+      const restored: DesignDocument = { ...parsed.document, id: current.id, product, meta: current.meta };
       const when = new Date(version.createdAt).toLocaleString('en-IN', { day: 'numeric', month: 'short', hour: 'numeric', minute: '2-digit' });
       const surfaceId = restored.surfaces.some((s) => s.id === studio.getState().editor.activeSurfaceId) ? studio.getState().editor.activeSurfaceId : (restored.surfaces[0]?.id ?? '');
       actions.execute(`Restore version from ${when}`, () => restored, { surfaceId, select: [] });

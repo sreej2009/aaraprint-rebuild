@@ -29,7 +29,15 @@ describe('createBlankDesign', () => {
       schemaVersion: CURRENT_SCHEMA_VERSION,
       id: 'design_1',
       name: 'Classic Visiting Cards design',
-      product: { slug: 'business-card-classic', productId: cardProfile.productId, variantId: 'variant_9' },
+      product: {
+        slug: 'business-card-classic',
+        productId: cardProfile.productId,
+        familyId: 'visiting-card',
+        variantId: 'variant_9',
+        // Without the catalogue product the variant's options and SKU aren't known yet.
+        sku: null,
+        configuration: { options: {}, quantity: 1, orientation: null, studio: {}, sameDesignBothSides: null },
+      },
       surfaces: [
         { id: 'front', label: 'Front', print: surfacePrintFromProfile(cardProfile), background: { color: null }, elements: [] },
         { id: 'back', label: 'Back', print: surfacePrintFromProfile(cardProfile), background: { color: null }, elements: [] },
@@ -124,16 +132,17 @@ describe('parseDesign', () => {
       const { title, ...others } = raw;
       return { ...others, name: title };
     };
-    const noop: Migration = (raw) => {
-      steps.push(1);
+    const noop = (step: number): Migration => (raw) => {
+      steps.push(step);
       return raw;
     };
     const migrations = new Map<number, Migration>([
       [0, renameTitle],
-      [1, noop],
+      [1, noop(1)],
+      [2, noop(2)],
     ]);
     const result = parseDesign(oldDoc, { migrations });
-    expect(steps).toEqual([0, 1]);
+    expect(steps).toEqual([0, 1, 2]);
     expect(result.ok && result.document).toEqual(current);
     expect(result.ok && result.migratedFrom).toBe(0);
 

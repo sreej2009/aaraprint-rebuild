@@ -2,7 +2,7 @@
 
 A new storefront and Design Studio for Aaraprint — custom print and merchandise for India — with a completely new, light, accessible UI. The original site is used only as a reference for business rules and data.
 
-**Source of truth:** the four reports in this folder — `AARAPRINT_RECONNAISSANCE.md`, `AARAPRINT_UI_UX_BLUEPRINT.md`, `AARAPRINT_ASSET_INVENTORY.md`, `AARAPRINT_IMPLEMENTATION_PLAN.md`.
+**Source of truth:** the four reports in this folder — `AARAPRINT_RECONNAISSANCE.md`, `AARAPRINT_UI_UX_BLUEPRINT.md`, `AARAPRINT_ASSET_INVENTORY.md`, `AARAPRINT_IMPLEMENTATION_PLAN.md`. For workflow behaviour, `AARAPRINT_CLONE_WORKFLOW_AUDIT.md` (the verified audit of the original, all 533 products) comes first.
 
 **Status:** Phases 1 (Foundations) and 2 (Catalogue, product pages and content) complete. See [Phase plan](#phases) and the phase reports in `AARAPRINT_IMPLEMENTATION_PLAN.md` §17.
 
@@ -50,6 +50,8 @@ src/
                            design-system, planned (Phase 6 placeholders), 404, studio (Design Studio)
   features/catalogue/      listing logic (filters, facets, sort, pages), search, product card/image, filter panel, listing view
   features/product/        option selection & price display, gallery, purchase panel, details, print specs
+  features/product-workflow/ product families (26), their options and capabilities, the product configuration
+                           saved in designs, and variant/price resolution (data and pure functions; plan §21)
   features/studio/         Design Studio (Phase 3): print geometry, profiles, design schema & commands,
                            store & undo history, shell (layouts, panels, sheets), Konva canvas, zoom/pan, guides,
                            selection, move/resize/rotate, editing shortcuts, inspector and layers panel
@@ -69,6 +71,7 @@ scripts/
   catalogue/product-types.mjs           product-type rules used for the "Type" filter
   content/import-content.mjs            converts the original content/policy pages into structured blocks
   studio/build-studio-profiles.mjs      builds a Design Studio profile per product (print area, trim, sides, mockups, rights, product-view placements)
+  studio/build-product-families.mjs     assigns every product to a product family from the catalogue and the audit's live survey
   studio/extract-product-views.mjs      copies the original's on-product placements (umbrella, rainwear, drinkware, pens, mugs) and umbrella/rainwear colours into data
   recovery/recover-additional-assets.mjs downloads assets missing from ../recovered into ../recovered-additional
   serve-build.mjs                       production preview server (static-hosting rules)
@@ -78,7 +81,7 @@ e2e/                       Playwright specs (routing, navigation, keyboard, axe 
 
 ## Data and media
 
-- `npm run data:import` regenerates `public/api/v1/catalogue/**` and `src/data/generated/navigation.json`; `npm run content:import` regenerates `src/data/generated/content/**`; `npm run studio:profiles` regenerates `public/api/v1/studio/**` and `src/data/generated/studio/profiles-meta.json` (run it after `data:import`). Both read `../recovered` (and the print configs in `../recovered-additional`). Generated files are committed so the app runs without the recovered folders.
+- `npm run data:import` regenerates `public/api/v1/catalogue/**` and `src/data/generated/navigation.json`; `npm run content:import` regenerates `src/data/generated/content/**`; `npm run studio:profiles` regenerates `public/api/v1/studio/**` and `src/data/generated/studio/profiles-meta.json` (run it after `data:import`); `npm run studio:families` regenerates `src/data/generated/studio/product-families.json` from the catalogue and `scripts/studio/data/original-studio-survey.json`. The catalogue and profile scripts read `../recovered` (and the print configs in `../recovered-additional`). Generated files are committed so the app runs without the recovered folders.
 - Media are referenced by path (e.g. `products/pens-2d/classic-front.png`) and resolved by `mediaUrl()`. In dev/preview `/media/*` is served from `../recovered-additional` then `../recovered` (override with `AARAPRINT_MEDIA_ROOTS`). In production set `VITE_MEDIA_BASE_URL` to the CDN.
 - `../recovered/` is read-only. Recovery scripts refuse to write inside it.
 
@@ -116,7 +119,7 @@ e2e/                       Playwright specs (routing, navigation, keyboard, axe 
 | 1 | Foundations — tokens, components, shell, routing + pre-rendering, data layer, tests, asset recovery | ✅ Done |
 | 2 | Catalogue, product pages and content pages | ✅ Done |
 | 3 | Design Studio core — all customisable products, flat artwork view, desktop/tablet/phone | ✅ Done (plan §18.19) |
-| 4 | Studio advanced (snapping, QR, preflight, on-product apparel & wrap modes, options panel) | In progress: M1 product view, M2 on-product workspace, M3 product colour, M4 pens and mugs done (plan §19) |
+| 4 | Studio advanced (snapping, QR, preflight, on-product apparel & wrap modes, options panel) | In progress: M1 product view, M2 on-product workspace, M3 product colour, M4 pens and mugs done (plan §19); workflow parity track M1 schema v3 + product family registry done (plan §21) |
 | 5 | 3D previews and remaining product modes | — |
 | 6 | Cart, checkout (pay on delivery), accounts, tracking — needs backend | — |
 | 7 | Polish, performance, SEO and launch | — |

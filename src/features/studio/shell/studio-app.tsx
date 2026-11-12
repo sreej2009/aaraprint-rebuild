@@ -109,11 +109,12 @@ function EditorSession({ product, profile, variantId, initialSurface, initialToo
   // The options chosen on the product page win; otherwise the design keeps its own.
   const effectiveVariantId = resolveStudioVariant(product, variantId ?? restored?.document.product.variantId ?? null)?.id ?? null;
   const [store] = useState(() => {
-    const blank = createBlankDesign(profile, { variantId: effectiveVariantId });
+    const blank = createBlankDesign(profile, { variantId: effectiveVariantId, catalogue: product });
     const document = restored ? restored.document : opened.kind === 'sample' ? sampleDesignFor(blank) : blank;
-    const studio = createStudioStore({ document, ...(initialSurface ? { surfaceId: initialSurface } : {}) });
-    // Not an undo step: the variant follows the product page (as in M3).
-    if (restored && restored.document.product.variantId !== effectiveVariantId) studio.getState().actions.setVariant(effectiveVariantId);
+    const studio = createStudioStore({ document, catalogue: product, ...(initialSurface ? { surfaceId: initialSurface } : {}) });
+    // Not an undo step: the variant follows the product page (as in M3), and its options and SKU
+    // fill the product configuration (a design saved before schema v3 has none yet).
+    if (restored) studio.getState().actions.syncProductVariant(effectiveVariantId);
     return studio;
   });
   const [viewportStore] = useState(() => createViewportStore());

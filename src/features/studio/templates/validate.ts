@@ -1,3 +1,4 @@
+import { emptyConfiguration } from '@/features/product-workflow/configuration';
 import { fontByFamily } from '../assets/fonts';
 import { printBoxes } from '../geometry/boxes';
 import { canUseAsset, type RightsStatus, type StudioFamily } from '../profile/types';
@@ -102,7 +103,7 @@ function readSurfaces(surfaces: Record<string, unknown>, errors: ValidationIssue
     schemaVersion: CURRENT_SCHEMA_VERSION,
     id: 'template',
     name: 'Template',
-    product: { slug: 'template', productId: 'template', variantId: null },
+    product: { slug: 'template', productId: 'template', familyId: null, variantId: null, sku: null, configuration: emptyConfiguration() },
     surfaces: designSurfaces,
     assets: {},
     meta: { createdAt: '2026-01-01T00:00:00.000Z', updatedAt: '2026-01-01T00:00:00.000Z', revision: 0 },

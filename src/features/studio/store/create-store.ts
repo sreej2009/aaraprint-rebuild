@@ -1,4 +1,6 @@
 import { createStore, type StoreApi } from 'zustand/vanilla';
+import type { Orientation, StudioChoice } from '@/features/product-workflow/configuration';
+import { productWorkflow, type ProductWorkflow } from '@/features/product-workflow/registry';
 import { layoutChanges, relayoutDocument, textMeasurer, type TextMeasurer } from '../canvas/text-layout';
 import * as cmd from '../commands';
 import { createId, type IdFactory } from '../ids';
@@ -20,6 +22,10 @@ import { isAllowedOnLocked, isPickable, nextSelection, pruneSelection, type Sele
  * - `changeCount` goes up on every document change (edit, undo, redo, load); autosave watches it.
  * - Text heights follow the text: every text element a command adds or re-flows is re-measured
  *   (canvas/text-layout.ts) before the step is recorded, so the height change is part of it.
+ *
+ * Product configuration (schema v3) changes go through `execute()` too, so choosing a colour, size,
+ * quantity or format is an undo step that autosave, versions and restore cover like any edit. The
+ * catalogue product they resolve variants against is given when the store is created.
  *
  * Locked elements can't be moved, resized, edited, reordered or deleted through the store; they can
  * still be selected from the layers list, renamed, shown/hidden and unlocked.
@@ -95,6 +101,25 @@ export interface StudioActions {
   renameDesign(name: string): boolean;
   /** Not undoable: the variant comes from the product options, so it's applied to every history step. */
   setVariant(variantId: string | null): void;
+  /**
+   * Not undoable: follow a variant chosen outside the Studio (product page, or the variant a v2
+   * design was saved with) — its options and SKU fill the configuration on every history step.
+   * Does nothing without the catalogue product.
+   */
+  syncProductVariant(variantId: string | null): void;
+
+  // Product configuration (Phase 4 M1): each is one undo step; false when nothing changed or the
+  // store has no catalogue product. Invalid ids or values throw (a bug in the caller).
+  setProductOption(groupId: string, valueId: string): boolean;
+  setProductOptions(values: Record<string, string>): boolean;
+  setProductColour(valueId: string): boolean;
+  setProductSize(size: cmd.ProductSize): boolean;
+  /** Re-resolve the variant and SKU from the saved options. */
+  resolveProductVariant(): boolean;
+  setOrderQuantity(quantity: number): boolean;
+  setOrientation(orientation: Orientation): boolean;
+  setStudioChoice(key: string, choice: StudioChoice | null): boolean;
+  setSameDesignBothSides(on: boolean): boolean;
   /** Load a different document (restored draft, version). Clears history and selection. */
   replaceDocument(document: DesignDocument, surfaceId?: string): void;
   /**
@@ -136,6 +161,10 @@ export interface CreateStudioStoreOptions {
   clock?: () => number;
   newId?: IdFactory;
   historyLimit?: number;
+  /** The catalogue product, for product-configuration actions (variant and SKU resolution). */
+  catalogue?: cmd.CatalogueProduct | null;
+  /** Defaults to the registry's workflow for the document's product. */
+  workflow?: ProductWorkflow | null;
   /**
    * Text measurement for automatic text heights. Defaults to the canvas's Konva measurer once it
    * has loaded (until then heights are left as they are and corrected by `relayoutText`); null
@@ -149,6 +178,9 @@ export function createStudioStore(options: CreateStudioStoreOptions): StudioStor
   const newId = options.newId ?? createId;
   const historyLimit = options.historyLimit ?? HISTORY_LIMIT;
   const measurer = (): TextMeasurer | null => (options.measureText === undefined ? textMeasurer() : options.measureText);
+  const catalogue = options.catalogue ?? null;
+  const workflow = options.workflow === undefined ? productWorkflow(options.document.product.slug) : options.workflow;
+  const groupName = (groupId: string) => catalogue?.optionGroups.find((g) => g.id === groupId)?.name ?? 'option';
 
   return createStore<StudioState>()((set, get) => {
     const surface = (state: StudioState, surfaceId = state.editor.activeSurfaceId): SurfaceDesign | undefined =>
@@ -348,6 +380,57 @@ export function createStudioStore(options: CreateStudioStoreOptions): StudioStor
         const document = cmd.setVariant(state.document, variantId);
         if (document === state.document) return;
         set({ document, history: rebaseHistory(state.history, (d) => cmd.setVariant(d, variantId)), changeCount: state.changeCount + 1 });
+      },
+
+      syncProductVariant(variantId) {
+        if (!catalogue) return;
+        const state = get();
+        const document = cmd.syncProductVariant(state.document, catalogue, variantId);
+        if (document === state.document) return;
+        set({ document, history: rebaseHistory(state.history, (d) => cmd.syncProductVariant(d, catalogue, variantId)), changeCount: state.changeCount + 1 });
+      },
+
+      setProductOption(groupId, valueId) {
+        if (!catalogue) return false;
+        return actions.execute(`Change ${groupName(groupId)}`, (d) => cmd.setProductOption(d, catalogue, groupId, valueId));
+      },
+
+      setProductOptions(values) {
+        if (!catalogue) return false;
+        const ids = Object.keys(values);
+        const label = ids.length === 1 && ids[0] ? `Change ${groupName(ids[0])}` : 'Change product options';
+        return actions.execute(label, (d) => cmd.setProductOptions(d, catalogue, values));
+      },
+
+      setProductColour(valueId) {
+        if (!catalogue || !workflow) return false;
+        return actions.execute('Change product colour', (d) => cmd.setProductColour(d, catalogue, workflow, valueId));
+      },
+
+      setProductSize(size) {
+        if (!catalogue || !workflow) return false;
+        return actions.execute('Change size', (d) => cmd.setProductSize(d, catalogue, workflow, size));
+      },
+
+      resolveProductVariant() {
+        if (!catalogue) return false;
+        return actions.execute('Update product', (d) => cmd.resolveProductVariant(d, catalogue));
+      },
+
+      setOrderQuantity(quantity) {
+        return actions.execute('Change quantity', (d) => cmd.setOrderQuantity(d, quantity));
+      },
+
+      setOrientation(orientation) {
+        return actions.execute('Change orientation', (d) => cmd.setOrientation(d, orientation));
+      },
+
+      setStudioChoice(key, choice) {
+        return actions.execute('Change product option', (d) => cmd.setStudioChoice(d, key, choice));
+      },
+
+      setSameDesignBothSides(on) {
+        return actions.execute(on ? 'Same design on both sides' : 'Separate designs per side', (d) => cmd.setSameDesignBothSides(d, on));
       },
 
       replaceDocument(document, surfaceId) {

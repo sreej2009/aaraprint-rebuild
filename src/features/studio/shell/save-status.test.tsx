@@ -59,8 +59,8 @@ function renderStudio({ repository = createMemoryRepository(), width = 1440, sam
 
 /** A design already saved in the repository. */
 function savedDesign(repository: MemoryRepository, fields: { text?: string; slug?: string; document?: unknown; id?: string } = {}) {
-  // As real saves are: with the product's default options.
-  const doc: DesignDocument = createBlankDesign(profile, { newId: () => fields.id ?? 'design_saved', variantId: resolveStudioVariant(product, null)?.id ?? null });
+  // As real saves are: with the product's default options, their values and SKU (schema v3).
+  const doc: DesignDocument = createBlankDesign(profile, { newId: () => fields.id ?? 'design_saved', variantId: resolveStudioVariant(product, null)?.id ?? null, catalogue: product });
   if (fields.text) doc.surfaces[0]!.elements.push(createTextElement({ x: 100, y: 100, width: 400, height: 60 }, { id: 'el_saved', text: fields.text }));
   const slug = fields.slug ?? 'business-card-classic';
   const stored = fields.document ?? toStoredDocument({ ...doc, product: { ...doc.product, slug } }, doc.meta);
@@ -70,7 +70,7 @@ function savedDesign(repository: MemoryRepository, fields: { text?: string; slug
     productId: doc.product.productId,
     variantId: null,
     name: doc.name,
-    schemaVersion: 2,
+    schemaVersion: doc.schemaVersion,
     createdAt: 1,
     updatedAt: Date.now(),
     revision: 1,
