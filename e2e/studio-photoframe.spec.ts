@@ -9,8 +9,8 @@ import { clearedStandIn } from './product-fixtures';
  * colour is the design's product configuration — the single source of truth — through Start
  * designing, the Studio, autosave, reload and undo/redo.
  *
- * Real product photos and masks stay rights-blocked, so each product is served a cleared stand-in
- * (product-fixtures.ts). Umbrellas and rainwear recolour their photo through its fabric mask. Pens,
+ * The pixel checks use cleared stand-ins (product-fixtures.ts) so they're deterministic; the real
+ * photos and masks (owner-cleared, M4-C2) are checked on the reported page at the end. Umbrellas and rainwear recolour their photo through its fabric mask. Pens,
  * mugs and drinkware choose part colours in the Studio; the original drew those with part masks
  * that aren't imported, so the photo can't show them: the choice is saved and the canvas says so.
  */
@@ -223,5 +223,56 @@ test('E · every width: umbrella, rainwear, drinkware, pen and mug are on the pr
       await expect(preview).toHaveCount(0);
     }
     await page.unrouteAll({ behavior: 'ignoreErrors' });
+  }
+});
+
+test('the real Custom Photo Umbrella (the reported page): its own photo, never the flat fallback; each colour recolours it; reload and reopen keep it', async ({ page }) => {
+  test.setTimeout(120_000);
+  const real = (p: Page) =>
+    p.evaluate(() => {
+      const node = window.Konva.stages.find((s) => s.container().closest('#studio-canvas'))!.findOne<KonvaNamespace.Image>('.product-mockup')!;
+      return { width: (node.image() as HTMLCanvasElement | HTMLImageElement).width };
+    });
+  await page.goto('/products/umbrella-photo-custom');
+  await page.getByRole('radio', { name: /^Navy/ }).first().click();
+  const link = page.getByRole('link', { name: /Start designing/ }).first();
+  await link.scrollIntoViewIfNeeded();
+  await link.click();
+  await confirmEntry(page);
+  await studioReady(page);
+  await photoReady(page);
+  await noFlatSwitch(page, 'open');
+  await expect(page.getByTestId('canvas-workspace-note')).toHaveCount(0);
+  await expect(page.getByText(/product photo isn’t available/)).toHaveCount(0);
+  expect((await real(page)).width).toBe(1122); // the real photo (1122 × 1402), not a placeholder
+  await expect(region(page)).toHaveAttribute('data-tint', 'applied', { timeout: 10_000 }); // Navy from the product page
+  const navy = JSON.stringify(await photoPixel(page));
+  const seen = new Set([navy]);
+  for (const name of ['Black', 'Red', 'Green']) {
+    await panel(page).getByRole('radiogroup', { name: /^Canopy Colour/ }).getByRole('radio', { name: new RegExp(`^${name}`) }).click();
+    await expect.poll(async () => seen.has(JSON.stringify(await photoPixel(page))), { message: name, timeout: 10_000 }).toBe(false);
+    seen.add(JSON.stringify(await photoPixel(page)));
+  }
+  await panel(page).getByRole('radiogroup', { name: /^Canopy Colour/ }).getByRole('radio', { name: /^Navy/ }).click();
+  await expect.poll(async () => JSON.stringify(await photoPixel(page)), { timeout: 10_000 }).toBe(navy);
+  await page.getByRole('navigation', { name: 'Design tools' }).getByRole('button', { name: 'Text', exact: true }).click();
+  await page.getByRole('button', { name: 'Add heading' }).click();
+  await page.keyboard.press('Control+Enter');
+  await expect(page.getByTestId('save-status')).toHaveAttribute('data-status', 'saved', { timeout: 10_000 });
+
+  // Reload, then Back to the product page and reopen: the same photo, colour and artwork.
+  for (const step of ['reload', 'reopen'] as const) {
+    if (step === 'reload') await page.reload();
+    else {
+      await page.goBack();
+      await expect(page.getByRole('radio', { name: /^Navy/ }).first()).toHaveAttribute('aria-checked', 'true');
+      await page.getByRole('link', { name: /Start designing/ }).first().click();
+    }
+    await studioReady(page);
+    await photoReady(page);
+    await noFlatSwitch(page, step);
+    await expect(page.getByTestId('canvas-workspace-note'), step).toHaveCount(0);
+    await expect.poll(async () => JSON.stringify(await photoPixel(page)), { message: step, timeout: 10_000 }).toBe(navy);
+    expect(await artworkCount(page), step).toBe(1);
   }
 });

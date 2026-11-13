@@ -29,6 +29,12 @@ const cleared = (change: (side: StudioProfile['sides'][number]) => Partial<Studi
   sides: umbrellaProfile.sides.map((side) => ({ ...side, mockup: { ...side.mockup!, ref: `studio-fixtures/umbrella-${side.id}.png`, format: 'png', rights: 'cleared' }, ...change(side) })),
 });
 
+/** A real profile with its photos and masks marked unconfirmed: the rights gate must still block it. */
+const blocked = (profile: StudioProfile): StudioProfile => ({
+  ...profile,
+  sides: profile.sides.map((side) => (side.mockup ? { ...side, mockup: { ...side.mockup, rights: 'unconfirmed' as const, mask: side.mockup.mask ? { ...side.mockup.mask, rights: 'unconfirmed' as const } : null } } : side)),
+});
+
 const photos = { requested: [] as string[], failing: new Set<string>() };
 const realMatchMedia = window.matchMedia;
 
@@ -83,14 +89,14 @@ async function ready() {
 }
 
 describe('which products offer it', () => {
-  it('a business card and an umbrella with its real (unconfirmed) photos stay exactly as before', async () => {
+  it('a business card, and an umbrella whose photos aren’t cleared, stay flat', async () => {
     renderStudio({ product: card, profile: cardProfile });
     await ready();
     expect(viewChoice()).not.toBeInTheDocument();
     expect(canvas()).toHaveAttribute('data-view', 'flat');
     document.body.innerHTML = '';
 
-    renderStudio({ profile: umbrellaProfile });
+    renderStudio({ profile: blocked(umbrellaProfile) });
     await ready();
     expect(viewChoice()).not.toBeInTheDocument();
     expect(canvas()).toHaveAttribute('data-view', 'flat');
@@ -196,8 +202,8 @@ describe('nothing about the view reaches the design', () => {
     expect(canvas()).toHaveAttribute('data-view', 'product');
     const onProduct = await facts(user);
     document.body.innerHTML = '';
-    // The same sample design where the photo can't be shown (real photos, rights unconfirmed): flat.
-    user = renderStudio({ profile: umbrellaProfile });
+    // The same sample design where the photo can't be shown (photos marked unconfirmed): flat.
+    user = renderStudio({ profile: blocked(umbrellaProfile) });
     await ready();
     expect(canvas()).toHaveAttribute('data-view', 'flat');
     const flat = await facts(user);

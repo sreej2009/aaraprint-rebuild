@@ -262,7 +262,7 @@ describe('persistence through the Studio save controller', () => {
       await new Promise((resolve) => setTimeout(resolve, 1300)); // past the autosave delay
     });
     expect(([...repository.designs.values()][0]!.document as DesignDocument).product.sku).toBe('UMBRELLA-GOLF-COLOUR-NAVY');
-  });
+  }, 15_000); // two visits, an autosave and the autosave delay
 
   it('a ?variantId= link still seeds a new design when nothing is saved', async () => {
     const product = readProduct('umbrella-golf');

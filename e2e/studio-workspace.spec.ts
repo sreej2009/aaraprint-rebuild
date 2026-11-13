@@ -3,7 +3,7 @@ import type { Download, Page } from '@playwright/test';
 import { readFileSync } from 'node:fs';
 import type KonvaNamespace from 'konva';
 import { expect, settleAnimations, test } from './fixtures';
-import { BOXES, clearedStandIn, INDIGO, MARK_RGB, near, PHOTO, PHOTO_RGB, placed } from './product-fixtures';
+import { BOXES, clearedStandIn, INDIGO, MARK_RGB, near, PHOTO, PHOTO_RGB, placed, unconfirmedRights } from './product-fixtures';
 
 /**
  * Editing on the product (Phase 4 M2): the product photo behind the artwork in the Studio canvas.
@@ -58,7 +58,8 @@ async function onTheProduct(page: Page) {
   await page.waitForFunction(() => {
     const st = window.Konva.stages.find((s) => s.container().closest('#studio-canvas'));
     const photo = st?.findOne<KonvaNamespace.Image>('.product-mockup');
-    return Boolean(photo && (photo.image() as HTMLImageElement).naturalWidth > 0);
+    const image = photo?.image() as (HTMLImageElement & HTMLCanvasElement) | undefined;
+    return Boolean(image && (image.naturalWidth || image.width) > 0); // a tinted photo is a canvas
   });
 }
 
@@ -352,11 +353,13 @@ test.describe('desktop: editing on the product', () => {
       expect([file.readUInt32BE(16), file.readUInt32BE(20)]).toEqual([Number(planned[1]), Number(planned[2])]);
       return file;
     };
-    // The same sample where the photo can't be shown (real photos: rights unconfirmed) is flat...
+    // The same sample where the photo can't be shown (its rights unconfirmed) is flat...
+    await unconfirmedRights(page, 'umbrella-golf');
     await open(page);
     await expect(region(page)).toHaveAttribute('data-view', 'flat');
     const flat = await proof();
     // ...and on the product with a cleared stand-in: the proof is identical.
+    await page.unrouteAll({ behavior: 'ignoreErrors' });
     await clearedStandIn(page);
     await open(page);
     await onTheProduct(page);
@@ -385,13 +388,20 @@ test.describe('desktop: editing on the product', () => {
     expect(mediaRequests.filter((p) => p.includes('studio-fixtures'))).toEqual(['/media/studio-fixtures/umbrella-golf-front.png', '/media/studio-fixtures/umbrella-golf-back.png']);
   });
 
-  test('H · rights and fallbacks: real photos are never offered; a photo that fails keeps the flat editor working', async ({ page }) => {
-    for (const slug of ['umbrella-golf', 'cap-rain-waterproof', 'drinkware-bottle-aluminium', 'business-card-classic', 'gift-mug-custom-black']) {
+  test('H · rights and fallbacks: real (owner-cleared) photos are shown, unconfirmed ones never; a photo that fails keeps the flat editor working', async ({ page }) => {
+    for (const slug of ['umbrella-golf', 'cap-rain-waterproof', 'drinkware-bottle-aluminium', 'gift-mug-custom-black']) {
       await open(page, `/products/${slug}/design?sample=1`);
-      await expect(region(page), slug).toHaveAttribute('data-view', 'flat');
-      await expect(viewChoice(page), slug).toHaveCount(0);
+      await onTheProduct(page);
     }
-    expect(mediaRequests.filter((p) => /\/products\/(umbrellas-rainwear|drinkware)-2d\//.test(p))).toEqual([]);
+    await open(page, '/products/business-card-classic/design?sample=1');
+    await expect(region(page)).toHaveAttribute('data-view', 'flat');
+    await expect(viewChoice(page)).toHaveCount(0);
+    mediaRequests = [];
+    await unconfirmedRights(page, 'cap-rain-waterproof');
+    await open(page, '/products/cap-rain-waterproof/design?sample=1');
+    await expect(region(page)).toHaveAttribute('data-view', 'flat');
+    expect(mediaRequests.filter((p) => /\/products\/umbrellas-rainwear-2d\//.test(p))).toEqual([]);
+    await page.unrouteAll({ behavior: 'ignoreErrors' });
 
     await clearedStandIn(page, 'umbrella-golf', { photo: 'missing' });
     await open(page);

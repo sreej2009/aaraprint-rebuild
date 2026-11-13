@@ -85,6 +85,9 @@ export async function clearedStandIn(page: Page, slug = 'umbrella-golf', { photo
       const ref = photo === 'mug' ? `studio-fixtures/${slug}-paired.png` : `studio-fixtures/${slug}-${side.id}.png`;
       side.mockup = { ...side.mockup, ref, format: 'png', rights: 'cleared' };
       if (mask === 'cleared') side.mockup.mask = { ref: `studio-fixtures/${slug}-${side.id}-mask.png`, width: PHOTO.width, height: PHOTO.height, rights: 'cleared' };
+      // 'real': the product's real mask entry, but unconfirmed, so a stand-in photo is never tinted with a
+      // mask drawn for another photo (the real masks themselves are owner-cleared since M4-C2).
+      else if (side.mockup.mask) side.mockup.mask = { ...side.mockup.mask, rights: 'unconfirmed' };
     }
     await route.fulfill({ response, json: profile });
   });
@@ -106,3 +109,20 @@ export function placed([cx, cy, w, h]: readonly number[], print = PRINT) {
 }
 
 export const near = (rgba: number[], rgb: number[]) => rgba[3] === 255 && rgb.every((c, i) => Math.abs(rgba[i]! - c) <= 3);
+
+/**
+ * Serve a product's real profile with its photos and masks marked unconfirmed, so the rights gate
+ * can still be checked in the browser. Since Phase 4 M4-C2 the real photo-frame assets are cleared
+ * by the business owner, so their real profiles show the product.
+ */
+export async function unconfirmedRights(page: Page, slug: string) {
+  await page.route(`**/api/v1/studio/${slug}.json`, async (route: Route) => {
+    const response = await route.fetch();
+    const profile = await response.json();
+    for (const side of profile.sides) {
+      if (!side.mockup) continue;
+      side.mockup = { ...side.mockup, rights: 'unconfirmed', mask: side.mockup.mask ? { ...side.mockup.mask, rights: 'unconfirmed' } : null };
+    }
+    await route.fulfill({ response, json: profile });
+  });
+}

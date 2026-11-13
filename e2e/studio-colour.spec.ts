@@ -3,7 +3,7 @@ import type { Download, Page } from '@playwright/test';
 import { readFileSync } from 'node:fs';
 import type KonvaNamespace from 'konva';
 import { expect, settleAnimations, test } from './fixtures';
-import { BOXES, clearedStandIn, FABRIC, INDIGO, MARK_RGB, near, PHOTO, PHOTO_RGB, placed, SHADES } from './product-fixtures';
+import { BOXES, clearedStandIn, FABRIC, INDIGO, MARK_RGB, near, PHOTO, PHOTO_RGB, placed, SHADES, unconfirmedRights } from './product-fixtures';
 
 /**
  * Product colour and masked tint (Phase 4 M3; since M4 the colour is the design's product option,
@@ -327,14 +327,23 @@ test.describe('desktop: product colour', () => {
     await expect.poll(async () => closeTo((await photoPixels(page, [POINTS.mid], 'studio-product-stage'))[0]!, NAVY)).toBe(true);
   });
 
-  test('E · rights: real photos and masks are never offered or requested; a cleared photo with an unconfirmed mask is shown as taken', async ({ page }) => {
+  test('E · rights: the real (owner-cleared) photos and masks are shown; unconfirmed ones are never requested; an unconfirmed mask leaves the photo as taken', async ({ page }) => {
     for (const slug of ['umbrella-golf', 'rainwear-waterproof-jacket-standard', 'cap-rain-waterproof']) {
       await open(page, `/products/${slug}/design?sample=1`);
-      await expect(page.getByRole('radiogroup', { name: 'Canvas view' }), slug).toHaveCount(0);
-      await expect(region(page), slug).toHaveAttribute('data-view', 'flat');
-      await expect(page.getByTestId('canvas-workspace-note'), slug).toBeVisible();
+      await onTheProduct(page);
+      await expect(page.getByTestId('canvas-workspace-note'), slug).toHaveCount(0);
+      expect(mediaRequests.some((p) => p.startsWith(`/media/products/umbrellas-rainwear-2d/${slug}-front.`)), slug).toBe(true);
     }
-    await clearedStandIn(page, 'umbrella-golf', { photo: 'fabric' }); // the real masks: unconfirmed
+    // The same product with its rights unconfirmed: flat, and its photo and mask are never requested.
+    mediaRequests = [];
+    await unconfirmedRights(page, 'umbrella-golf');
+    await open(page, `${UMBRELLA}?sample=1`);
+    await expect(region(page)).toHaveAttribute('data-view', 'flat');
+    await expect(page.getByTestId('canvas-workspace-note')).toBeVisible();
+    expect(mediaRequests.filter((p) => /\/products\/umbrellas-rainwear-2d\//.test(p))).toEqual([]);
+    await page.unrouteAll({ behavior: 'ignoreErrors' });
+    mediaRequests = [];
+    await clearedStandIn(page, 'umbrella-golf', { photo: 'fabric' }); // a mask whose rights aren't cleared
     await open(page);
     await onTheProduct(page);
     await choose(page, 'Navy');
@@ -374,10 +383,12 @@ test.describe('desktop: product colour', () => {
       await expect(dialog).toHaveCount(0);
       return file;
     };
-    // Flat: the same sample with the real (rights-blocked) photos.
+    // Flat: the same sample with its photos' rights unconfirmed.
+    await unconfirmedRights(page, 'umbrella-golf');
     await open(page, `${UMBRELLA}?sample=1`);
     await expect(region(page)).toHaveAttribute('data-view', 'flat');
     const flat = await proof();
+    await page.unrouteAll({ behavior: 'ignoreErrors' });
     await clearedStandIn(page, 'umbrella-golf', { photo: 'fabric', mask: 'cleared' });
     await open(page, `${UMBRELLA}?sample=1`);
     await onTheProduct(page);

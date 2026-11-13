@@ -3,7 +3,7 @@ import type { Download, Page } from '@playwright/test';
 import { readFileSync } from 'node:fs';
 import type KonvaNamespace from 'konva';
 import { expect, settleAnimations, test, openTool } from './fixtures';
-import { clearedStandIn, INDIGO, MARK_RGB, MUG_RGB, near, PEN_RGB, placed } from './product-fixtures';
+import { clearedStandIn, INDIGO, MARK_RGB, MUG_RGB, near, PEN_RGB, placed, unconfirmedRights } from './product-fixtures';
 
 /**
  * Pens and mugs on the product (Phase 4 M4). Real photos stay blocked (rights unconfirmed): these
@@ -296,13 +296,22 @@ test.describe('desktop: mugs', () => {
 test.describe('desktop: rights, saving and proofs', () => {
   test.skip(({ hasTouch }) => hasTouch, 'mouse and keyboard');
 
-  test('F · real pen and mug photos (rights unconfirmed) are never offered or requested; unrecovered ones stay flat', async ({ page }) => {
-    for (const slug of ['pen-ballpoint-classic', 'pen-gold-click', 'gift-mug-custom-black', 'mug-classic-photo', 'pen-recycled-paper']) {
+  test('F · real pen and mug photos (owner-cleared) are shown; unrecovered or unconfirmed ones stay flat and are never requested', async ({ page }) => {
+    for (const slug of ['pen-ballpoint-classic', 'pen-gold-click', 'gift-mug-custom-black']) {
+      await open(page, `/products/${slug}/design?sample=1`);
+      await onTheProduct(page);
+    }
+    expect(mediaRequests.filter((p) => /\/products\/(pens|mugs)-2d\//.test(p)).length).toBeGreaterThan(0);
+    for (const slug of ['mug-classic-photo', 'pen-recycled-paper']) {
       await open(page, `/products/${slug}/design?sample=1`);
       await expect(canvasChoice(page), slug).toHaveCount(0);
       await expect(region(page), slug).toHaveAttribute('data-view', 'flat');
     }
-    expect(mediaRequests.filter((p) => /\/products\/(pens|mugs)-2d\//.test(p))).toEqual([]);
+    mediaRequests = [];
+    await unconfirmedRights(page, 'pen-gold-click');
+    await open(page, '/products/pen-gold-click/design?sample=1');
+    await expect(region(page)).toHaveAttribute('data-view', 'flat');
+    expect(mediaRequests.filter((p) => /\/products\/pens-2d\//.test(p))).toEqual([]);
   });
 
   test('G · edits on a pen autosave and come back after a reload; no view, photo or frame is saved', async ({ page }) => {
@@ -351,9 +360,11 @@ test.describe('desktop: rights, saving and proofs', () => {
       ['gift-mug-custom-black', MUG],
     ] as const) {
       await page.unrouteAll({ behavior: 'ignoreErrors' });
+      await unconfirmedRights(page, slug); // the same sample shown flat
       await open(page, `${url}?sample=1`);
       await expect(region(page), slug).toHaveAttribute('data-view', 'flat');
       const flat = await proof(page);
+      await page.unrouteAll({ behavior: 'ignoreErrors' });
       await clearedStandIn(page, slug, { photo: slug.startsWith('pen') ? 'pen' : 'mug' });
       await open(page, `${url}?sample=1`);
       await onTheProduct(page);

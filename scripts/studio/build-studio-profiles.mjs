@@ -25,7 +25,7 @@ import fs from 'node:fs/promises';
 import path from 'node:path';
 import { readGlbInfo, readImageInfo } from '../../tooling/media-info.ts';
 import { resolveMediaFile } from '../../tooling/local-media.ts';
-import { ASSET_RIGHTS, familyFor, familyMockups, geometryOptionsFor, hasProductColours, modeFor, productViewFor, RIGHTS_NOTES, sideLabels, sizeCheckFor, trimFor } from './studio-rules.mjs';
+import { ASSET_RIGHTS, rightsForMockup, familyFor, familyMockups, geometryOptionsFor, hasProductColours, modeFor, productViewFor, RIGHTS_NOTES, sideLabels, sizeCheckFor, trimFor } from './studio-rules.mjs';
 
 const ROOT = process.cwd();
 const rootsArg = process.argv.includes('--roots') ? process.argv[process.argv.indexOf('--roots') + 1] : null;
@@ -142,8 +142,8 @@ async function mockupAsset(ref, missing, slug) {
     format: info.format,
     width: info.width,
     height: info.height,
-    mask: mask ? { ref: maskRef, width: mask.width, height: mask.height, rights: ASSET_RIGHTS.mask.status } : null,
-    rights: ASSET_RIGHTS.mockup.status,
+    mask: mask ? { ref: maskRef, width: mask.width, height: mask.height, rights: rightsForMockup(maskRef, 'mask') } : null,
+    rights: rightsForMockup(ref),
   };
 }
 
@@ -225,7 +225,7 @@ async function framedSide(family, slug, sideId, placements) {
   const fits = (crop ? crop.x + crop.width <= info.width : true) && Math.abs(shown.width / shown.height / (at.width / at.height) - 1) < 0.01;
   const [centerX, centerY, maxWidth, maxHeight] = box;
   return {
-    mockup: { ref, format: info.format, width: info.width, height: info.height, mask: null, rights: ASSET_RIGHTS.mockup.status },
+    mockup: { ref, format: info.format, width: info.width, height: info.height, mask: null, rights: rightsForMockup(ref) },
     placement: fits ? { centerX, centerY, maxWidth, maxHeight } : null,
     photoFrame: fits ? { width: frame.width, height: frame.height, crop, at } : null,
   };

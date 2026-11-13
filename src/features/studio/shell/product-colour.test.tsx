@@ -43,6 +43,12 @@ function stand(maskRights: (sideId: string) => string = () => 'cleared', base: S
   };
 }
 
+/** A real profile with its photos and masks marked unconfirmed: the rights gate must still block it. */
+const blocked = (profile: StudioProfile): StudioProfile => ({
+  ...profile,
+  sides: profile.sides.map((side) => (side.mockup ? { ...side, mockup: { ...side.mockup, rights: 'unconfirmed' as const, mask: side.mockup.mask ? { ...side.mockup.mask, rights: 'unconfirmed' as const } : null } } : side)),
+});
+
 const tints = { requests: [] as TintRequest[], fail: false };
 const realMatchMedia = window.matchMedia;
 
@@ -184,8 +190,8 @@ describe('the colour is the design’s product configuration (M4)', () => {
 });
 
 describe('rights and fallbacks', () => {
-  it('real (unconfirmed) photos stay flat with a note; cleared photos whose masks aren’t show the photo as taken; the photo-print umbrella has no colour', async () => {
-    renderStudio({ profile: umbrellaProfile });
+  it('unconfirmed photos stay flat with a note; cleared photos whose masks aren’t show the photo as taken; the photo-print umbrella has no colour', async () => {
+    renderStudio({ profile: blocked(umbrellaProfile) });
     await screen.findByRole('region', { name: /^Design canvas: / });
     expect(screen.queryByRole('radiogroup', { name: 'Canvas view' })).toBeNull();
     expect(canvas()).toHaveAttribute('data-view', 'flat');
@@ -302,5 +308,33 @@ describe('the saved colour is the single source of truth (M4-C)', () => {
     await user.click(swatch('Navy'));
     expect(canvas()).toHaveAttribute('data-tint', 'none');
     expect(screen.getByTestId('canvas-colour-unavailable')).toHaveTextContent('Colour preview unavailable for this side.');
+  });
+});
+
+describe('the real Custom Photo Umbrella (the reported page, M4-C2)', () => {
+  const custom = readProduct('umbrella-photo-custom');
+  const customProfile = readProfile('umbrella-photo-custom');
+
+  it('opens on its own photo, never the flat fallback; Navy tints it with its own fabric mask, front and back', async () => {
+    const user = renderStudio({ product: custom, profile: customProfile });
+    await onTheProduct();
+    expect(screen.queryByTestId('canvas-workspace-note')).toBeNull();
+    expect(screen.queryByText(/product photo isn’t available/)).toBeNull();
+    expect(screen.queryByRole('radiogroup', { name: 'Canvas view' })).toBeNull();
+    // The photo was taken in White and the design is ordered in Black (the default): tinted Black from the start.
+    await waitFor(() => expect(canvas()).toHaveAttribute('data-tint', 'applied'));
+    expect(tints.requests[0]?.hex).toBe('#2b2b2d');
+    await openProductOptions(user);
+    expect(swatch('Black')).toHaveAttribute('aria-checked', 'true');
+    await user.click(swatch('Navy'));
+    await waitFor(() => expect(canvas()).toHaveAttribute('data-tint', 'applied'));
+    expect(tints.requests.at(-1)).toEqual({ photoUrl: '/media/products/umbrellas-rainwear-2d/umbrella-photo-custom-front.webp', maskUrl: '/media/products/umbrellas-rainwear-2d/umbrella-photo-custom-front-mask.png', hex: '#243052' });
+    for (const [name, hex] of [['Red', '#b0262d'], ['Green', '#1f6a3d']] as const) {
+      await user.click(swatch(name));
+      await waitFor(() => expect(tints.requests.at(-1)?.hex).toBe(hex));
+      expect(canvas()).toHaveAttribute('data-tint', 'applied');
+    }
+    await user.click(sideRadio('Back'));
+    await waitFor(() => expect(tints.requests.at(-1)).toEqual({ photoUrl: '/media/products/umbrellas-rainwear-2d/umbrella-photo-custom-back.webp', maskUrl: '/media/products/umbrellas-rainwear-2d/umbrella-photo-custom-back-mask.png', hex: '#1f6a3d' }));
   });
 });

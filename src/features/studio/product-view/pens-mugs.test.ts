@@ -179,9 +179,12 @@ describe('mugs: the original data', () => {
 });
 
 describe('rights, validation and the registry', () => {
-  it('every real pen and mug photo is unconfirmed: none is shown', () => {
+  it('every real pen and mug photo is owner-cleared (M4-C2): shown wherever it was recovered with its box', () => {
     for (const p of all.filter((p) => p.productView === 'pen' || p.productView === 'mug')) {
-      for (const side of p.sides) expect(productViewFor(p, side.id, library)).toEqual({ ok: false, reason: side.mockup ? 'rights' : 'no-mockup' });
+      for (const side of p.sides) {
+        const result = productViewFor(p, side.id, library);
+        expect(result.ok ? 'ok' : result.reason, `${p.slug} ${side.id}`).toBe(side.mockup ? (side.placement ? 'ok' : 'no-placement') : 'no-mockup');
+      }
     }
   });
 

@@ -82,6 +82,12 @@ function renderStudio(slug: string, profile: StudioProfile = cleared(slug)) {
   return userEvent.setup();
 }
 
+/** A real profile with its photos and masks marked unconfirmed: the rights gate must still block it. */
+const blocked = (profile: StudioProfile): StudioProfile => ({
+  ...profile,
+  sides: profile.sides.map((side) => (side.mockup ? { ...side, mockup: { ...side.mockup, rights: 'unconfirmed' as const, mask: side.mockup.mask ? { ...side.mockup.mask, rights: 'unconfirmed' as const } : null } } : side)),
+});
+
 const canvas = () => screen.getByRole('region', { name: /^Design canvas: / });
 const canvasChoice = () => screen.queryByRole('radiogroup', { name: 'Canvas view' });
 const sideRadio = (name: 'Front' | 'Back') => within(screen.getByRole('radiogroup', { name: 'Side' })).getByRole('radio', { name: new RegExp(`^${name}`) });
@@ -129,7 +135,7 @@ describe('pens', () => {
     await screen.findByRole('region', { name: /^Design canvas: / });
     expect(canvasChoice()).toBeNull();
     document.body.innerHTML = '';
-    renderStudio('pen-gold-click', readProfile('pen-gold-click'));
+    renderStudio('pen-gold-click', blocked(readProfile('pen-gold-click')));
     await screen.findByRole('region', { name: /^Design canvas: / });
     expect(canvasChoice()).toBeNull();
     expect(canvas()).toHaveAttribute('data-view', 'flat');
@@ -174,7 +180,7 @@ describe('mugs', () => {
     await screen.findByRole('region', { name: /^Design canvas: / });
     expect(canvasChoice()).toBeNull();
     document.body.innerHTML = '';
-    renderStudio('gift-mug-personalised', readProfile('gift-mug-personalised'));
+    renderStudio('gift-mug-personalised', blocked(readProfile('gift-mug-personalised')));
     await screen.findByRole('region', { name: /^Design canvas: / });
     expect(canvasChoice()).toBeNull();
     expect(requested.filter((u) => u.includes('mugs-2d'))).toEqual([]);

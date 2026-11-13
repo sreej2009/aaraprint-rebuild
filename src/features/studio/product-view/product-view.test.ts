@@ -120,9 +120,19 @@ describe('placing the artwork (contain, centred)', () => {
 });
 
 describe('the rights gate and fallbacks', () => {
-  it('every real photo is unconfirmed, so no product shows one', () => {
+  it('every real photo-frame photo is owner-cleared (M4-C2): none is blocked by rights', () => {
     for (const p of all.filter(hasProductView)) {
-      for (const side of p.sides) expect(productViewFor(p, side.id, library)).toEqual({ ok: false, reason: side.mockup ? 'rights' : 'no-mockup' });
+      for (const side of p.sides) {
+        const result = productViewFor(p, side.id, library);
+        expect(result.ok ? 'ok' : result.reason, `${p.slug} ${side.id}`).not.toBe('rights');
+        expect(side.mockup?.rights ?? 'cleared', p.slug).toBe('cleared');
+      }
+    }
+    // The real Custom Photo Umbrella (the reported page) shows its own photo and mask, front and back.
+    const custom = readProfile('umbrella-photo-custom');
+    for (const id of ['front', 'back']) {
+      const result = productViewFor(custom, id, library);
+      expect(result.ok && [result.view.url, result.view.mask?.url]).toEqual([`/media/products/umbrellas-rainwear-2d/umbrella-photo-custom-${id}.webp`, `/media/products/umbrellas-rainwear-2d/umbrella-photo-custom-${id}-mask.png`]);
     }
   });
 
@@ -139,8 +149,8 @@ describe('the rights gate and fallbacks', () => {
         photo: { width: 1122, height: 1402 },
         placement: { centerX: 563, centerY: 374, maxWidth: 170, maxHeight: 227 },
         draw: { crop: null, at: { x: 0, y: 0, width: 1122, height: 1402 } },
-        // The real fabric mask's rights are unconfirmed: never used (M3).
-        mask: null,
+        // The real fabric mask, cleared by the owner (M4-C2).
+        mask: { url: '/media/products/umbrellas-rainwear-2d/umbrella-golf-front-mask.png' },
         photoColour: 'Black',
       },
     });

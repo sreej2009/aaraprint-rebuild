@@ -6,8 +6,8 @@ import { clearedStandIn } from './product-fixtures';
 /**
  * Product-first Studio workspaces (Phase 4 M4), in the production build. The workspace comes from
  * the design's product family (registry), so each family opens where the original did, on the tool
- * it did. Real product photos stay rights-blocked: those families open on the flat print area and
- * say why. A cleared stand-in shows the product itself. Widths are set per test, so this runs in
+ * it did. Photo-frame families open on their real (owner-cleared, M4-C2) product photos; families
+ * whose product geometry isn't imported open on the flat print area and say why. Widths are set per test, so this runs in
  * the desktop project only.
  */
 declare global {
@@ -19,15 +19,14 @@ declare global {
 
 const WIDTHS = [1440, 1280, 820, 390, 360] as const;
 
-type Expect = { slug: string; family: string; workspace: string; tool: 'Product options' | 'Text' | 'Uploads'; note: RegExp | null; sides: boolean };
+type Expect = { slug: string; family: string; workspace: string; tool: 'Product options' | 'Text' | 'Uploads'; note: RegExp | null; sides: boolean; view?: 'product' | 'flat' };
 const NOT_YET = /isn’t available yet: you’re designing the flat print area/;
-const BLOCKED = /flat print area/;
 const FAMILIES: Expect[] = [
-  { slug: 'umbrella-golf', family: 'umbrella', workspace: 'photo-frame', tool: 'Product options', note: BLOCKED, sides: true },
-  { slug: 'raincoat-industrial-safety', family: 'rainwear', workspace: 'photo-frame', tool: 'Product options', note: BLOCKED, sides: true },
-  { slug: 'bottle-sipper', family: 'drinkware', workspace: 'photo-frame', tool: 'Product options', note: BLOCKED, sides: true },
-  { slug: 'pen-gold-click', family: 'pen', workspace: 'photo-frame', tool: 'Product options', note: BLOCKED, sides: true },
-  { slug: 'gift-mug-custom-black', family: 'mug', workspace: 'photo-frame', tool: 'Product options', note: BLOCKED, sides: true },
+  { slug: 'umbrella-golf', family: 'umbrella', workspace: 'photo-frame', tool: 'Product options', note: null, sides: true, view: 'product' },
+  { slug: 'raincoat-industrial-safety', family: 'rainwear', workspace: 'photo-frame', tool: 'Product options', note: null, sides: true, view: 'product' },
+  { slug: 'bottle-sipper', family: 'drinkware', workspace: 'photo-frame', tool: 'Product options', note: null, sides: true, view: 'product' },
+  { slug: 'pen-gold-click', family: 'pen', workspace: 'photo-frame', tool: 'Product options', note: null, sides: true, view: 'product' },
+  { slug: 'gift-mug-custom-black', family: 'mug', workspace: 'photo-frame', tool: 'Product options', note: null, sides: true, view: 'product' },
   { slug: 'apparel-jersey-sports', family: 'apparel', workspace: 'perspective', tool: 'Product options', note: NOT_YET, sides: true },
   { slug: 'apparel-polo-6-degree', family: 'polo', workspace: 'polo-stage', tool: 'Product options', note: NOT_YET, sides: true },
   { slug: 'bag-backpack-american-tourister', family: 'bag', workspace: 'perspective', tool: 'Product options', note: NOT_YET, sides: true },
@@ -67,8 +66,8 @@ for (const f of FAMILIES) {
       await open(page, f.slug, width);
       const canvas = region(page);
       await expect(canvas, `${width}`).toHaveAttribute('data-workspace', f.workspace);
-      // Rights-blocked or not yet imported: the flat print area, never an invented product.
-      await expect(canvas).toHaveAttribute('data-view', 'flat');
+      // Photo-frame: the real photo. Not yet imported: the flat print area, never an invented product.
+      await expect(canvas).toHaveAttribute('data-view', f.view ?? 'flat');
       await expect(page.getByRole('radiogroup', { name: 'Canvas view' })).toHaveCount(0);
       const note = page.getByTestId('canvas-workspace-note');
       if (f.note) await expect(note).toHaveText(f.note);

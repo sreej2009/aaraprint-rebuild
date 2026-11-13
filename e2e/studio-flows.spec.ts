@@ -347,6 +347,10 @@ test.describe('desktop flows', () => {
     await expect(confirm).toBeVisible();
     await confirm.getByRole('button', { name: 'Restore' }).click();
     await expect.poll(async () => (await canvas(page)).texts).toEqual(['Version one']);
+    // The history dialog closes after a restore and hands focus back to the save status when its
+    // exit animation ends: wait for that, or a focus moved earlier is taken back and Ctrl Z lands there.
+    await expect(history).toHaveCount(0);
+    await expect(status(page)).toBeFocused();
     await page.locator('#studio-canvas').focus();
     await page.keyboard.press('Control+z');
     await expect.poll(async () => (await canvas(page)).texts).toEqual(['Version two']);

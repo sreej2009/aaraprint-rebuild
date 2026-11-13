@@ -274,6 +274,7 @@ describe('on the product (Phase 4 M1)', () => {
   const fixturePhotos = () => photos.requested.filter((url) => url.includes('studio-fixtures'));
 
   it('is not offered for a business card, or for an umbrella whose photos aren’t cleared: Preview stays flat', async () => {
+    const unconfirmed: StudioProfile = { ...umbrellaProfile, sides: umbrellaProfile.sides.map((s) => ({ ...s, mockup: { ...s.mockup!, rights: 'unconfirmed' as const } })) };
     let user = renderStudio();
     await openPreview(user);
     expect(viewChoice()).not.toBeInTheDocument();
@@ -281,7 +282,7 @@ describe('on the product (Phase 4 M1)', () => {
     await user.keyboard('{Escape}');
 
     document.body.innerHTML = '';
-    user = renderStudio({ studioProduct: umbrella, profile: umbrellaProfile });
+    user = renderStudio({ studioProduct: umbrella, profile: unconfirmed });
     await openPreview(user);
     expect(viewChoice()).not.toBeInTheDocument();
     expect(within(dialog()).queryByTestId('preview-product-unavailable')).not.toBeInTheDocument();

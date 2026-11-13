@@ -3,7 +3,7 @@ import type { Download, Page } from '@playwright/test';
 import { readFileSync } from 'node:fs';
 import type KonvaNamespace from 'konva';
 import { expect, test } from './fixtures';
-import { BOXES, clearedStandIn, INDIGO, MARK_RGB, near, PHOTO_RGB, placed } from './product-fixtures';
+import { BOXES, clearedStandIn, INDIGO, MARK_RGB, near, PHOTO_RGB, placed, unconfirmedRights } from './product-fixtures';
 
 /**
  * "On the product" in the Preview (Phase 4 M1). Every real product photo's rights are unconfirmed,
@@ -195,8 +195,8 @@ test.describe('desktop: on the product', () => {
     await page.waitForFunction(() => window.Konva.stages.some((s) => s.container().classList.contains('studio-preview-stage') && !s.container().classList.contains('studio-product-stage')));
     await page.keyboard.press('Escape');
 
-    // Not in M1: flat-printed drinkware, pens, mugs, polos, bags, signs and cards.
-    for (const slug of ['business-card-classic', 'gift-mug-custom-black', 'apparel-polo-6-degree', 'bag-backpack-american-tourister', 'label-jar-bottle']) {
+    // Families without a photo frame: polos, bags, labels and cards.
+    for (const slug of ['business-card-classic', 'apparel-polo-6-degree', 'bag-backpack-american-tourister', 'label-jar-bottle']) {
       await open(page, `/products/${slug}/design?sample=1`);
       await openPreview(page);
       await expect(viewChoice(page), slug).toHaveCount(0);
@@ -205,15 +205,21 @@ test.describe('desktop: on the product', () => {
     }
   });
 
-  test('3 · rights: umbrella, rainwear and drinkware with their real (unconfirmed) photos never offer them', async ({ page }) => {
+  test('3 · rights: umbrella, rainwear and drinkware show their real (owner-cleared) photos in the Preview; unconfirmed ones are never requested', async ({ page }) => {
     for (const slug of ['umbrella-golf', 'cap-rain-waterproof', 'drinkware-bottle-aluminium']) {
       await open(page, `/products/${slug}/design?sample=1`);
       await openPreview(page);
-      await expect(viewChoice(page), slug).toHaveCount(0);
+      await onTheProduct(page);
       await expect(preview(page).getByTestId('preview-product-unavailable'), slug).toHaveCount(0);
       await page.keyboard.press('Escape');
     }
-    expect(mediaRequests.filter((p) => /\/products\/(umbrellas-rainwear|drinkware)-2d\//.test(p))).toEqual([]);
+    mediaRequests = [];
+    await unconfirmedRights(page, 'umbrella-golf');
+    await open(page, `${UMBRELLA}?sample=1`);
+    await openPreview(page);
+    await expect(viewChoice(page)).toHaveCount(0);
+    await expect(preview(page).getByTestId('preview-area')).toHaveAttribute('data-view', 'flat');
+    expect(mediaRequests.filter((p) => /\/products\/umbrellas-rainwear-2d\//.test(p))).toEqual([]);
   });
 
   test('4 · the saved design is unchanged by the product view and holds no photo or placement', async ({ page }) => {

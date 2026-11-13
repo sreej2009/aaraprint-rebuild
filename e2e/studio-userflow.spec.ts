@@ -3,7 +3,7 @@ import type { Page } from '@playwright/test';
 import { readFileSync } from 'node:fs';
 import type KonvaNamespace from 'konva';
 import { expect, settleAnimations, test, confirmEntry } from './fixtures';
-import { clearedStandIn, INDIGO, near, PEN_RGB, PHOTO_RGB, placed } from './product-fixtures';
+import { clearedStandIn, INDIGO, near, PEN_RGB, PHOTO_RGB, placed, unconfirmedRights } from './product-fixtures';
 
 /**
  * The product view as a customer reaches it (corrective fix): from the product page, "Start
@@ -168,9 +168,18 @@ test.describe('desktop: the product view from the product page', () => {
     await flow(page, 'pen-customized-basic', 'pen', { front: PEN_RGB.front, back: PEN_RGB.back }, [1800, 600]);
   });
 
-  test('3 · rights: the real umbrella and pen (photos unconfirmed) stay flat, with no choice, and the Studio requests no product photo', async ({ page }) => {
+  test('3 · rights: the real umbrella and pen (owner-cleared) open on their own photos; with rights unconfirmed they stay flat and nothing is requested', async ({ page }) => {
     for (const slug of ['umbrella-photo-custom', 'pen-customized-basic']) {
       await startDesigning(page, slug);
+      await expect(region(page), slug).toHaveAttribute('data-view', 'product');
+      await expect(canvasChoice(page), slug).toHaveCount(0);
+      await page.waitForFunction(() => Boolean((window.Konva.stages.find((s) => s.container().closest('#studio-canvas'))?.findOne<KonvaNamespace.Image>('.product-mockup')?.image() as HTMLImageElement | undefined)?.width));
+      expect(mediaRequests.some((p) => /\/products\/(umbrellas-rainwear|pens)-2d\//.test(p)), slug).toBe(true);
+    }
+    for (const slug of ['umbrella-photo-custom', 'pen-customized-basic']) {
+      await unconfirmedRights(page, slug);
+      await page.goto(`/products/${slug}/design`);
+      await page.waitForFunction(() => Boolean(window.Konva?.stages.some((st) => st.container().closest('#studio-canvas'))));
       const before = mediaRequests.length;
       await expect(region(page), slug).toHaveAttribute('data-view', 'flat');
       await expect(canvasChoice(page), slug).toHaveCount(0);

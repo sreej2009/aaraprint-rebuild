@@ -43,10 +43,11 @@ describe('the switch', () => {
 });
 
 describe('the swap', () => {
-  it('real profiles are rights-blocked; with stand-ins the same gate allows them, sizes, placements and frames unchanged', () => {
+  it('real photo-frame profiles are owner-cleared (M4-C2); stand-ins pass the same gate, sizes, placements and frames unchanged', () => {
     for (const slug of ['umbrella-photo-custom', 'pen-customized-basic', 'gift-mug-custom-black']) {
       const real = readProfile(slug);
-      expect(productViewFor(real, 'front', library)).toEqual({ ok: false, reason: 'rights' });
+      const own = productViewFor(real, 'front', library);
+      expect(own.ok && own.view.url).toBe(`/media/${real.sides[0]!.mockup!.ref}`);
       const stand = withProductViewFixtures(real);
       expect(stand.devFixtures).toBe(true);
       const result = productViewFor(stand, 'front', library);
@@ -59,7 +60,8 @@ describe('the swap', () => {
         expect([side.mockup!.width, side.mockup!.height, side.placement, side.photoFrame]).toEqual([original.mockup!.width, original.mockup!.height, original.placement, original.photoFrame]);
       }
       // The real profile object is untouched.
-      expect(real.sides[0]!.mockup!.rights).toBe('unconfirmed');
+      expect(real.sides[0]!.mockup!.ref.startsWith('products/')).toBe(true);
+      expect(real.sides[0]!.mockup!.rights).toBe('cleared');
     }
   });
 

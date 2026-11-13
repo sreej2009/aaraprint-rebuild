@@ -82,10 +82,10 @@ describe('the colour data', () => {
     expect(golf.productColours!.defaultId).toBe(golf.productColours!.options[0]!.id);
   });
 
-  it('records the mask’s rights (unconfirmed) on all 35 profiles, and each side’s photo colour where there are colours', () => {
+  it('records the mask’s rights (cleared by the owner, M4-C2) on all 35 profiles, and each side’s photo colour where there are colours', () => {
     const family = all.filter((p) => p.family === 'umbrella' || p.family === 'rainwear');
     expect(family).toHaveLength(35);
-    for (const side of family.flatMap((p) => p.sides)) expect(side.mockup!.mask!.rights).toBe('unconfirmed');
+    for (const side of family.flatMap((p) => p.sides)) expect(side.mockup!.mask!.rights).toBe('cleared');
     for (const p of family.filter((p) => p.productColours)) expect(p.sides.map((s) => s.photoColour)).toEqual(register.umbrellaRainwearColours.photoColours[p.slug]);
     expect(family.filter((p) => !p.productColours).flatMap((p) => p.sides.filter((s) => 'photoColour' in s))).toEqual([]);
   });
@@ -127,10 +127,13 @@ describe('the colour data', () => {
 });
 
 describe('the mask gate', () => {
-  it('the real masks are never used: unconfirmed rights', () => {
+  it('a mask whose rights aren’t cleared is never used; the real (owner-cleared) masks are', () => {
     const view = viewOf(stand('umbrella-golf', { maskRights: 'unconfirmed' }));
     expect(view.mask).toBeNull();
-    expect(viewOf({ ...readProfile('umbrella-golf'), sides: readProfile('umbrella-golf').sides.map((s) => ({ ...s, mockup: { ...s.mockup!, rights: 'cleared' as const } })) }).mask).toBeNull();
+    const golf = readProfile('umbrella-golf');
+    const unconfirmedMask = { ...golf, sides: golf.sides.map((s) => ({ ...s, mockup: { ...s.mockup!, mask: { ...s.mockup!.mask!, rights: 'unconfirmed' as const } } })) };
+    expect(viewOf(unconfirmedMask).mask).toBeNull();
+    expect(viewOf(golf).mask).toEqual({ url: '/media/products/umbrellas-rainwear-2d/umbrella-golf-front-mask.png' });
   });
 
   it('a cleared mask is used, front and back, each its own', () => {

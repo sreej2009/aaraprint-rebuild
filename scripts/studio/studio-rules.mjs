@@ -140,9 +140,26 @@ export const RIGHTS_NOTES = {
   cleared: 'Rights confirmed.',
 };
 
+const OWNER_CONFIRMATION = 'The business owner confirmed on 13 Nov 2026 that they hold full rights to these recovered Aaraprint product assets and authorised their use in development and production (Phase 4 M4-C2).';
+
 export const ASSET_RIGHTS = {
   mockup: { status: 'unconfirmed', source: 'Product mockups from the original site; several show brand-name products (Asset Inventory §9).' },
   mask: { status: 'unconfirmed', source: 'Fabric masks next to the umbrella and rainwear mockups, from the original site (Asset Inventory §9).' },
+  // Photo-frame families (umbrella, rainwear, drinkware, pen, mug): cleared by the owner.
+  'products/umbrellas-rainwear-2d/': { status: 'cleared', source: `Umbrella and rainwear product photos and their fabric masks. ${OWNER_CONFIRMATION}` },
+  'products/drinkware-2d/': { status: 'cleared', source: `Drinkware product photos. ${OWNER_CONFIRMATION}` },
+  'products/pens-2d/': { status: 'cleared', source: `Pen product photos. ${OWNER_CONFIRMATION}` },
+  'products/mugs-2d/': { status: 'cleared', source: `Mug product photos. ${OWNER_CONFIRMATION}` },
   'polo-shirt.glb': { status: 'attribution-required', source: '"POLO SHIRT" by arvintriyoga, CC BY 4.0.', attribution: '"POLO SHIRT" by arvintriyoga, licensed under CC BY 4.0' },
   'shirt_baked.glb': { status: 'unconfirmed', source: 'Homepage 3D shirt from the original site; licence unknown (Asset Inventory §4).' },
 };
+
+/**
+ * The rights of a product mockup or its mask: the folder's own record where the owner has confirmed
+ * it (the photo-frame folders), otherwise the default for its kind (unconfirmed). Nothing else is
+ * cleared by this: other families' mockups keep their status.
+ */
+export function rightsForMockup(ref, kind = 'mockup') {
+  const folder = Object.keys(ASSET_RIGHTS).find((key) => key.endsWith('/') && ref.startsWith(key));
+  return (folder ? ASSET_RIGHTS[folder] : ASSET_RIGHTS[kind]).status;
+}

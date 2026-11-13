@@ -160,6 +160,7 @@ A full machine-readable list of the 122 + 50 missing URLs was produced during in
 4. **Deduplicate** `supabase-media/product-media` (identical to `product-media`).
 5. **Do not reuse** the original UI fonts, colours or decorative assets (Blueprint requires a new identity).
 6. **Rights check before launch:** brand-name products (Adidas, Puma, Levi's, U.S. Polo Assn., Arrow, Woodland, Marks & Spencer, American Tourister, Targus, Cello…) appear in product names/photos; Unsplash images need attribution or replacement; polo GLB requires CC BY 4.0 credit; `shirt_baked.glb` licence unknown; origin/licence of AI-looking mockups unknown.
+   - **13 Nov 2026 (Phase 4 M4-C2):** the business owner confirmed full rights to the recovered photo-frame assets and authorised their use in development and production: `umbrellas-rainwear-2d/` (photos and fabric masks), `drinkware-2d/`, `pens-2d/` and `mugs-2d/`. These are recorded as **cleared** in `scripts/studio/studio-rules.mjs` (`ASSET_RIGHTS`, per folder). All other mockups (clothing, caps, bags, labels, packaging, signs, posters, gifts, polo) remain **unconfirmed** and blocked.
 
 ---
 

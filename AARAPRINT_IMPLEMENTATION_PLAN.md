@@ -2583,6 +2583,7 @@ Its §19 gives the recommended order. Phases and milestones above are history an
 | M3 "Design it" entry workflow | Done |
 | M4 Product-first Studio workspace | Done |
 | M4-C Photo-frame Studio workflow (correction) | Done |
+| M4-C2 Photo-frame product rendering (correction) | Done |
 | M5… Review/Approve | Not started (audit §18) |
 
 ### M1 — Schema v3 and product family registry
@@ -3000,3 +3001,55 @@ The desktop skip-link tab-order test pressed Tab right after `goto`. The Studio 
 - Browser specs updated to the corrected requirement: `studio-workspace`, `studio-colour`, `studio-penmug`, `studio-product`, `studio-userflow`, `studio-workspaces` (no switch; proofs compared with the same design shown flat), and `studio.spec` (skip-link wait).
 
 **Results:** lint and typecheck clean; 897 unit and component tests passed (79 files); production build passes (Studio route 306.9 KB gzipped, +0.3 KB; product page unchanged at 232.0 KB). Full browser suite: 419 passed, 0 failed, 426 skipped (each for a different device layout, or a spec that sets its own widths). Run separately: `studio.spec.ts` + `entry.spec.ts` on every device 46 passed; the skip-link test 10 of 10 on desktop and tablet; `studio-photoframe.spec.ts` 6 passed.
+
+### M4-C2 — Photo-frame product rendering (correction)
+
+**Reported:** Custom Photo Umbrellas opened on the flat white print area with "The product photo isn't available here: you're designing the flat print area." Canopy Colour said Navy, but nothing on screen changed.
+
+#### Root cause
+
+Nothing was missing or mis-mapped. The profile for `umbrella-photo-custom` already held:
+- the recovered photos (`products/umbrellas-rainwear-2d/umbrella-photo-custom-{front,back}.webp`, 1122 × 1402), served from `../recovered` by the media server;
+- their fabric masks (`…-mask.png`);
+- the original's placements (front `562, 489, 279 × 372`; back `561, 381, 242 × 323`);
+- the photo colour (White);
+- the 4-colour palette (Black, Navy, Red, Green).
+
+`productViewFor()` returned `{ ok: false, reason: 'rights' }` because every product mockup and mask was recorded as `rights: 'unconfirmed'` (`ASSET_RIGHTS.mockup` / `.mask` in `scripts/studio/studio-rules.mjs`, Phase 3 rule D5). The rights gate is deliberate, so the canvas fell back to the flat print area with the note. M4-C's tests passed because they served cleared stand-ins, never the real assets.
+
+#### Fix
+
+- **Rights confirmed by the owner (13 Nov 2026).** The business owner confirmed they hold full rights to the recovered umbrella, rainwear, drinkware, pen and mug photos and the umbrella and rainwear fabric masks, and authorised their use in development and production.
+- **Recorded per folder.** `ASSET_RIGHTS` now records that confirmation for `products/umbrellas-rainwear-2d/`, `products/drinkware-2d/`, `products/pens-2d/` and `products/mugs-2d/`, with the source note. `rightsForMockup(ref, kind)` gives a mockup or mask its folder's status, else the unconfirmed default.
+- **Regenerated.** `npm run studio:profiles` changed exactly the 136 photo-frame profiles: 35 umbrella and rainwear (photos and masks cleared), 48 drinkware, 48 pens and 5 mugs. Clothing, caps, bags, labels, packaging, signs, posters and polo stay unconfirmed and blocked.
+- **The gate is unchanged.** It still blocks anything not cleared, and is still tested with explicitly unconfirmed copies (unit) and `unconfirmedRights()` (e2e). Development fixtures are unchanged.
+- **No other changes.** No code path, asset file or geometry changed; no files were added.
+
+#### Result (checked in the browser on the production build)
+
+- **Custom Photo Umbrellas** (product page Navy → Start designing):
+  - opens on its own photo, tinted Navy, print area on the canopy; no fallback note, no switch;
+  - Black, Red, Green and Navy each recolour the canopy through its mask;
+  - added text sits in the print area;
+  - reload, browser Back to the product page (still Navy) and Start designing again restore the same photo, colour and text;
+  - 1440, 1280, 820, 390 and 360 px: the photo is visible and nothing scrolls sideways.
+- **Rainwear:** real photos with masks; the ordered colour recolours them as for umbrellas.
+- **Drinkware, pens, mugs:** their real photos show with the artwork placed. Their colours (part colours in the Studio, and the catalogue colour on the product page) can't be drawn: no part masks exist in `../recovered` or `../recovered-additional` (`drinkware-2d` 220 files, `pens-2d` 10, `mugs-2d` 4, none of them masks). The original recoloured pen and mug parts with shapes drawn in its source (pen part colours per family and mug parts in `product-view-placements.json` are recorded for reference only), and drinkware body/cap colours have no recovered data. The canvas says when a part colour is chosen; nothing is faked. Pen photos are the family's photo (e.g. a white classic pen) whatever barrel colour is ordered.
+- **Products with no recovered photo** (e.g. `pen-recycled-paper`, `mug-classic-photo`) keep the flat fallback with its note.
+
+#### Tests
+
+- **Unit, regression for the report:** the real `umbrella-photo-custom` profile resolves to its own photo and mask, front and back. In the full Studio it opens on its photo with no fallback note; Navy, Red and Green tint it through its own mask; the default Black is tinted from the start (photographed in White).
+- **Unit, updated from "every real photo is blocked" to the confirmed rights:**
+  - every photo-frame photo passes the rights gate;
+  - profile data: cleared exactly for the four photo-frame folders, unconfirmed elsewhere;
+  - real masks are used; unconfirmed copies are still blocked (Preview, canvas, pens/mugs, colour, workspace).
+- **E2E `studio-photoframe.spec.ts`:** the real Custom Photo Umbrella from the product page:
+  - the real 1122-px photo, no fallback;
+  - each colour changes the photo's pixels;
+  - text added; reload and Back → reopen keep photo, colour and text.
+- **E2E rights checks** (`studio-colour`, `studio-penmug`, `studio-product`, `studio-userflow`, `studio-workspace`) now assert the real photos show and that an unconfirmed copy stays flat with nothing requested. `studio-workspaces` expects photo-frame families on the product. The stand-in fixture's `mask: 'real'` keeps meaning "a mask whose rights aren't cleared".
+
+- Timing fix found on the way: `studio-flows` I (restore a version, then Ctrl Z) focused the canvas before the closing history dialog handed focus back to the save status, so Ctrl Z sometimes landed there. The test now waits for the dialog to close (10 of 10 when repeated).
+
+**Results:** lint and typecheck clean; 898 unit and component tests passed (79 files); production build passes. Full browser suite: 420 passed, 0 failed, 428 skipped (each for a different device layout, or a spec that sets its own widths). Run separately: `studio.spec`, `entry.spec`, `studio-flows` and `studio-photoframe` 69 passed. Checked by eye in the browser: Custom Photo Umbrellas at 1440, 1280, 820, 390 and 360 px; Black, Navy, Red and Green; text added; reload; Back and reopen.

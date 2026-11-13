@@ -841,6 +841,22 @@
         "status": "unconfirmed",
         "source": "Fabric masks next to the umbrella and rainwear mockups, from the original site (Asset Inventory §9)."
       },
+      "products/umbrellas-rainwear-2d/": {
+        "status": "cleared",
+        "source": "Umbrella and rainwear product photos and their fabric masks. The business owner confirmed on 13 Nov 2026 that they hold full rights to these recovered Aaraprint product assets and authorised their use in development and production (Phase 4 M4-C2)."
+      },
+      "products/drinkware-2d/": {
+        "status": "cleared",
+        "source": "Drinkware product photos. The business owner confirmed on 13 Nov 2026 that they hold full rights to these recovered Aaraprint product assets and authorised their use in development and production (Phase 4 M4-C2)."
+      },
+      "products/pens-2d/": {
+        "status": "cleared",
+        "source": "Pen product photos. The business owner confirmed on 13 Nov 2026 that they hold full rights to these recovered Aaraprint product assets and authorised their use in development and production (Phase 4 M4-C2)."
+      },
+      "products/mugs-2d/": {
+        "status": "cleared",
+        "source": "Mug product photos. The business owner confirmed on 13 Nov 2026 that they hold full rights to these recovered Aaraprint product assets and authorised their use in development and production (Phase 4 M4-C2)."
+      },
       "polo-shirt.glb": {
         "status": "attribution-required",
         "source": "\"POLO SHIRT\" by arvintriyoga, CC BY 4.0.",
@@ -852,8 +868,9 @@
       }
     },
     "byStatus": {
-      "unconfirmed": 580,
-      "attribution-required": 1
+      "unconfirmed": 391,
+      "attribution-required": 1,
+      "cleared": 189
     },
     "files": {
       "models/polo-shirt.glb": {
@@ -1381,387 +1398,387 @@
         "products": 1
       },
       "products/drinkware-2d/bottle-flip-lid-sports-back.png": {
-        "status": "unconfirmed",
+        "status": "cleared",
         "products": 1
       },
       "products/drinkware-2d/bottle-flip-lid-sports-front.png": {
-        "status": "unconfirmed",
+        "status": "cleared",
         "products": 1
       },
       "products/drinkware-2d/bottle-gym-shaker-back.png": {
-        "status": "unconfirmed",
+        "status": "cleared",
         "products": 1
       },
       "products/drinkware-2d/bottle-gym-shaker-front.png": {
-        "status": "unconfirmed",
+        "status": "cleared",
         "products": 1
       },
       "products/drinkware-2d/bottle-sipper-back.png": {
-        "status": "unconfirmed",
+        "status": "cleared",
         "products": 1
       },
       "products/drinkware-2d/bottle-sipper-front.png": {
-        "status": "unconfirmed",
+        "status": "cleared",
         "products": 1
       },
       "products/drinkware-2d/bottle-steel-classic-back.png": {
-        "status": "unconfirmed",
+        "status": "cleared",
         "products": 1
       },
       "products/drinkware-2d/bottle-steel-classic-front.png": {
-        "status": "unconfirmed",
+        "status": "cleared",
         "products": 1
       },
       "products/drinkware-2d/bottle-temperature-display-back.png": {
-        "status": "unconfirmed",
+        "status": "cleared",
         "products": 1
       },
       "products/drinkware-2d/bottle-temperature-display-front.png": {
-        "status": "unconfirmed",
+        "status": "cleared",
         "products": 1
       },
       "products/drinkware-2d/bottle-vacuum-insulated-back.png": {
-        "status": "unconfirmed",
+        "status": "cleared",
         "products": 1
       },
       "products/drinkware-2d/bottle-vacuum-insulated-front.png": {
-        "status": "unconfirmed",
+        "status": "cleared",
         "products": 1
       },
       "products/drinkware-2d/drinkware-bottle-aluminium-screw-back.png": {
-        "status": "unconfirmed",
+        "status": "cleared",
         "products": 1
       },
       "products/drinkware-2d/drinkware-bottle-aluminium-screw-front.png": {
-        "status": "unconfirmed",
+        "status": "cleared",
         "products": 1
       },
       "products/drinkware-2d/drinkware-bottle-cello-duro-flip-screw-back.png": {
-        "status": "unconfirmed",
+        "status": "cleared",
         "products": 1
       },
       "products/drinkware-2d/drinkware-bottle-cello-duro-flip-screw-front.png": {
-        "status": "unconfirmed",
+        "status": "cleared",
         "products": 1
       },
       "products/drinkware-2d/drinkware-bottle-cello-duro-kent-screw-back.png": {
-        "status": "unconfirmed",
+        "status": "cleared",
         "products": 1
       },
       "products/drinkware-2d/drinkware-bottle-cello-duro-kent-screw-front.png": {
-        "status": "unconfirmed",
+        "status": "cleared",
         "products": 1
       },
       "products/drinkware-2d/drinkware-bottle-cello-swift-screw-back.png": {
-        "status": "unconfirmed",
+        "status": "cleared",
         "products": 1
       },
       "products/drinkware-2d/drinkware-bottle-cello-swift-screw-front.png": {
-        "status": "unconfirmed",
+        "status": "cleared",
         "products": 1
       },
       "products/drinkware-2d/drinkware-bottle-cola-printed-600ml-screw-back.png": {
-        "status": "unconfirmed",
+        "status": "cleared",
         "products": 1
       },
       "products/drinkware-2d/drinkware-bottle-cola-printed-600ml-screw-front.png": {
-        "status": "unconfirmed",
+        "status": "cleared",
         "products": 1
       },
       "products/drinkware-2d/drinkware-bottle-gym-screw-back.png": {
-        "status": "unconfirmed",
+        "status": "cleared",
         "products": 1
       },
       "products/drinkware-2d/drinkware-bottle-gym-screw-front.png": {
-        "status": "unconfirmed",
+        "status": "cleared",
         "products": 1
       },
       "products/drinkware-2d/drinkware-bottle-inox-screw-back.png": {
-        "status": "unconfirmed",
+        "status": "cleared",
         "products": 1
       },
       "products/drinkware-2d/drinkware-bottle-inox-screw-front.png": {
-        "status": "unconfirmed",
+        "status": "cleared",
         "products": 1
       },
       "products/drinkware-2d/drinkware-bottle-matt-vacuum-screw-back.png": {
-        "status": "unconfirmed",
+        "status": "cleared",
         "products": 1
       },
       "products/drinkware-2d/drinkware-bottle-matt-vacuum-screw-front.png": {
-        "status": "unconfirmed",
+        "status": "cleared",
         "products": 1
       },
       "products/drinkware-2d/drinkware-bottle-sipper-custom-screw-back.png": {
-        "status": "unconfirmed",
+        "status": "cleared",
         "products": 1
       },
       "products/drinkware-2d/drinkware-bottle-sipper-custom-screw-front.png": {
-        "status": "unconfirmed",
+        "status": "cleared",
         "products": 1
       },
       "products/drinkware-2d/drinkware-bottle-sipper-steel-screw-back.png": {
-        "status": "unconfirmed",
+        "status": "cleared",
         "products": 1
       },
       "products/drinkware-2d/drinkware-bottle-sipper-steel-screw-front.png": {
-        "status": "unconfirmed",
+        "status": "cleared",
         "products": 1
       },
       "products/drinkware-2d/drinkware-bottle-temperature-display-screw-back.png": {
-        "status": "unconfirmed",
+        "status": "cleared",
         "products": 1
       },
       "products/drinkware-2d/drinkware-bottle-temperature-display-screw-front.png": {
-        "status": "unconfirmed",
+        "status": "cleared",
         "products": 1
       },
       "products/drinkware-2d/drinkware-bottle-thermal-suction-screw-back.png": {
-        "status": "unconfirmed",
+        "status": "cleared",
         "products": 1
       },
       "products/drinkware-2d/drinkware-bottle-thermal-suction-screw-front.png": {
-        "status": "unconfirmed",
+        "status": "cleared",
         "products": 1
       },
       "products/drinkware-2d/drinkware-bottle-vacuum-screw-back.png": {
-        "status": "unconfirmed",
+        "status": "cleared",
         "products": 1
       },
       "products/drinkware-2d/drinkware-bottle-vacuum-screw-front.png": {
-        "status": "unconfirmed",
+        "status": "cleared",
         "products": 1
       },
       "products/drinkware-2d/drinkware-bottle-water-custom-screw-back.png": {
-        "status": "unconfirmed",
+        "status": "cleared",
         "products": 1
       },
       "products/drinkware-2d/drinkware-bottle-water-custom-screw-front.png": {
-        "status": "unconfirmed",
+        "status": "cleared",
         "products": 1
       },
       "products/drinkware-2d/drinkware-bottle-wireless-speaker-screw-back.png": {
-        "status": "unconfirmed",
+        "status": "cleared",
         "products": 1
       },
       "products/drinkware-2d/drinkware-bottle-wireless-speaker-screw-front.png": {
-        "status": "unconfirmed",
+        "status": "cleared",
         "products": 1
       },
       "products/drinkware-2d/drinkware-cup-vacuum-insulation-screw-back.png": {
-        "status": "unconfirmed",
+        "status": "cleared",
         "products": 1
       },
       "products/drinkware-2d/drinkware-cup-vacuum-insulation-screw-front.png": {
-        "status": "unconfirmed",
+        "status": "cleared",
         "products": 1
       },
       "products/drinkware-2d/drinkware-flask-cello-flip-screw-back.png": {
-        "status": "unconfirmed",
+        "status": "cleared",
         "products": 1
       },
       "products/drinkware-2d/drinkware-flask-cello-flip-screw-front.png": {
-        "status": "unconfirmed",
+        "status": "cleared",
         "products": 1
       },
       "products/drinkware-2d/drinkware-flask-coffee-vacuum-screw-back.png": {
-        "status": "unconfirmed",
+        "status": "cleared",
         "products": 1
       },
       "products/drinkware-2d/drinkware-flask-coffee-vacuum-screw-front.png": {
-        "status": "unconfirmed",
+        "status": "cleared",
         "products": 1
       },
       "products/drinkware-2d/drinkware-flask-hip-7oz-black-back.png": {
-        "status": "unconfirmed",
+        "status": "cleared",
         "products": 1
       },
       "products/drinkware-2d/drinkware-flask-hip-7oz-black-front.png": {
-        "status": "unconfirmed",
+        "status": "cleared",
         "products": 1
       },
       "products/drinkware-2d/drinkware-glass-champagne-back.png": {
-        "status": "unconfirmed",
+        "status": "cleared",
         "products": 1
       },
       "products/drinkware-2d/drinkware-glass-champagne-front.png": {
-        "status": "unconfirmed",
+        "status": "cleared",
         "products": 1
       },
       "products/drinkware-2d/drinkware-glass-wine-back.png": {
-        "status": "unconfirmed",
+        "status": "cleared",
         "products": 1
       },
       "products/drinkware-2d/drinkware-glass-wine-front.png": {
-        "status": "unconfirmed",
+        "status": "cleared",
         "products": 1
       },
       "products/drinkware-2d/drinkware-mug-beer-customised-back.png": {
-        "status": "unconfirmed",
+        "status": "cleared",
         "products": 1
       },
       "products/drinkware-2d/drinkware-mug-beer-customised-front.png": {
-        "status": "unconfirmed",
+        "status": "cleared",
         "products": 1
       },
       "products/drinkware-2d/drinkware-mug-beer-frosted-back.png": {
-        "status": "unconfirmed",
+        "status": "cleared",
         "products": 1
       },
       "products/drinkware-2d/drinkware-mug-beer-frosted-front.png": {
-        "status": "unconfirmed",
+        "status": "cleared",
         "products": 1
       },
       "products/drinkware-2d/drinkware-mug-coffee-vacuum-back.png": {
-        "status": "unconfirmed",
+        "status": "cleared",
         "products": 1
       },
       "products/drinkware-2d/drinkware-mug-coffee-vacuum-front.png": {
-        "status": "unconfirmed",
+        "status": "cleared",
         "products": 1
       },
       "products/drinkware-2d/drinkware-mug-temperature-display-back.png": {
-        "status": "unconfirmed",
+        "status": "cleared",
         "products": 1
       },
       "products/drinkware-2d/drinkware-mug-temperature-display-front.png": {
-        "status": "unconfirmed",
+        "status": "cleared",
         "products": 1
       },
       "products/drinkware-2d/drinkware-pexpo-austin-steel-screw-back.png": {
-        "status": "unconfirmed",
+        "status": "cleared",
         "products": 1
       },
       "products/drinkware-2d/drinkware-pexpo-austin-steel-screw-front.png": {
-        "status": "unconfirmed",
+        "status": "cleared",
         "products": 1
       },
       "products/drinkware-2d/drinkware-pexpo-bravo-vacuum-screw-back.png": {
-        "status": "unconfirmed",
+        "status": "cleared",
         "products": 1
       },
       "products/drinkware-2d/drinkware-pexpo-bravo-vacuum-screw-front.png": {
-        "status": "unconfirmed",
+        "status": "cleared",
         "products": 1
       },
       "products/drinkware-2d/drinkware-pexpo-cameo-compact-screw-back.png": {
-        "status": "unconfirmed",
+        "status": "cleared",
         "products": 1
       },
       "products/drinkware-2d/drinkware-pexpo-cameo-compact-screw-front.png": {
-        "status": "unconfirmed",
+        "status": "cleared",
         "products": 1
       },
       "products/drinkware-2d/drinkware-pexpo-cocoa-tumbler-screw-back.png": {
-        "status": "unconfirmed",
+        "status": "cleared",
         "products": 1
       },
       "products/drinkware-2d/drinkware-pexpo-cocoa-tumbler-screw-front.png": {
-        "status": "unconfirmed",
+        "status": "cleared",
         "products": 1
       },
       "products/drinkware-2d/drinkware-pexpo-flamingo-vacuum-screw-back.png": {
-        "status": "unconfirmed",
+        "status": "cleared",
         "products": 1
       },
       "products/drinkware-2d/drinkware-pexpo-flamingo-vacuum-screw-front.png": {
-        "status": "unconfirmed",
+        "status": "cleared",
         "products": 1
       },
       "products/drinkware-2d/drinkware-pexpo-morocco-thermo-screw-back.png": {
-        "status": "unconfirmed",
+        "status": "cleared",
         "products": 1
       },
       "products/drinkware-2d/drinkware-pexpo-morocco-thermo-screw-front.png": {
-        "status": "unconfirmed",
+        "status": "cleared",
         "products": 1
       },
       "products/drinkware-2d/drinkware-pexpo-orio-thermo-screw-back.png": {
-        "status": "unconfirmed",
+        "status": "cleared",
         "products": 1
       },
       "products/drinkware-2d/drinkware-pexpo-orio-thermo-screw-front.png": {
-        "status": "unconfirmed",
+        "status": "cleared",
         "products": 1
       },
       "products/drinkware-2d/drinkware-pexpo-stanzy-tumbler-screw-back.png": {
-        "status": "unconfirmed",
+        "status": "cleared",
         "products": 1
       },
       "products/drinkware-2d/drinkware-pexpo-stanzy-tumbler-screw-front.png": {
-        "status": "unconfirmed",
+        "status": "cleared",
         "products": 1
       },
       "products/drinkware-2d/drinkware-tumbler-customised-screw-back.png": {
-        "status": "unconfirmed",
+        "status": "cleared",
         "products": 1
       },
       "products/drinkware-2d/drinkware-tumbler-customised-screw-front.png": {
-        "status": "unconfirmed",
+        "status": "cleared",
         "products": 1
       },
       "products/drinkware-2d/drinkware-tumbler-skinny-600ml-screw-back.png": {
-        "status": "unconfirmed",
+        "status": "cleared",
         "products": 1
       },
       "products/drinkware-2d/drinkware-tumbler-skinny-600ml-screw-front.png": {
-        "status": "unconfirmed",
+        "status": "cleared",
         "products": 1
       },
       "products/drinkware-2d/drinkware-tumbler-travel-screw-back.png": {
-        "status": "unconfirmed",
+        "status": "cleared",
         "products": 1
       },
       "products/drinkware-2d/drinkware-tumbler-travel-screw-front.png": {
-        "status": "unconfirmed",
+        "status": "cleared",
         "products": 1
       },
       "products/drinkware-2d/drinkware-tumbler-vacuum-insulated-screw-back.png": {
-        "status": "unconfirmed",
+        "status": "cleared",
         "products": 1
       },
       "products/drinkware-2d/drinkware-tumbler-vacuum-insulated-screw-front.png": {
-        "status": "unconfirmed",
+        "status": "cleared",
         "products": 1
       },
       "products/drinkware-2d/drinkware-tumbler-wine-screw-back.png": {
-        "status": "unconfirmed",
+        "status": "cleared",
         "products": 1
       },
       "products/drinkware-2d/drinkware-tumbler-wine-screw-front.png": {
-        "status": "unconfirmed",
+        "status": "cleared",
         "products": 1
       },
       "products/drinkware-2d/mug-frosted-beer-back.png": {
-        "status": "unconfirmed",
+        "status": "cleared",
         "products": 1
       },
       "products/drinkware-2d/mug-frosted-beer-front.png": {
-        "status": "unconfirmed",
+        "status": "cleared",
         "products": 1
       },
       "products/drinkware-2d/tumbler-insulated-coffee-back.png": {
-        "status": "unconfirmed",
+        "status": "cleared",
         "products": 1
       },
       "products/drinkware-2d/tumbler-insulated-coffee-front.png": {
-        "status": "unconfirmed",
+        "status": "cleared",
         "products": 1
       },
       "products/drinkware-2d/tumbler-skinny-travel-back.png": {
-        "status": "unconfirmed",
+        "status": "cleared",
         "products": 1
       },
       "products/drinkware-2d/tumbler-skinny-travel-front.png": {
-        "status": "unconfirmed",
+        "status": "cleared",
         "products": 1
       },
       "products/drinkware-2d/tumbler-wine-stemless-back.png": {
-        "status": "unconfirmed",
+        "status": "cleared",
         "products": 1
       },
       "products/drinkware-2d/tumbler-wine-stemless-front.png": {
-        "status": "unconfirmed",
+        "status": "cleared",
         "products": 1
       },
       "products/labels-packaging-2d/label-jar-bottle-back.png": {
@@ -2245,95 +2262,95 @@
         "products": 1
       },
       "products/mugs-2d/colour-changing-magic.png": {
-        "status": "unconfirmed",
+        "status": "cleared",
         "products": 2
       },
       "products/mugs-2d/custom-black.png": {
-        "status": "unconfirmed",
+        "status": "cleared",
         "products": 2
       },
       "products/mugs-2d/custom-decorative.png": {
-        "status": "unconfirmed",
+        "status": "cleared",
         "products": 2
       },
       "products/mugs-2d/magic-colour-change.png": {
-        "status": "unconfirmed",
+        "status": "cleared",
         "products": 2
       },
       "products/mugs-2d/personalised.png": {
-        "status": "unconfirmed",
+        "status": "cleared",
         "products": 2
       },
       "products/pens-2d/classic-back.png": {
-        "status": "unconfirmed",
+        "status": "cleared",
         "products": 14
       },
       "products/pens-2d/classic-front.png": {
-        "status": "unconfirmed",
+        "status": "cleared",
         "products": 14
       },
       "products/pens-2d/fountain-back.png": {
-        "status": "unconfirmed",
+        "status": "cleared",
         "products": 2
       },
       "products/pens-2d/fountain-front.png": {
-        "status": "unconfirmed",
+        "status": "cleared",
         "products": 2
       },
       "products/pens-2d/gel-back.png": {
-        "status": "unconfirmed",
+        "status": "cleared",
         "products": 1
       },
       "products/pens-2d/gel-front.png": {
-        "status": "unconfirmed",
+        "status": "cleared",
         "products": 1
       },
       "products/pens-2d/highlighter-back.png": {
-        "status": "unconfirmed",
+        "status": "cleared",
         "products": 1
       },
       "products/pens-2d/highlighter-front.png": {
-        "status": "unconfirmed",
+        "status": "cleared",
         "products": 1
       },
       "products/pens-2d/metal-back.png": {
-        "status": "unconfirmed",
+        "status": "cleared",
         "products": 18
       },
       "products/pens-2d/metal-front.png": {
-        "status": "unconfirmed",
+        "status": "cleared",
         "products": 18
       },
       "products/pens-2d/multicolor-back.png": {
-        "status": "unconfirmed",
+        "status": "cleared",
         "products": 2
       },
       "products/pens-2d/multicolor-front.png": {
-        "status": "unconfirmed",
+        "status": "cleared",
         "products": 2
       },
       "products/pens-2d/roller-back.png": {
-        "status": "unconfirmed",
+        "status": "cleared",
         "products": 8
       },
       "products/pens-2d/roller-front.png": {
-        "status": "unconfirmed",
+        "status": "cleared",
         "products": 8
       },
       "products/pens-2d/stylus-back.png": {
-        "status": "unconfirmed",
+        "status": "cleared",
         "products": 1
       },
       "products/pens-2d/stylus-front.png": {
-        "status": "unconfirmed",
+        "status": "cleared",
         "products": 1
       },
       "products/pens-2d/wheat-back.png": {
-        "status": "unconfirmed",
+        "status": "cleared",
         "products": 1
       },
       "products/pens-2d/wheat-front.png": {
-        "status": "unconfirmed",
+        "status": "cleared",
         "products": 1
       },
       "products/polo/back.png": {
@@ -2897,283 +2914,283 @@
         "products": 1
       },
       "products/umbrellas-rainwear-2d/cap-rain-waterproof-back.webp": {
-        "status": "unconfirmed",
+        "status": "cleared",
         "products": 1
       },
       "products/umbrellas-rainwear-2d/cap-rain-waterproof-front.webp": {
-        "status": "unconfirmed",
+        "status": "cleared",
         "products": 1
       },
       "products/umbrellas-rainwear-2d/jacket-waterproof-rain-back.webp": {
-        "status": "unconfirmed",
+        "status": "cleared",
         "products": 1
       },
       "products/umbrellas-rainwear-2d/jacket-waterproof-rain-front.webp": {
-        "status": "unconfirmed",
+        "status": "cleared",
         "products": 1
       },
       "products/umbrellas-rainwear-2d/raincoat-industrial-safety-back.webp": {
-        "status": "unconfirmed",
+        "status": "cleared",
         "products": 1
       },
       "products/umbrellas-rainwear-2d/raincoat-industrial-safety-front.webp": {
-        "status": "unconfirmed",
+        "status": "cleared",
         "products": 1
       },
       "products/umbrellas-rainwear-2d/raincoat-kids-back.webp": {
-        "status": "unconfirmed",
+        "status": "cleared",
         "products": 1
       },
       "products/umbrellas-rainwear-2d/raincoat-kids-front.webp": {
-        "status": "unconfirmed",
+        "status": "cleared",
         "products": 1
       },
       "products/umbrellas-rainwear-2d/rainsuit-safari-back.webp": {
-        "status": "unconfirmed",
+        "status": "cleared",
         "products": 1
       },
       "products/umbrellas-rainwear-2d/rainsuit-safari-front.webp": {
-        "status": "unconfirmed",
+        "status": "cleared",
         "products": 1
       },
       "products/umbrellas-rainwear-2d/rainwear-bag-cover-waterproof-back.webp": {
-        "status": "unconfirmed",
+        "status": "cleared",
         "products": 1
       },
       "products/umbrellas-rainwear-2d/rainwear-bag-cover-waterproof-front.webp": {
-        "status": "unconfirmed",
+        "status": "cleared",
         "products": 1
       },
       "products/umbrellas-rainwear-2d/rainwear-kiara-kids-raincoat-back.webp": {
-        "status": "unconfirmed",
+        "status": "cleared",
         "products": 1
       },
       "products/umbrellas-rainwear-2d/rainwear-kiara-kids-raincoat-front.webp": {
-        "status": "unconfirmed",
+        "status": "cleared",
         "products": 1
       },
       "products/umbrellas-rainwear-2d/rainwear-kiara-womens-long-raincoat-back.webp": {
-        "status": "unconfirmed",
+        "status": "cleared",
         "products": 1
       },
       "products/umbrellas-rainwear-2d/rainwear-kiara-womens-long-raincoat-front.webp": {
-        "status": "unconfirmed",
+        "status": "cleared",
         "products": 1
       },
       "products/umbrellas-rainwear-2d/rainwear-lbw-safari-suit-back.webp": {
-        "status": "unconfirmed",
+        "status": "cleared",
         "products": 1
       },
       "products/umbrellas-rainwear-2d/rainwear-lbw-safari-suit-front.webp": {
-        "status": "unconfirmed",
+        "status": "cleared",
         "products": 1
       },
       "products/umbrellas-rainwear-2d/rainwear-mirage-safari-suit-back.webp": {
-        "status": "unconfirmed",
+        "status": "cleared",
         "products": 1
       },
       "products/umbrellas-rainwear-2d/rainwear-mirage-safari-suit-front.webp": {
-        "status": "unconfirmed",
+        "status": "cleared",
         "products": 1
       },
       "products/umbrellas-rainwear-2d/rainwear-rain-cap-freedom-back.webp": {
-        "status": "unconfirmed",
+        "status": "cleared",
         "products": 1
       },
       "products/umbrellas-rainwear-2d/rainwear-rain-cap-freedom-front.webp": {
-        "status": "unconfirmed",
+        "status": "cleared",
         "products": 1
       },
       "products/umbrellas-rainwear-2d/rainwear-rain-cap-waterproof-back.webp": {
-        "status": "unconfirmed",
+        "status": "cleared",
         "products": 1
       },
       "products/umbrellas-rainwear-2d/rainwear-rain-cap-waterproof-front.webp": {
-        "status": "unconfirmed",
+        "status": "cleared",
         "products": 1
       },
       "products/umbrellas-rainwear-2d/rainwear-raincare-safari-suit-back.webp": {
-        "status": "unconfirmed",
+        "status": "cleared",
         "products": 1
       },
       "products/umbrellas-rainwear-2d/rainwear-raincare-safari-suit-front.webp": {
-        "status": "unconfirmed",
+        "status": "cleared",
         "products": 1
       },
       "products/umbrellas-rainwear-2d/rainwear-raincoat-industrial-safety-back.webp": {
-        "status": "unconfirmed",
+        "status": "cleared",
         "products": 1
       },
       "products/umbrellas-rainwear-2d/rainwear-raincoat-industrial-safety-front.webp": {
-        "status": "unconfirmed",
+        "status": "cleared",
         "products": 1
       },
       "products/umbrellas-rainwear-2d/rainwear-raincoat-poncho-back.webp": {
-        "status": "unconfirmed",
+        "status": "cleared",
         "products": 1
       },
       "products/umbrellas-rainwear-2d/rainwear-raincoat-poncho-front.webp": {
-        "status": "unconfirmed",
+        "status": "cleared",
         "products": 1
       },
       "products/umbrellas-rainwear-2d/rainwear-rainsuit-standard-back.webp": {
-        "status": "unconfirmed",
+        "status": "cleared",
         "products": 1
       },
       "products/umbrellas-rainwear-2d/rainwear-rainsuit-standard-front.webp": {
-        "status": "unconfirmed",
+        "status": "cleared",
         "products": 1
       },
       "products/umbrellas-rainwear-2d/rainwear-skylark-safari-suit-back.webp": {
-        "status": "unconfirmed",
+        "status": "cleared",
         "products": 1
       },
       "products/umbrellas-rainwear-2d/rainwear-skylark-safari-suit-front.webp": {
-        "status": "unconfirmed",
+        "status": "cleared",
         "products": 1
       },
       "products/umbrellas-rainwear-2d/rainwear-waterproof-jacket-foldable-back.webp": {
-        "status": "unconfirmed",
+        "status": "cleared",
         "products": 1
       },
       "products/umbrellas-rainwear-2d/rainwear-waterproof-jacket-foldable-front.webp": {
-        "status": "unconfirmed",
+        "status": "cleared",
         "products": 1
       },
       "products/umbrellas-rainwear-2d/rainwear-waterproof-jacket-scott-back.webp": {
-        "status": "unconfirmed",
+        "status": "cleared",
         "products": 1
       },
       "products/umbrellas-rainwear-2d/rainwear-waterproof-jacket-scott-front.webp": {
-        "status": "unconfirmed",
+        "status": "cleared",
         "products": 1
       },
       "products/umbrellas-rainwear-2d/rainwear-waterproof-jacket-standard-back.webp": {
-        "status": "unconfirmed",
+        "status": "cleared",
         "products": 1
       },
       "products/umbrellas-rainwear-2d/rainwear-waterproof-jacket-standard-front.webp": {
-        "status": "unconfirmed",
+        "status": "cleared",
         "products": 1
       },
       "products/umbrellas-rainwear-2d/umbrella-golf-back.webp": {
-        "status": "unconfirmed",
+        "status": "cleared",
         "products": 1
       },
       "products/umbrellas-rainwear-2d/umbrella-golf-bulk-back.webp": {
-        "status": "unconfirmed",
+        "status": "cleared",
         "products": 1
       },
       "products/umbrellas-rainwear-2d/umbrella-golf-bulk-front.webp": {
-        "status": "unconfirmed",
+        "status": "cleared",
         "products": 1
       },
       "products/umbrellas-rainwear-2d/umbrella-golf-classic-back.webp": {
-        "status": "unconfirmed",
+        "status": "cleared",
         "products": 1
       },
       "products/umbrellas-rainwear-2d/umbrella-golf-classic-front.webp": {
-        "status": "unconfirmed",
+        "status": "cleared",
         "products": 1
       },
       "products/umbrellas-rainwear-2d/umbrella-golf-front.webp": {
-        "status": "unconfirmed",
+        "status": "cleared",
         "products": 1
       },
       "products/umbrellas-rainwear-2d/umbrella-golf-promotional-basic-back.webp": {
-        "status": "unconfirmed",
+        "status": "cleared",
         "products": 1
       },
       "products/umbrellas-rainwear-2d/umbrella-golf-promotional-basic-front.webp": {
-        "status": "unconfirmed",
+        "status": "cleared",
         "products": 1
       },
       "products/umbrellas-rainwear-2d/umbrella-photo-custom-back.webp": {
-        "status": "unconfirmed",
+        "status": "cleared",
         "products": 1
       },
       "products/umbrellas-rainwear-2d/umbrella-photo-custom-front.webp": {
-        "status": "unconfirmed",
+        "status": "cleared",
         "products": 1
       },
       "products/umbrellas-rainwear-2d/umbrella-photo-print-back.webp": {
-        "status": "unconfirmed",
+        "status": "cleared",
         "products": 1
       },
       "products/umbrellas-rainwear-2d/umbrella-photo-print-front.webp": {
-        "status": "unconfirmed",
+        "status": "cleared",
         "products": 1
       },
       "products/umbrellas-rainwear-2d/umbrella-promotional-back.webp": {
-        "status": "unconfirmed",
+        "status": "cleared",
         "products": 1
       },
       "products/umbrellas-rainwear-2d/umbrella-promotional-front.webp": {
-        "status": "unconfirmed",
+        "status": "cleared",
         "products": 1
       },
       "products/umbrellas-rainwear-2d/umbrella-single-fold-back.webp": {
-        "status": "unconfirmed",
+        "status": "cleared",
         "products": 1
       },
       "products/umbrellas-rainwear-2d/umbrella-single-fold-bulk-back.webp": {
-        "status": "unconfirmed",
+        "status": "cleared",
         "products": 1
       },
       "products/umbrellas-rainwear-2d/umbrella-single-fold-bulk-front.webp": {
-        "status": "unconfirmed",
+        "status": "cleared",
         "products": 1
       },
       "products/umbrellas-rainwear-2d/umbrella-single-fold-front.webp": {
-        "status": "unconfirmed",
+        "status": "cleared",
         "products": 1
       },
       "products/umbrellas-rainwear-2d/umbrella-three-fold-back.webp": {
-        "status": "unconfirmed",
+        "status": "cleared",
         "products": 1
       },
       "products/umbrellas-rainwear-2d/umbrella-three-fold-bulk-back.webp": {
-        "status": "unconfirmed",
+        "status": "cleared",
         "products": 1
       },
       "products/umbrellas-rainwear-2d/umbrella-three-fold-bulk-front.webp": {
-        "status": "unconfirmed",
+        "status": "cleared",
         "products": 1
       },
       "products/umbrellas-rainwear-2d/umbrella-three-fold-front.webp": {
-        "status": "unconfirmed",
+        "status": "cleared",
         "products": 1
       },
       "products/umbrellas-rainwear-2d/umbrella-three-fold-sun-back.webp": {
-        "status": "unconfirmed",
+        "status": "cleared",
         "products": 1
       },
       "products/umbrellas-rainwear-2d/umbrella-three-fold-sun-front.webp": {
-        "status": "unconfirmed",
+        "status": "cleared",
         "products": 1
       },
       "products/umbrellas-rainwear-2d/umbrella-two-fold-back.webp": {
-        "status": "unconfirmed",
+        "status": "cleared",
         "products": 1
       },
       "products/umbrellas-rainwear-2d/umbrella-two-fold-bulk-back.webp": {
-        "status": "unconfirmed",
+        "status": "cleared",
         "products": 1
       },
       "products/umbrellas-rainwear-2d/umbrella-two-fold-bulk-front.webp": {
-        "status": "unconfirmed",
+        "status": "cleared",
         "products": 1
       },
       "products/umbrellas-rainwear-2d/umbrella-two-fold-front.webp": {
-        "status": "unconfirmed",
+        "status": "cleared",
         "products": 1
       },
       "products/umbrellas-rainwear-2d/umbrella-two-fold-sun-back.webp": {
-        "status": "unconfirmed",
+        "status": "cleared",
         "products": 1
       },
       "products/umbrellas-rainwear-2d/umbrella-two-fold-sun-front.webp": {
-        "status": "unconfirmed",
+        "status": "cleared",
         "products": 1
       },
       "shirt_baked.glb": {

@@ -89,10 +89,15 @@ describe('Studio profiles', () => {
     expect(umbrella?.mask).toMatchObject({ ref: 'products/umbrellas-rainwear-2d/umbrella-golf-front-mask.png' });
   });
 
-  it('mark asset rights so unconfirmed assets are never used', () => {
-    const mockupRights = [...profiles.values()].flatMap((p) => p.sides.flatMap((s) => (s.mockup ? [s.mockup.rights] : [])));
-    expect(mockupRights).toHaveLength(640 + (48 + 5) * 2);
-    expect(new Set(mockupRights)).toEqual(new Set(['unconfirmed']));
+  it('mark asset rights so unconfirmed assets are never used; only the owner-cleared photo-frame folders are cleared', () => {
+    const mockups = [...profiles.values()].flatMap((p) => p.sides.flatMap((s) => (s.mockup ? [s.mockup] : [])));
+    expect(mockups).toHaveLength(640 + (48 + 5) * 2);
+    const photoFrame = /^products\/(umbrellas-rainwear|drinkware|pens|mugs)-2d\//;
+    for (const m of mockups) {
+      expect(m.rights, m.ref).toBe(photoFrame.test(m.ref) ? 'cleared' : 'unconfirmed');
+      expect(m.mask?.rights ?? 'cleared', m.ref).toBe('cleared');
+    }
+    expect(mockups.filter((m) => m.rights === 'unconfirmed').length).toBeGreaterThan(0); // apparel, bags, signs, labels, polo
     const poloModel = profile('apparel-polo-classic').model3d;
     expect(poloModel).toMatchObject({ ref: 'models/polo-shirt.glb', rights: 'attribution-required' });
     expect(poloModel?.attribution).toContain('CC BY 4.0');
