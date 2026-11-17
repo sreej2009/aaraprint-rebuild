@@ -37,6 +37,7 @@ beforeEach(() => {
   });
   setPreviewRendererForTests({
     Canvas: ({ surface }: PreviewCanvasProps) => <div data-testid="preview-canvas" data-side={surface.id} />,
+    PrintCanvas: () => <div data-testid="print-canvas" />,
     ProductCanvas: ({ surface, draw, photoSize, placed }: ProductCanvasProps) => (
       <div
         data-testid="product-canvas"

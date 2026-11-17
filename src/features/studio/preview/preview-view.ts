@@ -22,6 +22,15 @@ export type PreviewZoom = { mode: 'fit' } | { mode: 'manual'; viewport: Viewport
  */
 export type PreviewSpace = Pick<SurfacePrint, 'widthPx' | 'heightPx' | 'dpi'>;
 
+/**
+ * Review's print check view (Phase 4 M6) zooms over the whole print area, bleed included: the
+ * bleed box, with its top-left corner at 0,0 (the drawing shifts the design by the bleed).
+ */
+export function printSpace(print: Pick<SurfacePrint, 'widthPx' | 'heightPx' | 'dpi' | 'bleedPx'>): PreviewSpace {
+  const bleed = Math.max(0, print.bleedPx);
+  return { widthPx: print.widthPx + 2 * bleed, heightPx: print.heightPx + 2 * bleed, dpi: print.dpi };
+}
+
 /** The finished piece in design px. */
 export function trimRect(print: PreviewSpace): Rect {
   return { x: 0, y: 0, width: print.widthPx, height: print.heightPx };

@@ -242,6 +242,7 @@ describe('shared with the Preview', () => {
     const drawn: { photo?: string } = {};
     setPreviewRendererForTests({
       Canvas: ({ surface }: PreviewCanvasProps) => <div data-testid="preview-canvas" data-side={surface.id} />,
+      PrintCanvas: () => <div data-testid="print-canvas" />,
       ProductCanvas: ({ photo }: ProductCanvasProps) => {
         drawn.photo = photo.dataset.hex ?? 'photo';
         return <div data-testid="product-canvas" data-photo={drawn.photo} />;

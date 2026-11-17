@@ -203,7 +203,7 @@ test.describe('desktop: print check', () => {
     await openChecks(page);
     await expect(dialog(page).locator('li[data-kind="image-unavailable"]')).toContainText('“logo.png” isn’t in this browser');
     const proof = await downloadProof(page);
-    expect(proof).toMatchObject({ name: 'classic-visiting-cards-design-front-proof.png', width: 1216, height: 983 });
+    expect(proof).toMatchObject({ name: 'aaraprint-business-card-classic-front-proof.png', width: 1216, height: 983 });
   });
 
   test('10 · checks are per side; the editor’s side is never changed by them', async ({ page }) => {
@@ -241,7 +241,7 @@ test.describe('desktop: print check', () => {
     await expect(dialog(page).getByRole('radio', { name: 'Front and back' })).toBeChecked();
     await expect(dialog(page).getByTestId('proof-facts')).toContainText('2367 × 983 px, full resolution');
     const proof = await downloadProof(page);
-    expect(proof).toMatchObject({ name: 'classic-visiting-cards-design-proof.png', width: 2367, height: 983 });
+    expect(proof).toMatchObject({ name: 'aaraprint-business-card-classic-proof.png', width: 2367, height: 983 });
     // Front panel at (65, 152), back at (1216, 152); bleed 18 px; trim 1050 × 600.
     const [frontCentre, frontBleed, backCentre, page_] = await pixels(page, proof.file, [
       [65 + 18 + 900, 152 + 18 + 500],
@@ -256,7 +256,7 @@ test.describe('desktop: print check', () => {
 
     await dialog(page).getByRole('radio', { name: 'Back only' }).click();
     const back = await downloadProof(page);
-    expect(back).toMatchObject({ name: 'classic-visiting-cards-design-back-proof.png', width: 1216, height: 983 });
+    expect(back).toMatchObject({ name: 'aaraprint-business-card-classic-back-proof.png', width: 1216, height: 983 });
     await closeChecks(page);
     await expect(page.getByRole('button', { name: 'Undo' })).toBeEnabled(); // the last edit is still there to undo
   });

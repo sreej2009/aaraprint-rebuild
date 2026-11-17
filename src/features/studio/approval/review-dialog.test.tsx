@@ -8,7 +8,7 @@ import { setGraphicsLibraryForTests } from '../assets/graphics';
 import { setImageLoaderForTests } from '../assets/image-cache';
 import { readApproval } from '../persistence/records';
 import { createMemoryRepository, type MemoryRepository } from '../persistence/repository';
-import { setPreviewRendererForTests } from '../preview/renderer';
+import { setPreviewRendererForTests, type PrintCanvasProps } from '../preview/renderer';
 import { StudioApp } from '../shell/studio-app';
 import { readProduct, readProfile } from '../testing/catalogue-fixtures';
 
@@ -28,7 +28,13 @@ const realMatchMedia = window.matchMedia;
 beforeEach(() => {
   setGraphicsLibraryForTests({ status: 'ready', library: { graphics: [], withheld: 0 } });
   setImageLoaderForTests(async () => new Image());
-  setPreviewRendererForTests({ Canvas: () => <div data-testid="preview-canvas" />, ProductCanvas: () => <div data-testid="product-canvas" />, Thumbnail: () => <div />, size: { width: 800, height: 600 } });
+  setPreviewRendererForTests({
+    Canvas: () => <div data-testid="preview-canvas" />,
+    PrintCanvas: ({ surface, flagged }: PrintCanvasProps) => <div data-testid="print-canvas" data-side={surface.id} data-flagged={flagged.map((f) => `${f.elementId}:${f.level}`).join(' ')} />,
+    ProductCanvas: () => <div data-testid="product-canvas" />,
+    Thumbnail: () => <div />,
+    size: { width: 800, height: 600 },
+  });
 });
 afterEach(() => {
   window.matchMedia = realMatchMedia;

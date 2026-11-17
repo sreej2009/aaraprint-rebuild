@@ -1,17 +1,18 @@
-import { ArrowRight, CircleAlert, CircleCheck, TriangleAlert } from 'lucide-react';
+import { ArrowRight, CircleAlert, CircleCheck, Ruler, TriangleAlert } from 'lucide-react';
 import { Dialog as DialogPrimitive } from 'radix-ui';
-import { useMemo, useState } from 'react';
+import { useState } from 'react';
 import { useNavigate } from 'react-router';
 import { accountService } from '@/features/account/account';
 import { Button, Spinner } from '@/design-system';
 import { cn } from '@/lib/cn';
 import { formatINR } from '@/lib/format';
 import { useSaveController, useSaveState } from '../persistence/persistence-context';
-import { usePrintReport } from '../preflight/use-print-report';
-import { PreviewDialog } from '../preview/preview-dialog';
+import { ArtworkList, PrintFacts, ReadinessSummary } from '../preflight/print-check-parts';
+import { ProofSection } from '../preflight/proof-section';
+import { PreviewDialog, type ReviewPanelProps } from '../preview/preview-dialog';
 import { useStudio } from '../store';
 import { useStudioSession } from '../shell/session-context';
-import { approvalBlockers, approvalStatus } from './approval';
+import { approvalStatus } from './approval';
 
 /**
  * Review your design → Approve and continue (Phase 4 M5), from the Studio's Continue (Next on
@@ -20,6 +21,11 @@ import { approvalBlockers, approvalStatus } from './approval';
  * shown — with this panel: what is ordered, print warnings, what still blocks approval, and the
  * actions. Approving saves the design and keeps the approved content as a version (save
  * controller); the handoff then goes back to the product page, where the design is attached.
+ *
+ * Phase 4 M6: the print check is part of Review — its status (Ready, Warning, Needs attention:
+ * exactly when approval is blocked), a Print check view of the print area with trim, bleed and
+ * safe zone, the shown side's print facts and each element's placement and resolution — and the
+ * proof can be downloaded here, as on the original. Approval rules are M5's, unchanged.
  */
 export function ReviewButton({ label, iconOnly }: { label: string; iconOnly: boolean }) {
   const [open, setOpen] = useState(false);
@@ -45,14 +51,13 @@ export function ReviewButton({ label, iconOnly }: { label: string; iconOnly: boo
   );
 }
 
-function ReviewPanel({ capture }: { capture: () => string | null }) {
-  const { product, variant, variantLabel, print, price, workspace } = useStudioSession();
+function ReviewPanel({ capture, checks, printView, onPrintView, surface }: ReviewPanelProps) {
+  const { product, variant, variantLabel, print, price } = useStudioSession();
   const document = useStudio((s) => s.document);
   const controller = useSaveController();
   const approval = useSaveState((s) => s.approval);
-  const report = usePrintReport();
-  const workflow = workspace?.workflow ?? null;
-  const blockers = useMemo(() => approvalBlockers({ product, workflow, document, report }), [product, workflow, document, report]);
+  const { report, blockers, readiness } = checks;
+  const sideCheck = report.sides.find((side) => side.surfaceId === surface.id);
   const warnings = report.sides.flatMap((side) => side.issues.filter((i) => i.level !== 'notice' && i.kind !== 'image-unavailable' && i.kind !== 'graphic-unavailable').map((i) => ({ ...i, side: side.label })));
   const status = approvalStatus(approval, document);
   const [step, setStep] = useState<'review' | 'approving' | 'handoff'>('review');
@@ -62,7 +67,7 @@ function ReviewPanel({ capture }: { capture: () => string | null }) {
     if (blockers.length > 0 || !controller) return;
     setProblem(null);
     setStep('approving');
-    const result = await controller.approve({ thumbnail: capture() });
+    const result = await controller.approve({ thumbnail: await capture() });
     if (result.ok) setStep('handoff');
     else {
       setProblem(result.message);
@@ -102,6 +107,29 @@ function ReviewPanel({ capture }: { capture: () => string | null }) {
                 <Row term={sided ? 'Sides' : 'Design'} value={counts.join(' · ')} />
               </dl>
               {(priced?.sku ?? variant?.sku) && <p className="text-caption break-all text-fg-muted">SKU {priced?.sku ?? variant?.sku}</p>}
+            </section>
+
+            <section aria-labelledby="review-print-heading" className="flex flex-col gap-2" data-testid="review-print-check">
+              <h3 id="review-print-heading" className="text-body-sm font-semibold text-fg">
+                Print check
+              </h3>
+              <ReadinessSummary readiness={readiness} testId="review-print-status" />
+              {!printView ? (
+                <Button variant="secondary" size="sm" className="w-fit pointer-coarse:h-11" onClick={() => onPrintView(true)} data-testid="review-show-print-check">
+                  <Ruler aria-hidden="true" /> Show trim, bleed and safe zone
+                </Button>
+              ) : (
+                <div className="flex flex-col gap-3" data-testid="review-print-details">
+                  <h4 className="text-body-sm font-semibold text-fg">{sided ? `${surface.label}: print details` : 'Print details'}</h4>
+                  <PrintFacts print={surface.print} testId="review-print-facts" />
+                  {sideCheck && !report.empty && (
+                    <>
+                      <h4 className="text-body-sm font-semibold text-fg">{sided ? `${surface.label}: artwork and resolution` : 'Artwork and resolution'}</h4>
+                      <ArtworkList side={sideCheck} print={surface.print} label={sided ? `${surface.label} artwork` : 'Artwork'} />
+                    </>
+                  )}
+                </div>
+              )}
             </section>
 
             {status !== 'none' && (
@@ -145,6 +173,10 @@ function ReviewPanel({ capture }: { capture: () => string | null }) {
                 {problem}
               </p>
             )}
+
+            <div className="border-t border-border pt-4">
+              <ProofSection document={document} report={report} compact />
+            </div>
           </div>
           <div className="flex shrink-0 flex-col gap-2 border-t border-border px-4 py-3 sm:flex-row-reverse lg:flex-col">
             <Button

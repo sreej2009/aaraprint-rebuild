@@ -41,8 +41,19 @@ export interface ProductCanvasProps {
   onStage?: (stage: Konva.Stage | null) => void;
 }
 
+/**
+ * Review's print check view (Phase 4 M6): the side's whole print area — bleed included — with the
+ * trim, bleed, safe zone and the elements worth checking outlined. Drawn over the bleed box, so
+ * the viewport's space is `printSpace(print)` (preview-view.ts). Presentation only.
+ */
+export interface PrintCanvasProps extends PreviewCanvasProps {
+  /** Elements to outline, and how strongly. */
+  flagged: readonly { elementId: string; level: 'serious' | 'warning' }[];
+}
+
 export interface PreviewRenderer {
   Canvas: ComponentType<PreviewCanvasProps>;
+  PrintCanvas: ComponentType<PrintCanvasProps>;
   ProductCanvas: ComponentType<ProductCanvasProps>;
   Thumbnail: ComponentType<PreviewThumbnailProps>;
   /** The space the preview gets, when it can't be measured (tests). */
@@ -51,6 +62,7 @@ export interface PreviewRenderer {
 
 const browser: PreviewRenderer = {
   Canvas: lazy(() => import('./preview-canvas').then((m) => ({ default: m.PreviewCanvas }))),
+  PrintCanvas: lazy(() => import('./preview-canvas').then((m) => ({ default: m.PrintAreaCanvas }))),
   ProductCanvas: lazy(() => import('./preview-canvas').then((m) => ({ default: m.ProductPreviewCanvas }))),
   Thumbnail: lazy(() => import('./preview-canvas').then((m) => ({ default: m.PreviewThumbnail }))),
   size: null,

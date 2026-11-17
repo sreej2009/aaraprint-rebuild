@@ -30,6 +30,8 @@ export interface ProofPanel {
   trim: Rect;
   shape: TrimShape;
   bleed: number;
+  /** The safe zone's inset from the trim, in proof px (0 = none). */
+  safe: number;
 }
 
 export interface ProofLayout {
@@ -67,6 +69,7 @@ export function proofLayout(prints: readonly SurfacePrint[]): ProofLayout {
       trim: { x: print.bleedPx * scale, y: print.bleedPx * scale, width: print.widthPx * scale, height: print.heightPx * scale },
       shape: shape.kind === 'rounded-rectangle' ? { kind: 'rounded-rectangle', radius: shape.radius * scale } : shape,
       bleed: print.bleedPx * scale,
+      safe: (b.safe.x - b.trim.x) * scale,
     };
     x += b.bleed.width + margin;
     return panel;
@@ -84,8 +87,15 @@ export function proofLayout(prints: readonly SurfacePrint[]): ProofLayout {
   };
 }
 
-/** "Riya's card" + ["Front"] → "riyas-card-front-proof.png"; both sides → "riyas-card-proof.png". */
-export function proofFileName(designName: string, sides: readonly string[] | 'all'): string {
+export type ProofFormat = 'png' | 'pdf';
+
+/**
+ * The proof's file name (Phase 4 M6): deterministic, from the product and the sides in it — never
+ * a random id. "business-card-classic" + all sides → "aaraprint-business-card-classic-proof.png";
+ * the back only → "aaraprint-business-card-classic-back-proof.png"; a PDF ends in ".pdf".
+ * (The original named it after the design: "{design name}-proof.png".)
+ */
+export function proofFileName(productSlug: string, sides: readonly string[] | 'all', format: ProofFormat = 'png'): string {
   const slug = (text: string) =>
     text
       .toLowerCase()
@@ -95,6 +105,6 @@ export function proofFileName(designName: string, sides: readonly string[] | 'al
       .replace(/[^a-z0-9]+/g, '-')
       .replace(/^-+|-+$/g, '')
       .slice(0, 60);
-  const base = slug(designName) || 'design';
-  return sides === 'all' ? `${base}-proof.png` : `${base}-${sides.map(slug).join('-')}-proof.png`;
+  const base = `aaraprint-${slug(productSlug) || 'design'}`;
+  return sides === 'all' ? `${base}-proof.${format}` : `${base}-${sides.map(slug).join('-')}-proof.${format}`;
 }

@@ -1,26 +1,25 @@
-import { CircleCheck, Download, Info, OctagonAlert, ShieldAlert, ShieldCheck, TriangleAlert } from 'lucide-react';
-import { Component, Suspense, useMemo, useRef, useState, type ReactNode } from 'react';
-import { Button, Dialog, DialogContent, DialogTrigger, RadioGroup, Spinner } from '@/design-system';
+import { CircleCheck, Info, OctagonAlert, ShieldAlert, ShieldCheck, TriangleAlert } from 'lucide-react';
+import { useRef, useState } from 'react';
+import { Button, Dialog, DialogContent, DialogTrigger } from '@/design-system';
 import { cn } from '@/lib/cn';
 import { CANVAS_REGION_ID } from '../shell/dom-ids';
-import { useStudioSession } from '../shell/session-context';
-import { finishedSizeMm } from '../geometry/boxes';
-import { pxToMm, roundTo } from '../geometry/units';
-import { usePreviewReady } from '../preview/readiness';
-import { formatSize } from '../profile/describe';
-import type { DesignDocument, SurfaceDesign } from '../schema/types';
+import type { DesignDocument } from '../schema/types';
 import { useStudio, useStudioStoreApi } from '../store';
+import { ArtworkList, PrintFacts, ReadinessSummary } from './print-check-parts';
+import { usePrintReadiness } from './use-print-status';
 import type { IssueLevel, PrintIssue, PrintReport, SideCheck } from './print-checks';
-import { proofPipeline, type ProofTexts } from './proof-export';
-import { proofTexts } from './proof-texts';
-import { proofFileName, proofLayout, type ProofLayout } from './proof-layout';
+import { ProofSection } from './proof-section';
 import { usePrintReport, useSettledPrintReport } from './use-print-report';
 
 /**
  * Print check and proof (Plan M15). The top-bar button shows how many things to check; the dialog
- * lists them per side (advice only — nothing is blocked, the design is never changed) and makes a
- * PNG proof of the current design, unsaved changes included. Full preflight with blocking is
- * Phase 4; print-ready files are made server-side in Phase 6.
+ * lists them per side (advice only — the design is never changed) and makes a proof of the current
+ * design, unsaved changes included. Print-ready files are made server-side in Phase 6.
+ *
+ * Phase 4 M6: the dialog also says whether the design is Ready, has warnings or Needs attention
+ * (exactly when Review's "Approve and continue" is blocked: approval/approval.ts), the print facts
+ * from the product's print configuration, and each element's placement and resolution. Review has
+ * the same checks with the print area drawn (its Print check view).
  */
 export function PrintCheckButton({ iconOnly }: { iconOnly: boolean }) {
   const [open, setOpen] = useState(false);
@@ -56,6 +55,7 @@ function PrintCheckDialog({ onClose }: { onClose(): void }) {
   const document = useStudio((s) => s.document);
   const studio = useStudioStoreApi();
   const report = usePrintReport();
+  const readiness = usePrintReadiness(report);
   const toCanvas = useRef(false);
 
   // "Show" closes the dialog and selects the layer on its side, for the customer to fix (or not).
@@ -80,7 +80,9 @@ function PrintCheckDialog({ onClose }: { onClose(): void }) {
       }}
     >
       <div className="flex flex-col gap-6" data-testid="print-check">
+        <ReadinessSummary readiness={readiness} testId="print-check-status" />
         <ChecksSection report={report} sided={document.surfaces.length > 1} onShow={show} />
+        <DetailsSection document={document} report={report} />
         <ProofSection document={document} report={report} />
       </div>
     </DialogContent>
@@ -169,130 +171,38 @@ function SideChecks({ side, sided, onShow }: { side: SideCheck; sided: boolean; 
   );
 }
 
-// ------------------------------------------------------------------- Proof
+// ----------------------------------------------------------------- Details
 
-type ProofState = { status: 'idle' } | { status: 'making' } | { status: 'done'; fileName: string } | { status: 'error' };
-
-function ProofSection({ document, report }: { document: DesignDocument; report: PrintReport }) {
-  const { product } = useStudioSession();
-  const withArt = document.surfaces.filter((s) => !report.sides.find((c) => c.surfaceId === s.id)?.empty);
-  const choices = withArt.length > 1 ? ['all', ...withArt.map((s) => s.id)] : withArt.map((s) => s.id);
-  const [choice, setChoice] = useState(() => choices[0] ?? '');
-  const selected = choices.includes(choice) ? choice : (choices[0] ?? '');
-  const surfaces = selected === 'all' ? withArt : withArt.filter((s) => s.id === selected);
-  const [state, setState] = useState<ProofState>({ status: 'idle' });
-  const layout = useMemo(() => (surfaces.length ? proofLayout(surfaces.map((s) => s.print)) : null), [surfaces]);
-  const print = (surfaces[0] ?? document.surfaces[0]!).print;
-  const size = finishedSizeMm(print);
-  const mm = (px: number) => `${roundTo(pxToMm(px, print.dpi), 1)} mm`;
-  const making = state.status === 'making';
-  const fileName = proofFileName(document.name, selected === 'all' ? 'all' : surfaces.map((s) => s.label));
-
+/**
+ * The print facts (once when the sides share them, which they do on every product today) and each
+ * side's artwork with placement and resolution (M6).
+ */
+function DetailsSection({ document, report }: { document: DesignDocument; report: PrintReport }) {
+  const sided = document.surfaces.length > 1;
+  const same = document.surfaces.every((s) => JSON.stringify(s.print) === JSON.stringify(document.surfaces[0]!.print));
+  const prints = same ? [document.surfaces[0]!] : document.surfaces;
   return (
-    <section aria-labelledby="proof-heading" className="flex flex-col gap-3 border-t border-border pt-5">
-      <h3 id="proof-heading" className="text-body font-semibold text-fg">
-        Proof
+    <section aria-labelledby="print-details-heading" className="flex flex-col gap-3 border-t border-border pt-5" data-testid="print-details">
+      <h3 id="print-details-heading" className="text-body font-semibold text-fg">
+        Print details
       </h3>
-      <p className="text-body-sm text-fg-muted">
-        A picture of your design to check, with the trim line and the bleed (the tinted edge that is cut off). It isn’t a print-ready file: those are made separately when your design is printed, and
-        colours on screen can differ from print.
-      </p>
-      {!layout ? (
-        <p className="text-body-sm font-medium text-fg" data-testid="proof-empty">
-          Your design is empty. Add something to it to make a proof.
-        </p>
-      ) : (
-        <>
-          {choices.length > 1 && (
-            <RadioGroup
-              label="Sides in the proof"
-              value={selected}
-              onValueChange={setChoice}
-              options={choices.map((value) => ({ value, label: value === 'all' ? 'Front and back' : `${document.surfaces.find((s) => s.id === value)!.label} only` }))}
-            />
-          )}
-          <dl className="grid grid-cols-[auto_1fr] gap-x-4 gap-y-1.5 text-body-sm" data-testid="proof-facts">
-            <Fact term="Product" value={product.name} />
-            <Fact term="Sides" value={surfaces.map((s) => s.label).join(' and ')} />
-            <Fact term="Finished size" value={formatSize(size.width, size.height)} />
-            <Fact term="Resolution" value={`${print.dpi} DPI`} />
-            <Fact term="Bleed" value={print.bleedPx > 0 ? `${mm(print.bleedPx)} each side` : 'None'} />
-            <Fact term="Safe zone" value={`${mm(print.safeZonePx)} from the edge`} />
-            <Fact
-              term="Proof image"
-              value={`${layout.width} × ${layout.height} px${layout.scaled ? `, scaled to ${Math.round(layout.scale * 100)}% to stay within browser limits` : ', full resolution'}`}
-            />
-            <Fact term="Print check" value={report.warnings === 0 ? 'No warnings' : `${report.warnings} ${report.warnings === 1 ? 'warning' : 'warnings'}`} />
-          </dl>
-          <div className="flex flex-wrap items-center gap-3">
-            <Button onClick={() => !making && setState({ status: 'making' })} aria-disabled={making || undefined} data-testid="download-proof" className="pointer-coarse:h-11">
-              {making ? <Spinner size="sm" /> : <Download aria-hidden="true" />}
-              Download proof (PNG)
-            </Button>
-            <output className="text-body-sm text-fg-muted" data-testid="proof-status">
-              {state.status === 'making' ? 'Making your proof…' : state.status === 'done' ? `Proof downloaded: ${state.fileName}` : ''}
-            </output>
-          </div>
-          {state.status === 'error' && (
-            <p role="alert" className="text-body-sm font-medium text-danger" data-testid="proof-error">
-              The proof couldn’t be made. Your design is unchanged — try again.
-            </p>
-          )}
-          {making && (
-            <ProofBoundary onError={() => setState({ status: 'error' })}>
-              <ProofJob
-                surfaces={surfaces}
-                layout={layout}
-                texts={proofTexts(document, product.name, surfaces, layout, report.warnings)}
-                fileName={fileName}
-                onDone={() => setState({ status: 'done', fileName })}
-                onError={() => setState({ status: 'error' })}
-              />
-            </ProofBoundary>
-          )}
-        </>
-      )}
+      {prints.map((surface) => (
+        <div key={surface.id} className="flex flex-col gap-2">
+          {!same && <h4 className="text-body-sm font-semibold text-fg">{surface.label}</h4>}
+          <PrintFacts print={surface.print} testId={`print-facts-${surface.id}`} />
+        </div>
+      ))}
+      {!report.empty &&
+        report.sides.map((side) => {
+          const surface = document.surfaces.find((s) => s.id === side.surfaceId)!;
+          if (sided && side.empty) return null;
+          return (
+            <div key={side.surfaceId} className="flex flex-col gap-2">
+              <h4 className="text-body-sm font-semibold text-fg">{sided ? `${side.label}: artwork and resolution` : 'Artwork and resolution'}</h4>
+              <ArtworkList side={side} print={surface.print} label={sided ? `${side.label} artwork` : 'Artwork'} />
+            </div>
+          );
+        })}
     </section>
   );
-}
-
-function Fact({ term, value }: { term: string; value: string }) {
-  return (
-    <>
-      <dt className="text-fg-muted">{term}</dt>
-      <dd className="text-right text-fg tabular-nums">{value}</dd>
-    </>
-  );
-}
-
-/** Waits for fonts and images (as the preview does), draws the sides, then hands over the file. */
-function ProofJob({ surfaces, layout, texts, fileName, onDone, onError }: { surfaces: SurfaceDesign[]; layout: ProofLayout; texts: ProofTexts; fileName: string; onDone(): void; onError(): void }) {
-  const ready = usePreviewReady(surfaces);
-  const { Render, deliver } = proofPipeline();
-  if (!ready) return null;
-  return (
-    <Suspense fallback={null}>
-      <Render
-        surfaces={surfaces}
-        layout={layout}
-        onDone={(canvases) => {
-          deliver(layout, canvases, texts, fileName).then(onDone, onError);
-        }}
-        onError={onError}
-      />
-    </Suspense>
-  );
-}
-
-class ProofBoundary extends Component<{ children: ReactNode; onError(): void }, { failed: boolean }> {
-  state = { failed: false };
-  static getDerivedStateFromError() {
-    return { failed: true };
-  }
-  componentDidCatch() {
-    this.props.onError();
-  }
-  render() {
-    return this.state.failed ? null : this.props.children;
-  }
 }

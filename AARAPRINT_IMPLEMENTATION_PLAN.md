@@ -2585,7 +2585,8 @@ Its §19 gives the recommended order. Phases and milestones above are history an
 | M4-C Photo-frame Studio workflow (correction) | Done |
 | M4-C2 Photo-frame product rendering (correction) | Done |
 | M5 Review, approval and cart handoff | Done |
-| M6… Checkout, accounts (Phase 6) | Not started |
+| M6 Print check and proof workflow | Done |
+| M7… Checkout, accounts (Phase 6) | Not started |
 
 ### M1 — Schema v3 and product family registry
 
@@ -3189,3 +3190,165 @@ Gzipped JS on entry against the M4-C2 commit: the product page went from 232.0 K
 **Results:** lint and typecheck clean; 929 unit and component tests passed (84 files); production build passes (one earlier build attempt hit a pre-render timeout on `/credits` under load and passed on retry). Full browser suite: 426 passed, 0 failed, 440 skipped (each for a different device layout, or a spec that sets its own widths). Run separately: `studio-approval`, `studio`, `shell` and `a11y` specs, 104 passed. Checked by eye in the browser: a visiting card and the real Custom Photo Umbrella in Navy, through Review, approval, handoff, the attached card, Add to cart and the cart page, and the Review panel at 360 px.
 
 **Not in M5:** checkout, payment, order creation, shipping and GST, accounts and sign-in, cloud save, cart quantity editing, the original's Download proof inside Review (Print check keeps it), and the 2D/3D toggle in Review.
+
+### M6 — Print check and proof workflow
+
+**Scope:** the print check before approval, inside Review: Studio → Review your design → Print check (a view of Review) → Approve and continue. It builds on the Phase 3 M15 print check and PNG proof, not a second system. Out of scope: checkout, payment, accounts, a server cart, print-ready files (Phase 6), QR and tables (not in the design model yet), and enabling any rights-unconfirmed mockup.
+
+#### What the original did (audit §11, spec §2.5)
+
+- **Review your design:** per-side preview with element counts, a blurry-image alert with the DPI per side, **Download proof**, Continue editing, Approve and continue.
+- **The DPI alert didn't block:** "1 image may print blurry — front: about 254 DPI — we recommend at least 300 DPI".
+- **Proof file:** `{design name}-proof.png`.
+- **Guides:** flat products show Safety Area and Bleed legends; photo-frame products (drinkware, umbrella, rainwear) don't show them in the editor.
+
+#### Where each value comes from
+
+| Shown | Source |
+|---|---|
+| Print size (trim), with bleed, bleed, safe zone, print px, DPI, shape | The side's print configuration (`surface.print`, copied from the product's print config), converted as mm = px ÷ DPI × 25.4 |
+| Effective resolution | The uploaded file's pixels (`naturalWidth × naturalHeight`) over its printed size (element box ÷ product DPI), as in M12 (`effectiveDpi`) |
+| Placement | The four corners of the element's rotated box against the safe zone, trim and bleed shapes (the editor's `placementFor`, plus the bleed edge) |
+| Blocking | M5 `approvalBlockers`, unchanged |
+| "Not available" | A file this browser doesn't have, a pixel size that isn't recorded, the printed size behind a size option (`geometryOptions`) |
+
+- **`printAreaSizeMultiplier` (polos 1.5):** the original's on-product layout scale. It doesn't change the print size, so the print check doesn't show it.
+
+#### Print check (`preflight/print-checks.ts`, `print-status.ts`, `use-print-status.ts`, `print-check-parts.tsx`)
+
+- **Per element** (`SideCheck.artwork`, top layer first):
+  - **type:** image, graphic, text or shape;
+  - **placement:**
+    - inside the safe zone;
+    - outside the safe zone;
+    - past the trim, in the bleed;
+    - past the bleed edge;
+    - outside the print area;
+  - **resolution:**
+    - **uploaded raster image:** its DPI and band (≥ 300 good, 150–299 acceptable, below 150 low, the M12 bands), with the file's pixels and printed size;
+    - **vector** for text, shapes, library graphics (SVG) and SVG files;
+    - **"Not available"** for a missing file;
+    - **"Resolution can't be determined"** for an unknown pixel size.
+
+  No DPI is ever estimated.
+- **Rules, keeping the M15 kinds and levels:**
+  - outside the safe zone: warning;
+  - past the trim: stronger warning ("Past the trim edge");
+  - **new:** past the bleed is worded more strongly ("Past the trim edge and the bleed", or "Past the edge of the print area" on products without bleed);
+  - **new:** fully off the print area is "Outside the print area".
+
+  None of these block, as on the original.
+- **Fewer false warnings:**
+  - a filled rectangle or image covering the whole piece is a background, so it gets the note "Runs into the bleed", not a warning;
+  - template sample text is a note.
+- **Status** (`printReadiness`), always in words and an icon:
+  - **Needs attention** exactly when M5 blocks approval: empty design, missing image or graphic, unfinished choices, no variant, invalid design;
+  - **Warning** when something is worth checking and approval is still allowed;
+  - **Ready** otherwise.
+
+  Per side: Ready, Warning, Needs attention (a missing file there) or **Blank** (a blank back prints blank). With "Same design on both sides" on, a blank side says so; the Studio doesn't copy artwork, so nothing is drawn for it.
+- **Size options:** a product whose printed size follows an option (`geometryOptions`, e.g. banners' Size) says: "The printed size for your size choice isn't available here: these figures are this product's design area."
+
+#### Print check view in Review (`preview/preview-dialog.tsx`, `preview-canvas.tsx` `PrintAreaCanvas`)
+
+- **Switching:** Review has **Preview | Print check** (a radio group: header from 1024 px, bottom bar below). The panel's "Show trim, bleed and safe zone" opens it too.
+- **Phones:** the legend uses short words (Bleed, Trim, Safe zone, Check; screen readers get the full meaning) and drops the size line, so the drawing keeps its height.
+- **Drawing:** the whole print area (the bleed box) with the same artwork nodes, clipped to the bleed as in the editor:
+  - the bleed band tinted, its edge a thin line;
+  - the trim solid;
+  - the safe zone dashed;
+  - each element worth checking in a dotted outline (red past the trim, amber otherwise).
+
+  Lines keep their screen width and have a white halo. The legend tells them apart by line style as well as colour. Zoom and pan work as in Preview, over the bleed box.
+- **Presentation only:** nothing is added to the design, saved, exported or put in the undo history.
+- **Sides:** the side tabs show each side's status in this view. Two-sided products switch Front/Back; a one-sided design has no Back tab (the picker needs two sides).
+- **Panel:**
+  - the status and each side's status;
+  - in the print check view, the shown side's print facts and its artwork with placement and resolution;
+  - then, as in M5, "Worth checking", what blocks approval, and Approve and continue.
+- **Photo-frame products:** Preview stays the real product photo in the ordered colour (M4-C2, unchanged), and Print check shows the flat print area. They have no bleed, so their legend shows "Edge of the print area" and no bleed band.
+- **Thumbnail:** approving from the print check view switches back to the preview first and pictures it once drawn (5 s cap, then approves without a thumbnail), so the approved thumbnail never shows guides.
+
+#### Proof (`preflight/proof-section.tsx`, `proof-export.ts`, `proof-layout.ts`, `proof-texts.ts`, `proof-pdf.ts`)
+
+- **Where:** **Download proof** is in Review, as on the original, and in the Print check dialog. It is one shared component.
+- **Always the current document:** what is in memory, unsaved changes included, never a saved or approved copy.
+- **Making one changes nothing:** no edit, no undo step, no change to the approval.
+- **Contents:**
+  - the M15 picture: each chosen side whole, bleed tinted, trim line, 16 MP cap;
+  - **new:** the safe zone as a dashed line;
+  - **new:** side notes with the safe zone;
+  - **new:** the options, SKU and quantity line.
+
+  Footer lines shrink to fit the picture's width.
+- **Formats:**
+  - **PNG**;
+  - **PDF, at real size:** a hand-written one-page PDF 1.4 (no library) with the same picture as a JPEG. The page is proof px ÷ (DPI × proof scale) × 72 pt, so the trim prints at its real size. A page over 200 in is reduced.
+
+  Both are proofs, not print-ready files.
+- **File names:** deterministic, from the product: `aaraprint-{product-slug}-proof.{png|pdf}`, or `aaraprint-{product-slug}-{side}-proof.{png|pdf}` for one side. **Deliberate difference:** the original used `{design name}-proof.png`.
+
+#### Print check dialog (Studio top bar, M15)
+
+It keeps its checks, Show and proof. **New:** the status with each side's status, **Print details** (print facts and each side's artwork with placement and resolution) and the PNG/PDF choice.
+
+#### Approval
+
+M5 is unchanged and stays the only approval:
+- the same blockers;
+- the approved version is immutable and never pruned;
+- the status comes from the fingerprint (a later artwork or choice change makes it "changed"; undo restores "approved");
+- the cart refers to the approved version.
+
+Viewing the print check or downloading proofs never invalidates an approval.
+
+#### Responsive and accessibility
+
+- **Widths:** at 1440, 1280, 820, 390 and 360 px:
+  - the toggle, legend, side switch, proof button and Approve are on screen (the panel scrolls, actions pinned);
+  - long values wrap;
+  - nothing scrolls sideways.
+- **Accessibility:**
+  - the print area's name gives the side, its status and size;
+  - status is never colour alone;
+  - Preview | Print check works with the arrow keys and Space;
+  - Escape closes Review and returns focus to Continue;
+  - axe passes on Review's print check.
+
+#### Tests
+
+- `preflight/print-status.test.ts` (17):
+  - print facts from real configs (card, umbrella, pen, mug, round card, banner with a size option);
+  - all five placements, including rotation and a product without bleed;
+  - background note vs band warning; never changing the design;
+  - DPI formula and bands; vectors (text, shape, graphic, SVG); unknown and missing;
+  - sample text;
+  - Ready / Warning / Needs attention against the M5 blockers;
+  - same design on both sides; a one-sided design;
+  - umbrella, rainwear, drinkware, pen, mug and T-shirt front/back independence.
+- `preflight/proof-pdf.test.ts` (5): real-size page, scaled and capped pages, the structure and embedded JPEG, the xref offsets, UTF-16 titles.
+- `approval/review-print-check.test.tsx` (6):
+  - Warning with side statuses, the print check view (flags, facts, artwork, side tabs, back);
+  - Needs attention blocks;
+  - approve from the print check view;
+  - checking and proofs keep the approval, an edit invalidates it;
+  - PNG and PDF proof of the unsaved design with names;
+  - phone layout.
+- `preflight/print-check-dialog.test.tsx` (+1): status and details.
+- **Updated for deliberate changes:** proof file names (unit and `e2e/studio-proof.spec.ts`), the proof's legend line and side note, the sides radio group named in one test, and the preview renderer stubs (`PrintCanvas`).
+- `e2e/studio-print-check.spec.ts` (new):
+  - card: Warning, print stage guides and flags read from Konva, facts, sides, axe, PNG (1216 × 983) and PDF (`/MediaBox [0 0 291.84 235.92]`), approve from the print check view, cart;
+  - empty design blocked, then Ready;
+  - the real Custom Photo Umbrella in Navy;
+  - a pen;
+  - widths 1440, 1280, 820, 390, 360;
+  - keyboard.
+
+**Results:** lint and typecheck clean; 958 unit and component tests passed (87 files); production build passes (Studio main chunk 50.1 KB gzipped; the print check view adds 1.5 KB to the lazily loaded preview drawing). Full browser suite: 436 passed, 0 failed, 450 skipped (each for a different device layout, or a spec that sets its own widths). In a first full run, `studio-colour.spec` H failed as expected (it compared whole proof files across colours, and the proof now names the ordered colour; it now compares the artwork pixels) and `entry.spec` failed once on mobile under load; both passed when re-run alone and in the second full run. Run separately: `studio-print-check`, `studio-proof` and `studio-approval` 27 passed. Checked by eye in the browser: a visiting card at 1440, 1280, 820, 390 and 360 px (Review, print check view, PNG and PDF proofs), the real Custom Photo Umbrella in Navy (photo preview, print check, proof, approval, cart), a black mug, and the Print check dialog.
+
+**Known limitations:**
+- **Proofs aren't print files:** they are pictures (PNG, or PDF with a JPEG inside): no vector text, embedded fonts, colour profile or crop marks. Print-ready files remain Phase 6.
+- **Size options:** the printed size for an option-driven size isn't in the data; the check says so.
+- **Not in the design model yet:** QR codes and tables, so they aren't checked.
+- **Resolution bands stay absolute (M12):** 300 / 150 DPI, also on products whose print configuration is 100–200 DPI.
+- **No 2D/3D toggle in Review.**

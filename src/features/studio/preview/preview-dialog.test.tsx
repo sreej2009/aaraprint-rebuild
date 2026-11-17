@@ -37,6 +37,7 @@ const stubRenderer = {
       data-photo-size={`${photoSize.width}x${photoSize.height}`}
     />
   ),
+  PrintCanvas: () => <div data-testid="print-canvas" />,
   Thumbnail: ({ surface }: PreviewThumbnailProps) => <div data-testid="thumbnail-drawing" data-side={surface.id} />,
   size: { width: 1000, height: 600 },
 };

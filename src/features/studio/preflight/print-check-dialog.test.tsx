@@ -179,7 +179,7 @@ describe('proof', () => {
     ]);
     expect(within(dialog()).getByRole('radio', { name: 'Front and back' })).toBeChecked();
     await user.click(within(dialog()).getByTestId('download-proof'));
-    await waitFor(() => expect(within(dialog()).getByTestId('proof-status')).toHaveTextContent('Proof downloaded: classic-visiting-cards-design-proof.png'));
+    await waitFor(() => expect(within(dialog()).getByTestId('proof-status')).toHaveTextContent('Proof downloaded: aaraprint-business-card-classic-proof.png'));
     expect(delivered).toHaveLength(1);
     expect(delivered[0]!.layout).toMatchObject({ width: 2367, height: 983, scaled: false });
     expect(delivered[0]!.surfaces.map((s) => s.id)).toEqual(['front', 'back']);
@@ -190,7 +190,7 @@ describe('proof', () => {
     expect(within(dialog()).getByTestId('proof-facts')).toHaveTextContent('1216 × 983 px');
     await user.click(within(dialog()).getByTestId('download-proof'));
     await waitFor(() => expect(delivered).toHaveLength(2));
-    expect(delivered[1]).toMatchObject({ fileName: 'classic-visiting-cards-design-back-proof.png' });
+    expect(delivered[1]).toMatchObject({ fileName: 'aaraprint-business-card-classic-back-proof.png' });
     expect(delivered[1]!.surfaces.map((s) => s.id)).toEqual(['back']);
     // Making a proof is no edit.
     await user.keyboard('{Escape}');
@@ -216,7 +216,7 @@ describe('proof', () => {
     await user.click(screen.getByRole('button', { name: 'Add heading' }));
     await user.keyboard('{Control>}{Enter}{/Control}');
     await openChecks(user);
-    expect(within(dialog()).queryByRole('radiogroup')).not.toBeInTheDocument();
+    expect(within(dialog()).queryByRole('radiogroup', { name: 'Sides in the proof' })).not.toBeInTheDocument();
     expect(within(dialog()).getByTestId('proof-facts')).toHaveTextContent('SidesFront');
     expect(within(dialog()).getByRole('region', { name: 'Back · no artwork' })).toHaveTextContent('No artwork on this side');
   });
@@ -229,5 +229,23 @@ describe('phones', () => {
     await openChecks(user);
     await user.click(within(dialog()).getByTestId('download-proof'));
     await waitFor(() => expect(delivered).toHaveLength(1));
+  });
+});
+
+describe('status and details (Phase 4 M6)', () => {
+  it('says the sample Needs attention (its logo is missing, so approval is blocked), with print facts and each element’s placement and resolution', async () => {
+    const user = renderStudio();
+    await openChecks(user);
+    const status = within(dialog()).getByTestId('print-check-status');
+    expect(status).toHaveAttribute('data-status', 'blocked');
+    expect(status).toHaveTextContent('Needs attention');
+    expect(within(status).getByRole('list', { name: 'Print check by side' })).toHaveTextContent('Front: Needs attention A file is missingBack: Ready No warnings');
+    const details = within(dialog()).getByTestId('print-details');
+    expect(details.textContent!.replaceAll(String.fromCharCode(0xa0), ' ')).toContain('Print size (trim)88.9 × 50.8 mmWith bleed91.9 × 53.8 mmBleed1.5 mm each side');
+    const front = within(details).getByRole('list', { name: 'Front artwork' });
+    expect(front.querySelector('[data-element="el_logo"]')).toHaveTextContent('Not available: the file is missing');
+    expect(front.querySelector('[data-element="el_star"]')).toHaveAttribute('data-resolution', 'vector');
+    expect(front.querySelector('[data-element="el_band"]')).toHaveTextContent('Past the trim, in the bleed');
+    expect(front.querySelector('[data-element="el_name"]')).toHaveTextContent('Vector text: sharp at any size');
   });
 });

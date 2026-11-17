@@ -371,7 +371,7 @@ test.describe('desktop: product colour', () => {
     await expect(swatch(page, 'Black')).toHaveAttribute('aria-checked', 'true');
   });
 
-  test('H · the proof is byte-for-byte the same flat, on the product, and in every colour', async ({ page }) => {
+  test('H · the proof’s artwork is the same flat, on the product, and in every colour (only its order line names the colour)', async ({ page }) => {
     const proof = async () => {
       await page.getByTestId('print-check-button').click();
       const dialog = page.getByRole('dialog', { name: 'Print check and proof' });
@@ -400,7 +400,32 @@ test.describe('desktop: product colour', () => {
     await tinted(page);
     const navy = await proof();
     expect(flat.subarray(1, 4).toString()).toBe('PNG');
-    for (const file of [black, red, navy]) expect(file.equals(flat)).toBe(true);
+    // Black is ordered either way: the same file, byte for byte.
+    expect(black.equals(flat)).toBe(true);
+    // Red and Navy: the same artwork, pixel for pixel; only the footer differs, as it names what is
+    // ordered (options and SKU, Phase 4 M6). The product colour is never drawn into the proof.
+    const picture = (file: Buffer) =>
+      page.evaluate(async (data) => {
+        const image = new Image();
+        image.src = `data:image/png;base64,${data}`;
+        await image.decode();
+        const c = document.createElement('canvas');
+        c.width = image.width;
+        c.height = image.height;
+        const g = c.getContext('2d')!;
+        g.drawImage(image, 0, 0);
+        // Everything above the footer: the side's name and the artwork panel (the top 80 %).
+        const rows = Math.floor(image.height * 0.8);
+        const pixels = g.getImageData(0, 0, image.width, rows).data;
+        let hash = 0;
+        for (let i = 0; i < pixels.length; i += 1) hash = (hash * 31 + pixels[i]!) | 0;
+        return `${image.width}x${image.height}:${hash}`;
+      }, file.toString('base64'));
+    const reference = await picture(flat);
+    for (const file of [red, navy]) {
+      expect(file.equals(flat)).toBe(false);
+      expect(await picture(file)).toBe(reference);
+    }
   });
 
   test('axe: the canvas with Product options, and the Preview on the coloured product', async ({ page }) => {

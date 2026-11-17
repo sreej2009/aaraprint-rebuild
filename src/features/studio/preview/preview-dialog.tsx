@@ -2,7 +2,7 @@ import type Konva from 'konva';
 import { ChevronDown, Eye, Maximize, X, ZoomIn, ZoomOut } from 'lucide-react';
 import { Dialog as DialogPrimitive, RadioGroup as RadioGroupPrimitive } from 'radix-ui';
 import { Component, Suspense, type ComponentType, useCallback, useEffect, useMemo, useRef, useState, type KeyboardEvent, type PointerEvent, type ReactNode } from 'react';
-import { Button, DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger, IconButton, Spinner } from '@/design-system';
+import { Button, DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger, IconButton, SegmentedControl, Spinner } from '@/design-system';
 import { cn } from '@/lib/cn';
 import { finishedSizeMm } from '../geometry/boxes';
 import { formatZoom, wheelZoomFactor } from '../geometry/viewport';
@@ -17,7 +17,11 @@ import { useStudio, useStudioStoreApi } from '../store';
 import { useStudioSession } from '../shell/session-context';
 import { useStudioUi } from '../shell/ui-context';
 import { useElementSize } from '../shell/use-element-size';
-import { canPan, panBy, percentOf, PREVIEW_PRESETS, previewFit, previewLimits, stepPreviewPercent, viewportFor, zoomToPercent, type PreviewZoom } from './preview-view';
+import { PrintLegend } from '../preflight/print-check-parts';
+import { usePrintStatus, type PrintCheckState } from '../preflight/use-print-status';
+import { READINESS_LABELS } from '../preflight/print-status';
+import { usePrintReportFor } from '../preflight/use-print-report';
+import { canPan, panBy, percentOf, PREVIEW_PRESETS, previewFit, previewLimits, printSpace, stepPreviewPercent, viewportFor, zoomToPercent, type PreviewZoom } from './preview-view';
 import { usePreviewReady } from './readiness';
 import { previewRenderer } from './renderer';
 
@@ -45,13 +49,27 @@ export function PreviewButton({ iconOnly }: { iconOnly: boolean }) {
 /**
  * Review your design (Phase 4 M5) is this same dialog — the same drawing, sides, zoom and product
  * view — with a review panel beside the preview (below it on phones). `Panel` gets `capture`,
- * a small PNG of what the preview shows now (null when it can't be drawn), for the approval.
+ * a small PNG of the preview (null when it can't be drawn), for the approval.
+ *
+ * Phase 4 M6: Review also has a **Print check** view — the side's whole print area with trim,
+ * bleed, safe zone and the elements worth checking outlined — and the panel gets the checks, the
+ * status and what blocks approval, worked out once here. `capture` always pictures the preview:
+ * from the print check view it switches back first.
  */
+export interface ReviewPanelProps {
+  capture: () => Promise<string | null>;
+  checks: PrintCheckState;
+  printView: boolean;
+  onPrintView(on: boolean): void;
+  /** The side shown. */
+  surface: SurfaceDesign;
+}
+
 export interface ReviewSlot {
   title: string;
   closeLabel: string;
   description: string;
-  Panel: ComponentType<{ capture: () => string | null }>;
+  Panel: ComponentType<ReviewPanelProps>;
 }
 
 export function PreviewDialog({ review }: { review?: ReviewSlot } = {}) {
@@ -67,6 +85,9 @@ export function PreviewDialog({ review }: { review?: ReviewSlot } = {}) {
   const surface = document.surfaces.find((s) => s.id === sideId) ?? document.surfaces[0]!;
   const contentRef = useRef<HTMLDivElement>(null);
   const [attempt, setAttempt] = useState(0);
+  // Review's view: the preview or the print check (M6). Kept on retry.
+  const [printView, setPrintView] = useState(false);
+  const body = { document, surface, profile, view: productOnly ? 'product' : view, productOnly, onView: setView, onSide: setSideId, onRetry: () => setAttempt((n) => n + 1) } as const;
 
   return (
     <DialogPrimitive.Portal>
@@ -81,7 +102,7 @@ export function PreviewDialog({ review }: { review?: ReviewSlot } = {}) {
         }}
         className="fixed inset-0 z-50 flex flex-col bg-surface-sunken outline-none data-[state=open]:animate-fade-in"
       >
-        <PreviewBody key={attempt} document={document} surface={surface} profile={profile} view={productOnly ? 'product' : view} productOnly={productOnly} review={review} onView={setView} onSide={setSideId} onRetry={() => setAttempt((n) => n + 1)} />
+        {review ? <ReviewBody key={attempt} {...body} review={review} printView={printView} onPrintView={setPrintView} /> : <PreviewBody key={attempt} {...body} />}
       </DialogPrimitive.Content>
     </DialogPrimitive.Portal>
   );
@@ -95,6 +116,16 @@ type PreviewMode = ProductViewMode;
 /** Shown when "On the product" is chosen but this side's photo can't be shown. */
 export const PRODUCT_VIEW_UNAVAILABLE = 'On-product preview unavailable for this product.';
 
+/** Review: the print checks of the design shown, worked out once for the drawing and the panel. */
+function ReviewBody(props: BodyProps & { review: ReviewSlot }) {
+  const checks = usePrintStatus(usePrintReportFor(props.document));
+  return <PreviewBody {...props} checks={checks} />;
+}
+
+type ReviewView = 'preview' | 'print';
+
+const FIT: PreviewZoom = { mode: 'fit' };
+
 interface BodyProps {
   document: DesignDocument;
   surface: SurfaceDesign;
@@ -104,29 +135,48 @@ interface BodyProps {
   productOnly?: boolean;
   /** Review your design (Phase 4 M5): the review panel and its texts. */
   review?: ReviewSlot | undefined;
+  /** Review (M6): the print checks, and whether the print check view is shown. */
+  checks?: PrintCheckState;
+  printView?: boolean;
+  onPrintView?(on: boolean): void;
   onView(view: PreviewMode): void;
   onSide(id: string): void;
   onRetry(): void;
 }
 
-function PreviewBody({ document, surface, profile, view, productOnly = false, review, onView, onSide, onRetry }: BodyProps) {
+function PreviewBody({ document, surface, profile, view, productOnly = false, review, checks, printView = false, onPrintView, onView, onSide, onRetry }: BodyProps) {
   const ready = usePreviewReady(document.surfaces);
   // Phones keep the header short: sides and zoom move to the bottom bar (and the view toggle on tablets too).
   const layout = useStudioUi().layout;
   const phone = layout === 'phone';
   const roomy = layout === 'laptop' || layout === 'desktop';
   const areaRef = useRef<HTMLElement>(null);
-  const { Canvas, ProductCanvas, size: fixedSize } = previewRenderer();
+  const { Canvas, ProductCanvas, PrintCanvas, size: fixedSize } = previewRenderer();
   const measured = useElementSize(areaRef);
   const available = fixedSize ?? measured;
-  const [zoom, setZoom] = useState<PreviewZoom>({ mode: 'fit' });
+  // Review's print check view (M6): the whole print area, with its guides.
+  const printing = Boolean(review && checks && printView);
+  const reviewView: ReviewView = printing ? 'print' : 'preview';
+  // Each view starts fitted: the zoom belongs to the view it was set in.
+  const [zoomState, setZoomState] = useState<{ view: ReviewView; zoom: PreviewZoom }>({ view: 'preview', zoom: { mode: 'fit' } });
+  const zoom: PreviewZoom = zoomState.view === reviewView ? zoomState.zoom : FIT;
+  const setZoom = useCallback(
+    (next: PreviewZoom | ((current: PreviewZoom) => PreviewZoom)) =>
+      setZoomState((state) => {
+        const current = state.view === reviewView ? state.zoom : FIT;
+        return { view: reviewView, zoom: typeof next === 'function' ? next(current) : next };
+      }),
+    [reviewView],
+  );
   const [failed, setFailed] = useState(false);
   // The drawn stage (flat or on the product), for the approval's thumbnail.
   const stageRef = useRef<Konva.Stage | null>(null);
+  const [stageVersion, setStageVersion] = useState(0);
   const onStage = useCallback((stage: Konva.Stage | null) => {
     stageRef.current = stage;
+    if (stage) setStageVersion((v) => v + 1);
   }, []);
-  const capture = useCallback((): string | null => {
+  const snap = useCallback((): string | null => {
     const stage = stageRef.current;
     if (!stage || stage.width() === 0 || stage.height() === 0) return null;
     try {
@@ -142,7 +192,7 @@ function PreviewBody({ document, surface, profile, view, productOnly = false, re
    * design isn't changed, saved or exported with it. Only the photo for the side shown is loaded.
    */
   const offered = useProductViewOffered(profile, document.surfaces);
-  const wanted = offered && view === 'product';
+  const wanted = offered && view === 'product' && !printing;
   // The product colour is the design's (Product options, M4): the same tinted photo as the canvas.
   const { colour } = useProductColour(profile);
   const colourOffered = useProductColourOffered(profile, document.surfaces);
@@ -151,8 +201,40 @@ function PreviewBody({ document, surface, profile, view, productOnly = false, re
   const onProduct = product.status === 'loading' || product.status === 'ready';
   const print = surface.print;
   // Zoom and pan work the same on the product: over the whole photo, 100 % = the artwork's real size.
-  const space = useMemo(() => (onProduct && productView && placed ? productSpace(productView, placed, print) : print), [onProduct, productView, placed, print]);
-  const shown = ready && product.status !== 'loading';
+  const space = useMemo(() => (printing ? printSpace(print) : onProduct && productView && placed ? productSpace(productView, placed, print) : print), [printing, onProduct, productView, placed, print]);
+  const shown = ready && (printing || product.status !== 'loading');
+
+  // The approval's thumbnail is always the preview (flat or on the product), never the print check
+  // view: from there, Review switches back and pictures the preview once it is drawn.
+  const printingNow = useRef(printing);
+  const waiting = useRef<((url: string | null) => void)[]>([]);
+  useEffect(() => {
+    printingNow.current = printing;
+  }, [printing]);
+  useEffect(() => {
+    if (printing || !shown || waiting.current.length === 0) return;
+    const frame = requestAnimationFrame(() => {
+      const url = snap();
+      for (const resolve of waiting.current.splice(0)) resolve(url);
+    });
+    return () => cancelAnimationFrame(frame);
+  }, [printing, shown, stageVersion, snap]);
+  const capture = useCallback((): Promise<string | null> => {
+    if (!printingNow.current) return Promise.resolve(snap());
+    return new Promise((resolve) => {
+      const done = (url: string | null) => {
+        clearTimeout(timer);
+        resolve(url);
+      };
+      // Never hold the approval up: without a picture in 5 s, approve without a thumbnail.
+      const timer = setTimeout(() => {
+        waiting.current = waiting.current.filter((w) => w !== done);
+        resolve(null);
+      }, 5000);
+      waiting.current.push(done);
+      onPrintView?.(false);
+    });
+  }, [snap, onPrintView]);
   const sized = available.width > 0 && available.height > 0;
   const viewport = useMemo(() => (sized ? viewportFor(zoom, available, space) : { scale: 0, x: 0, y: 0 }), [sized, zoom, available, space]);
   const fitPercent = sized ? percentOf(previewFit(available, space), space) : 100;
@@ -168,7 +250,7 @@ function PreviewBody({ document, surface, profile, view, productOnly = false, re
       if (next === 'fit') setZoom({ mode: 'fit' });
       else setZoom((z) => ({ mode: 'manual', viewport: zoomToPercent(viewportFor(z, available, space), next, available, space, anchor) }));
     },
-    [available, space],
+    [available, space, setZoom],
   );
   const step = useCallback((direction: 1 | -1) => zoomTo(stepPreviewPercent(percent, direction, fitPercent)), [zoomTo, percent, fitPercent]);
 
@@ -177,7 +259,7 @@ function PreviewBody({ document, surface, profile, view, productOnly = false, re
   const switchSide = (id: string) => {
     onSide(id);
     if (wanted) setZoom({ mode: 'fit' });
-    else if (zoom.mode === 'manual') setZoom({ mode: 'manual', viewport: zoomToPercent({ scale: 0, x: 0, y: 0 }, percent, available, print) });
+    else if (zoom.mode === 'manual') setZoom({ mode: 'manual', viewport: zoomToPercent({ scale: 0, x: 0, y: 0 }, percent, available, space) });
   };
   // Flat and on the product show different things, so each starts fitted.
   const switchView = (next: PreviewMode) => {
@@ -201,7 +283,7 @@ function PreviewBody({ document, surface, profile, view, productOnly = false, re
     };
     area.addEventListener('wheel', onWheel, { passive: false });
     return () => area.removeEventListener('wheel', onWheel);
-  }, [sized, pannable, percent, viewport, available, space, zoomTo]);
+  }, [sized, pannable, percent, viewport, available, space, zoomTo, setZoom]);
 
   // Dragging (mouse, pen or one finger) moves the piece once it's bigger than the screen.
   const drag = useRef<{ id: number; x: number; y: number } | null>(null);
@@ -263,11 +345,40 @@ function PreviewBody({ document, surface, profile, view, productOnly = false, re
     wanted && !onProduct ? PRODUCT_VIEW_UNAVAILABLE : null,
     onProduct && colourUnavailable(product.view, colour, product.tint) ? COLOUR_UNAVAILABLE : null,
   ].filter((n): n is string => n !== null);
-  const toggle = offered && !productOnly && (
+  const toggle = offered && !productOnly && !printing && (
     <>
       <ProductViewToggle label="Preview view" testId="preview-view-toggle" value={view} onChange={switchView} />
     </>
   );
+  // Review (M6): Preview or Print check.
+  const reviewToggle = review && checks && onPrintView && (
+    <div data-testid="review-view-toggle" className="shrink-0">
+      <SegmentedControl
+        label="Review view"
+        size="sm"
+        options={[
+          { value: 'preview', label: 'Preview' },
+          { value: 'print', label: 'Print check' },
+        ]}
+        value={reviewView}
+        onValueChange={(next) => onPrintView(next === 'print')}
+        className="pointer-coarse:*:h-11"
+      />
+    </div>
+  );
+  const sideStatus = checks?.readiness.sides.find((s) => s.surfaceId === surface.id);
+  const flagged = useMemo(
+    () =>
+      (checks?.report.sides.find((s) => s.surfaceId === surface.id)?.issues ?? [])
+        .filter((i): i is typeof i & { elementId: string; level: 'serious' | 'warning' } => i.elementId !== null && i.level !== 'notice')
+        .map((i) => ({ elementId: i.elementId, level: i.level })),
+    [checks, surface.id],
+  );
+  // Side tabs say each side's print check status in the print check view.
+  const sideNote = printing && checks ? (s: SurfaceDesign) => {
+    const found = checks.readiness.sides.find((r) => r.surfaceId === s.id);
+    return found ? READINESS_LABELS[found.status] : '';
+  } : undefined;
 
   return (
     <div className="flex min-h-0 flex-1 flex-col">
@@ -278,7 +389,8 @@ function PreviewBody({ document, surface, profile, view, productOnly = false, re
             {document.name}
           </p>
         </div>
-        {!phone && sided && <SidePicker document={document} active={surface.id} onSelect={switchSide} />}
+        {!phone && sided && <SidePicker document={document} active={surface.id} onSelect={switchSide} note={sideNote} />}
+        {roomy && reviewToggle}
         {roomy && toggle}
         {!phone && <ZoomControls percent={percent} limits={limits} fit={zoom.mode === 'fit'} onStep={step} onZoom={zoomTo} />}
         <DialogPrimitive.Close asChild>
@@ -287,7 +399,9 @@ function PreviewBody({ document, surface, profile, view, productOnly = false, re
       </header>
       <DialogPrimitive.Description id="studio-preview-description" className="sr-only">
         {review ? `${review.description} ` : ''}
-        {onProduct
+        {printing
+          ? `Print check of ${sided ? `the ${surface.label.toLowerCase()} of ` : ''}“${document.name}”: the whole print area (${formatSize(size.width, size.height)} trim${print.bleedPx > 0 ? ' plus bleed' : ''}) with the trim, bleed and safe zone drawn, and anything worth checking outlined. Escape closes the review.`
+          : onProduct
           ? `How ${sided ? `the ${surface.label.toLowerCase()} of ` : ''}“${document.name}” will look on the product (${formatSize(size.width, size.height)} print), shown on a product photo; colours and fit are approximate. Guides, bleed and editing controls are hidden. Escape closes the preview.`
           : `How ${sided ? `the ${surface.label.toLowerCase()} of ` : ''}“${document.name}” will look once printed and trimmed (${formatSize(size.width, size.height)}). Guides, bleed and editing controls are hidden. Escape closes the preview.`}
       </DialogPrimitive.Description>
@@ -298,12 +412,12 @@ function PreviewBody({ document, surface, profile, view, productOnly = false, re
       <section
         ref={areaRef}
         aria-roledescription="preview"
-        aria-label={`${sideName}${onProduct ? ' on the product' : ''}: ${status ?? `${visibleCount(surface)} ${visibleCount(surface) === 1 ? 'item' : 'items'}`}, ${formatSize(size.width, size.height)}.${pannable ? ' Arrow keys move around.' : ''}`}
+        aria-label={`${sideName}${printing ? ' print check' : onProduct ? ' on the product' : ''}: ${status ?? `${visibleCount(surface)} ${visibleCount(surface) === 1 ? 'item' : 'items'}`}${printing && sideStatus ? `, ${READINESS_LABELS[sideStatus.status]} (${sideStatus.detail.toLowerCase()})` : ''}, ${formatSize(size.width, size.height)}.${pannable ? ' Arrow keys move around.' : ''}`}
         // oxlint-disable-next-line jsx-a11y/no-noninteractive-tabindex -- focusable only while zoomed in, so arrow keys can move around
         tabIndex={pannable ? 0 : -1}
         data-testid="preview-area"
         data-zoom={zoom.mode}
-        data-view={onProduct ? 'product' : 'flat'}
+        data-view={printing ? 'print' : onProduct ? 'product' : 'flat'}
         data-tint={onProduct ? product.tint : undefined}
         onKeyDown={onArtworkKey}
         onPointerDown={onPointerDown}
@@ -320,7 +434,9 @@ function PreviewBody({ document, surface, profile, view, productOnly = false, re
               <PreviewBoundary onError={() => setFailed(true)}>
                 <Suspense fallback={null}>
                   <div aria-hidden="true" className={cn('absolute inset-0 transition-opacity', shown ? 'opacity-100' : 'opacity-0')}>
-                    {!onProduct ? (
+                    {printing ? (
+                      <PrintCanvas surface={surface} width={available.width} height={available.height} viewport={viewport} flagged={flagged} onStage={onStage} />
+                    ) : !onProduct ? (
                       <Canvas surface={surface} width={available.width} height={available.height} viewport={viewport} onStage={onStage} />
                     ) : (
                       photo &&
@@ -366,18 +482,32 @@ function PreviewBody({ document, surface, profile, view, productOnly = false, re
       </section>
 
       <footer className="flex shrink-0 flex-wrap items-center justify-between gap-x-4 gap-y-2 border-t border-border bg-surface px-3 py-2 md:px-4">
-        {phone && sided && <SidePicker document={document} active={surface.id} onSelect={switchSide} />}
+        {phone && sided && <SidePicker document={document} active={surface.id} onSelect={switchSide} note={sideNote} />}
         {phone && <ZoomControls percent={percent} limits={limits} fit={zoom.mode === 'fit'} onStep={step} onZoom={zoomTo} />}
+        {!roomy && reviewToggle}
         {!roomy && toggle}
-        <p className={cn('text-caption text-fg-muted', phone && 'w-full')}>
-          <span className="font-semibold text-fg">{sided ? surface.label : 'Design'}</span> ·{' '}
-          {onProduct
-            ? `on the product · ${formatSize(size.width, size.height)} print on a ${import.meta.env.DEV && profile.devFixtures ? 'stand-in photo (development only)' : 'product photo, colours approximate'}`
-            : `${formatSize(size.width, size.height)}, trimmed · guides and bleed hidden`}
-        </p>
+        {printing ? (
+          <div className={cn('flex min-w-0 flex-col gap-1', phone && 'w-full')}>
+            {/* Phones keep the drawing as tall as they can: the size is in the panel and the area's name. */}
+            {!phone && (
+              <p className="text-caption text-fg-muted">
+                <span className="font-semibold text-fg">{sided ? surface.label : 'Design'}</span> · print area {formatSize(size.width, size.height)}
+                {print.bleedPx > 0 ? ' plus bleed' : ''}
+              </p>
+            )}
+            <PrintLegend print={print} compact={phone} />
+          </div>
+        ) : (
+          <p className={cn('text-caption text-fg-muted', phone && 'w-full')}>
+            <span className="font-semibold text-fg">{sided ? surface.label : 'Design'}</span> ·{' '}
+            {onProduct
+              ? `on the product · ${formatSize(size.width, size.height)} print on a ${import.meta.env.DEV && profile.devFixtures ? 'stand-in photo (development only)' : 'product photo, colours approximate'}`
+              : `${formatSize(size.width, size.height)}, trimmed · guides and bleed hidden`}
+          </p>
+        )}
       </footer>
       </div>
-      {review && <review.Panel capture={capture} />}
+      {review && checks && onPrintView && <review.Panel capture={capture} checks={checks} printView={printing} onPrintView={onPrintView} surface={surface} />}
       </div>
       <ZoomAnnouncer percent={percent} fit={zoom.mode === 'fit'} />
     </div>
@@ -394,7 +524,7 @@ function isBlank(surface: SurfaceDesign): boolean {
  * Front and back as thumbnails: a radio group (arrow keys move between sides), each named by its
  * side and marked when empty. Only the sides the product really has are shown.
  */
-function SidePicker({ document, active, onSelect, className }: { document: DesignDocument; active: string; onSelect(id: string): void; className?: string }) {
+function SidePicker({ document, active, onSelect, note, className }: { document: DesignDocument; active: string; onSelect(id: string): void; note?: ((surface: SurfaceDesign) => string) | undefined; className?: string }) {
   const { Thumbnail } = previewRenderer();
   return (
     <RadioGroupPrimitive.Root
@@ -434,7 +564,7 @@ function SidePicker({ document, active, onSelect, className }: { document: Desig
             </span>
             <span className="flex flex-col leading-tight">
               <span className="text-body-sm font-semibold">{surface.label}</span>{' '}
-              <span className={cn('text-caption', checked ? 'text-accent-strong' : 'text-fg-muted')}>{isBlank(surface) ? 'Empty' : `${count} ${count === 1 ? 'item' : 'items'}`}</span>
+              <span className={cn('text-caption', checked ? 'text-accent-strong' : 'text-fg-muted')}>{note ? note(surface) : isBlank(surface) ? 'Empty' : `${count} ${count === 1 ? 'item' : 'items'}`}</span>
             </span>
           </RadioGroupPrimitive.Item>
         );

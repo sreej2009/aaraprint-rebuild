@@ -165,19 +165,23 @@ describe('proof layout', () => {
     expect(proofLayout([{ ...CARD, bleedPx: 0 }]).panels[0]!.bleed).toBe(0);
   });
 
-  it('names the file after the design and the sides in it', () => {
-    expect(proofFileName('Riya’s Visiting Card', 'all')).toBe('riyas-visiting-card-proof.png');
-    expect(proofFileName('Café menu', ['Back'])).toBe('cafe-menu-back-proof.png');
-    expect(proofFileName('***', 'all')).toBe('design-proof.png');
+  it('names the file after the product and the sides in it, deterministically (M6: aaraprint-{product}-proof)', () => {
+    expect(proofFileName('business-card-classic', 'all')).toBe('aaraprint-business-card-classic-proof.png');
+    expect(proofFileName('business-card-classic', ['Back'])).toBe('aaraprint-business-card-classic-back-proof.png');
+    expect(proofFileName('umbrella-golf', 'all', 'pdf')).toBe('aaraprint-umbrella-golf-proof.pdf');
+    expect(proofFileName('Café menu', ['Front', 'Back'])).toBe('aaraprint-cafe-menu-front-back-proof.png');
+    expect(proofFileName('***', 'all')).toBe('aaraprint-design-proof.png');
+    // The same product and sides always give the same name: no random ids.
+    expect(proofFileName('business-card-classic', 'all')).toBe(proofFileName('business-card-classic', 'all'));
   });
 
   it('says what it is: a proof, not a print-ready file; scaled or not; the warnings', () => {
     const doc = design((d) => d.surfaces[0]!.elements.push(createTextElement({ x: 100, y: 100, width: 400, height: 60 }, { text: 'Hello' })));
     const texts = proofTexts(doc, 'Classic Visiting Cards', [doc.surfaces[0]!], proofLayout([CARD]), 2);
-    expect(texts.sides).toEqual([{ label: 'Front', note: '88.9 × 50.8 mm · 1.5 mm bleed' }]);
+    expect(texts.sides).toEqual([{ label: 'Front', note: '88.9 × 50.8 mm · 1.5 mm bleed · 2 mm safe zone' }]);
     expect(texts.lines).toEqual([
       'Proof only — not a print-ready file. Colours on screen and in print can differ.',
-      'The dark line is the trim: the tinted edge outside it (bleed) is cut off.',
+      'The dark line is the trim: the tinted edge outside it (bleed) is cut off. The dashed line is the safe zone.',
       'At full print resolution (300 DPI).',
       'Print check: 2 warnings — see the Studio’s print check.',
     ]);
