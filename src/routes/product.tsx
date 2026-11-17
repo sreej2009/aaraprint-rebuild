@@ -81,7 +81,7 @@ function ProductView({ product, profile, category, related }: Route.ComponentPro
   // The product's design session (Phase 4 M2): the options shown are its product configuration.
   // It starts from the default variant (the pre-rendered HTML), then restores the saved design and
   // applies a ?variantId= deep link in the browser.
-  const session = useProductDesignSession({ product, profile, linkedVariantId: params.get('variantId') });
+  const session = useProductDesignSession({ product, profile, linkedVariantId: params.get('variantId'), designId: params.get('designId') });
 
   // Keep ?variantId= on the resolved variant, so the page can be shared and reloaded as chosen.
   const variantId = useStore(session.store, (s) => s.document.product.variantId);

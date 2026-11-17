@@ -2,6 +2,7 @@ import { Search, ShoppingBag, UserRound } from 'lucide-react';
 import { Link } from 'react-router';
 import { BrandLogo, buttonClasses } from '@/design-system';
 import { cn } from '@/lib/cn';
+import { useCartLines } from '@/features/cart/cart';
 import { HeaderSearch } from './header-search';
 import { MobileNav } from './mobile-nav';
 import { ProductsMenu } from './products-menu';
@@ -10,8 +11,8 @@ const actionClasses =
   'inline-flex h-11 items-center gap-2 rounded-full px-3 text-body-sm font-medium text-fg transition-colors duration-150 hover:bg-surface-subtle';
 
 export function SiteHeader() {
-  // Cart contents arrive with the cart in Phase 6.
-  const cartCount: number = 0;
+  // The cart in this browser (Phase 4 M5); empty while pre-rendering.
+  const cartCount = useCartLines().length;
 
   return (
     <header className="sticky top-0 z-40 border-b border-border bg-surface/95 backdrop-blur-md supports-[backdrop-filter]:bg-surface/85">

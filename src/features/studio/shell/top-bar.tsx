@@ -1,5 +1,4 @@
-import { ArrowLeft, ArrowRight, PanelRightOpen, Redo2, Undo2 } from 'lucide-react';
-import type { MouseEvent, ReactNode } from 'react';
+import { ArrowLeft, PanelRightOpen, Redo2, Undo2 } from 'lucide-react';
 import { Link } from 'react-router';
 import { Button, IconButton, Separator, Tooltip } from '@/design-system';
 import { formatINR } from '@/lib/format';
@@ -8,6 +7,7 @@ import { selectCanRedo, selectCanUndo, selectRedoLabel, selectUndoLabel, useStud
 import { ZoomControl } from '../canvas/zoom-control';
 import { PrintCheckButton } from '../preflight/print-check-dialog';
 import { PreviewButton } from '../preview/preview-dialog';
+import { ReviewButton } from '../approval/review-dialog';
 import { SaveStatus } from './save-status';
 import { unitPriceCents, useStudioSession } from './session-context';
 import { SideMenu, SideSwitcher } from './side-controls';
@@ -56,11 +56,8 @@ export function TopBar({ title }: { title: string }) {
         <PreviewButton iconOnly={layout === 'phone' || layout === 'tablet'} />
         {/* Print check and proof download (M15): advice and a PNG proof, never blocking. */}
         <PrintCheckButton iconOnly={layout === 'phone' || layout === 'tablet'} />
-        <ComingSoon hint="Reviewing and ordering your design is coming soon" primary>
-          {/* Icon only on tablets, so the design name keeps its room next to Preview and Print check. */}
-          <span className={cn(layout === 'tablet' && 'sr-only')}>{phone ? 'Next' : 'Continue'}</span>
-          <ArrowRight aria-hidden="true" className="max-md:hidden" />
-        </ComingSoon>
+        {/* Review your design → Approve and continue (Phase 4 M5). Icon only on tablets, so the design name keeps its room. */}
+        <ReviewButton label={phone ? 'Next' : 'Continue'} iconOnly={layout === 'tablet'} />
       </div>
     </header>
   );
@@ -131,25 +128,3 @@ function ProductSummary() {
   );
 }
 
-/**
- * A control whose feature arrives later in Phase 3. It stays focusable (aria-disabled, not
- * disabled) so keyboard and screen-reader users can find out why it doesn't do anything yet.
- * Its accessible name is its visible text (sr-only where the text is hidden), per WCAG 2.5.3.
- */
-function ComingSoon({ hint, primary, children }: { hint: string; primary?: boolean; children: ReactNode }) {
-  const ignore = (event: MouseEvent) => event.preventDefault();
-  return (
-    <Tooltip content={hint}>
-      <Button
-        variant={primary ? 'primary' : 'secondary'}
-        size="sm"
-        aria-disabled="true"
-        aria-description={hint}
-        onClick={ignore}
-        className={cn(primary ? 'bg-accent/45 hover:bg-accent/45' : 'text-fg-muted hover:bg-transparent')}
-      >
-        {children}
-      </Button>
-    </Tooltip>
-  );
-}

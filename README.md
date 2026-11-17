@@ -49,7 +49,10 @@ src/
   routes/                  route modules: home, category, product, search, content-page, faq, contact, credits,
                            design-system, planned (Phase 6 placeholders), 404, studio (Design Studio)
   features/catalogue/      listing logic (filters, facets, sort, pages), search, product card/image, filter panel, listing view
-  features/product/        option selection & price display, gallery, purchase panel, details, print specs
+  features/product/        option selection & price display, gallery, purchase panel, details, print specs,
+                           the attached design card and Add to cart (Phase 4 M5)
+  features/cart/           the cart in this browser behind a CartService boundary, cart lines and /cart (Phase 4 M5)
+  features/account/        the account boundary (no sign-in backend yet: Phase 6)
   features/product-workflow/ product families (26), their options and capabilities, the product configuration
                            saved in designs, and variant/price resolution (data and pure functions; plan §21)
   features/product-options/ product options UI on the product page: registry-driven options bound to the
@@ -123,7 +126,7 @@ e2e/                       Playwright specs (routing, navigation, keyboard, axe 
 | 1 | Foundations — tokens, components, shell, routing + pre-rendering, data layer, tests, asset recovery | ✅ Done |
 | 2 | Catalogue, product pages and content pages | ✅ Done |
 | 3 | Design Studio core — all customisable products, flat artwork view, desktop/tablet/phone | ✅ Done (plan §18.19) |
-| 4 | Studio advanced (snapping, QR, preflight, on-product apparel & wrap modes, options panel) | In progress: M1 product view, M2 on-product workspace, M3 product colour, M4 pens and mugs done (plan §19); workflow parity track M1 schema v3 + product family registry, M2 product options UI, M3 "Design it" entry workflow, M4 product-first Studio workspace, M4-C photo-frame correction and M4-C2 photo-frame rendering done (plan §21) |
+| 4 | Studio advanced (snapping, QR, preflight, on-product apparel & wrap modes, options panel) | In progress: M1 product view, M2 on-product workspace, M3 product colour, M4 pens and mugs done (plan §19); workflow parity track M1 schema v3 + product family registry, M2 product options UI, M3 "Design it" entry workflow, M4 product-first Studio workspace, M4-C photo-frame correction, M4-C2 photo-frame rendering and M5 Review → Approve → design attached → cart done (plan §21) |
 | 5 | 3D previews and remaining product modes | — |
 | 6 | Cart, checkout (pay on delivery), accounts, tracking — needs backend | — |
 | 7 | Polish, performance, SEO and launch | — |

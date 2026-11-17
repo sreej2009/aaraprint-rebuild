@@ -24,6 +24,9 @@ import type { Product } from '@/lib/catalogue/types';
  * - Saving code (repository, restore, save controller, validator) loads after the page is
  *   interactive, so it never weighs on the product page's first load.
  * - Products ordered without a design (no Studio profile) keep their choices in memory only.
+ * - `?designId=` (the Studio's handoff after "Approve and continue", Phase 4 M5) restores exactly
+ *   that design; its approval comes with its record. A missing or another product's design falls
+ *   back to the latest one, so a stale link never shows a design that isn't there.
  */
 
 export type SessionPersistence =
@@ -51,6 +54,8 @@ export interface ProductDesignSessionOptions {
   profile: StudioProfile | null;
   /** `?variantId=` from the URL (null when absent). */
   linkedVariantId: string | null;
+  /** `?designId=` from the URL (null when absent): the design to continue. */
+  designId?: string | null;
   /** Where designs are saved; defaults to this browser's IndexedDB. Injectable for tests. */
   repository?: DesignRepository | null;
 }
@@ -85,7 +90,7 @@ export function createSessionStore(product: Product, profile: StudioProfile | nu
   return store;
 }
 
-export function useProductDesignSession({ product, profile, linkedVariantId, repository: injected }: ProductDesignSessionOptions): ProductDesignSession {
+export function useProductDesignSession({ product, profile, linkedVariantId, designId = null, repository: injected }: ProductDesignSessionOptions): ProductDesignSession {
   const workflow = useMemo(() => productWorkflow(product.slug), [product.slug]);
   const [store] = useState(() => createSessionStore(product, profile, workflow));
   const [controller, setController] = useState<SaveController | null>(null);
@@ -132,7 +137,8 @@ export function useProductDesignSession({ product, profile, linkedVariantId, rep
         // Changes made before the saving code arrived: write them now.
         if (store.getState().history.past.length > 0) void first.saveNow();
 
-        const result = await openSavedDesign(repository, { productSlug: product.slug, designId: null });
+        let result = await openSavedDesign(repository, { productSlug: product.slug, designId });
+        if (designId && result.kind !== 'restored' && !(result.kind === 'new' && result.storageError)) result = await openSavedDesign(repository, { productSlug: product.slug, designId: null });
         if (!live) return;
         if (result.kind === 'new' && result.storageError) {
           setPersistence('memory');

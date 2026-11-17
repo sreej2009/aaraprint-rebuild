@@ -27,8 +27,8 @@ export default [
     route('contact', 'routes/contact.tsx'),
     route('credits', 'routes/credits.tsx'),
 
-    // Commerce — Phase 6
-    planned('cart', 'cart'),
+    // Commerce: the cart (Phase 4 M5); checkout, tracking and accounts — Phase 6
+    route('cart', 'routes/cart.tsx'),
     planned('checkout', 'checkout'),
     planned('track-order', 'track-order'),
     planned('account', 'account'),

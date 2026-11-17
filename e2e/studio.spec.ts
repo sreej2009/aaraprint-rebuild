@@ -177,10 +177,14 @@ test.describe('keyboard and accessibility', () => {
     await expect(page.getByRole('link', { name: 'Skip to content' })).toBeFocused();
     await page.keyboard.press('Tab');
     await expect(page.getByRole('link', { name: 'Back to product' })).toBeFocused();
-    // Not built yet: focusable, announced as unavailable, and says why.
-    const coming = page.getByRole('button', { name: 'Continue' });
-    await expect(coming).toHaveAttribute('aria-disabled', 'true');
-    await expect(coming).toHaveAccessibleDescription(/coming soon/);
+    // Continue opens Review your design (Phase 4 M5) from the keyboard; Escape closes it back here.
+    const next = page.getByRole('button', { name: 'Continue', exact: true });
+    await next.focus();
+    await page.keyboard.press('Enter');
+    await expect(page.getByRole('dialog', { name: 'Review your design' })).toBeVisible();
+    await page.keyboard.press('Escape');
+    await expect(page.getByRole('dialog', { name: 'Review your design' })).toHaveCount(0);
+    await expect(next).toBeFocused();
   });
 
   test('no detectable WCAG 2.2 AA violations with panels and sheets open', async ({ page }, info) => {

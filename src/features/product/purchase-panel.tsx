@@ -1,5 +1,5 @@
-import { CircleCheck, PenTool, RefreshCcw, Truck, Upload, Wallet } from 'lucide-react';
-import { useEffect, useMemo, useRef, useState, type MouseEvent } from 'react';
+import { CircleCheck, PenTool, RefreshCcw, ShoppingCart, Truck, Upload, Wallet } from 'lucide-react';
+import { useEffect, useMemo, useRef, useState, useSyncExternalStore, type MouseEvent } from 'react';
 import { Link, useNavigate } from 'react-router';
 import { useStore } from 'zustand';
 import { Badge, Button, Callout, Price } from '@/design-system';
@@ -12,6 +12,11 @@ import { resolvePrice } from '@/features/product-workflow/pricing';
 import { needsEntry, nonEntryIssues, type EntryDraft } from '@/features/product-workflow/entry';
 import type { Product } from '@/lib/catalogue/types';
 import { formatINR } from '@/lib/format';
+import { cartService, type AddResult } from '@/features/cart/cart';
+import { cartLineFor } from '@/features/cart/line';
+import { approvalStatus } from '@/features/studio/approval/approval-status';
+import { variantSummary } from '@/features/studio/shell/variant';
+import { AttachedDesign } from './attached-design';
 
 export interface PurchasePanelProps {
   product: Product;
@@ -36,6 +41,24 @@ export function PurchasePanel({ product, categoryName, session }: PurchasePanelP
   const issues = useMemo(() => (workflow ? nonEntryIssues(product, workflow, configuration) : []), [product, workflow, configuration]);
   const variantId = price.status === 'priced' ? price.variantId : undefined;
   const ready = issues.length === 0;
+
+  // The design attached to this product (Phase 4 M5): this browser's saved design and its approval
+  // (the save controller's), current only while the design is exactly what was approved.
+  const document = useStore(store, (s) => s.document);
+  const approval = useSyncExternalStore(
+    (listener) => session.controller?.state.subscribe(listener) ?? (() => {}),
+    () => session.controller?.state.getState().approval ?? null,
+    () => null,
+  );
+  const status = useMemo(() => (product.isCustomizable ? approvalStatus(approval, document) : 'none'), [product.isCustomizable, approval, document]);
+  const optionsLabel = useMemo(() => variantSummary(product, price.status === 'priced' ? price.variant : undefined), [product, price]);
+  const editHref = `/products/${product.slug}/design?design=${encodeURIComponent(document.id)}`;
+  const [added, setAdded] = useState<{ result: AddResult; lineId: string } | { result: 'failed'; reason: string } | null>(null);
+  const addToCart = () => {
+    if (!approval || status !== 'approved') return;
+    const built = cartLineFor({ product, document, approval, price, optionsLabel, now: Date.now() });
+    setAdded(built.ok ? { result: cartService().add(built.line), lineId: built.line.lineId } : { result: 'failed', reason: built.reason });
+  };
   const navigate = useNavigate();
   const [entry, setEntry] = useState<'design' | 'upload' | null>(null);
   // The link that opened the entry step gets focus back when it closes.
@@ -92,6 +115,22 @@ export function PurchasePanel({ product, categoryName, session }: PurchasePanelP
         <Callout tone="warning">This product’s options can’t be shown right now. Please contact us to order it.</Callout>
       )}
 
+      {approval && status !== 'none' && (
+        <AttachedDesign
+          status={status}
+          approval={approval}
+          designName={document.name}
+          optionsLabel={optionsLabel}
+          quantity={document.product.configuration.quantity}
+          totalCents={price.status === 'priced' ? price.totalPriceCents : null}
+          editHref={editHref}
+          onRemove={async () => {
+            setAdded(null);
+            await session.controller?.clearApproval();
+          }}
+        />
+      )}
+
       <div className="flex flex-col gap-4 rounded-lg border border-border bg-surface-subtle p-5">
         <div aria-live="polite" className="flex flex-col gap-1" data-price-summary>
           <span className="text-caption font-medium text-fg-muted">Your price</span>
@@ -121,7 +160,37 @@ export function PurchasePanel({ product, categoryName, session }: PurchasePanelP
           )}
         </div>
         <div ref={ctaRef} className="flex flex-col gap-2">
-          {product.isCustomizable ? (
+          {product.isCustomizable && status === 'approved' ? (
+            <>
+              <div className="flex flex-col gap-2 sm:flex-row">
+                <Button size="lg" className="flex-1" onClick={addToCart} data-testid="add-to-cart">
+                  <ShoppingCart aria-hidden="true" /> Add to cart
+                </Button>
+                <Button asChild size="lg" variant="secondary" className="flex-1">
+                  <Link to={editHref}>
+                    <PenTool aria-hidden="true" /> Edit design
+                  </Link>
+                </Button>
+              </div>
+              <div aria-live="polite" data-testid="cart-confirmation">
+                {added && added.result !== 'failed' && (
+                  <Callout tone="success" className="py-3">
+                    <span className="flex flex-wrap items-center gap-x-3 gap-y-1">
+                      {added.result === 'added' ? 'Added to cart.' : 'This approved design is already in your cart.'}
+                      <Link to="/cart" className="font-semibold underline underline-offset-2">
+                        View cart
+                      </Link>
+                    </span>
+                  </Callout>
+                )}
+                {added?.result === 'failed' && (
+                  <Callout tone="warning" className="py-3">
+                    {added.reason}
+                  </Callout>
+                )}
+              </div>
+            </>
+          ) : product.isCustomizable ? (
             ready ? (
               <div className="flex flex-col gap-2 sm:flex-row">
                 <Button asChild size="lg" className="flex-1">
@@ -150,7 +219,7 @@ export function PurchasePanel({ product, categoryName, session }: PurchasePanelP
         </div>
         <Callout tone="info" className="py-3">
           {product.isCustomizable
-            ? 'Online cart and checkout are being rebuilt. Your design will be ready to order as soon as they launch.'
+            ? 'Design it, review and approve it, then add it to your cart. Online checkout is being rebuilt — contact us to place your order meanwhile.'
             : 'This product is ordered without a design. Online cart and checkout are being rebuilt — contact us to order now.'}
         </Callout>
       </div>
@@ -185,7 +254,11 @@ export function PurchasePanel({ product, categoryName, session }: PurchasePanelP
       >
         <div className="mx-auto flex max-w-xl items-center justify-between gap-3">
           {price.status === 'priced' ? <Price amount={price.totalPriceCents} size="md" /> : <span className="text-body-sm text-fg-muted">Choose your options</span>}
-          {product.isCustomizable && ready && (
+          {product.isCustomizable && status === 'approved' ? (
+            <Button tabIndex={ctaVisible ? -1 : undefined} onClick={addToCart}>
+              <ShoppingCart aria-hidden="true" /> Add to cart
+            </Button>
+          ) : product.isCustomizable && ready && (
             <Button asChild tabIndex={ctaVisible ? -1 : undefined}>
               <Link to={designHref(product.slug, variantId)} tabIndex={ctaVisible ? -1 : undefined} onClick={startDesigning('design')}>
                 Start designing

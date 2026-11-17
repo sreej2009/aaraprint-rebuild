@@ -1,4 +1,4 @@
-import { ASSETS_STORE, DB_NAME, DB_VERSION, DESIGNS_STORE, StorageError, summarise, toStorageError, VERSIONS_STORE, type AssetRecord, type AssetSummary, type DesignRecord, type VersionRecord, type VersionSummary } from './records';
+import { prunable, ASSETS_STORE, DB_NAME, DB_VERSION, DESIGNS_STORE, StorageError, summarise, toStorageError, VERSIONS_STORE, type AssetRecord, type AssetSummary, type DesignRecord, type VersionRecord, type VersionSummary } from './records';
 
 /**
  * Where designs are kept. One contract, two implementations: IndexedDB in the browser, and an
@@ -96,7 +96,7 @@ export function createMemoryRepository(): MemoryRepository {
     async addVersion(version, limit) {
       writing();
       versions.set(version.versionId, clone(version));
-      const mine = [...versions.values()].filter((v) => v.designId === version.designId).sort(newestFirst);
+      const mine = [...versions.values()].filter((v) => v.designId === version.designId && prunable(v)).sort(newestFirst);
       for (const old of mine.slice(Math.max(1, limit))) versions.delete(old.versionId);
     },
     async putAsset(asset) {
@@ -233,7 +233,7 @@ export function createIdbRepository(factory?: IDBFactory): DesignRepository {
       const finished = done(tx);
       store.put(version);
       const keys = (await request(store.index('designId').getAll(version.designId))) as VersionRecord[];
-      for (const old of keys.sort(newestFirst).slice(Math.max(1, limit))) store.delete(old.versionId);
+      for (const old of keys.filter(prunable).sort(newestFirst).slice(Math.max(1, limit))) store.delete(old.versionId);
       await finished;
     },
 

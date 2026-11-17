@@ -1,6 +1,7 @@
+import type Konva from 'konva';
 import { ChevronDown, Eye, Maximize, X, ZoomIn, ZoomOut } from 'lucide-react';
 import { Dialog as DialogPrimitive, RadioGroup as RadioGroupPrimitive } from 'radix-ui';
-import { Component, Suspense, useCallback, useEffect, useMemo, useRef, useState, type KeyboardEvent, type PointerEvent, type ReactNode } from 'react';
+import { Component, Suspense, type ComponentType, useCallback, useEffect, useMemo, useRef, useState, type KeyboardEvent, type PointerEvent, type ReactNode } from 'react';
 import { Button, DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger, IconButton, Spinner } from '@/design-system';
 import { cn } from '@/lib/cn';
 import { finishedSizeMm } from '../geometry/boxes';
@@ -41,7 +42,19 @@ export function PreviewButton({ iconOnly }: { iconOnly: boolean }) {
   );
 }
 
-function PreviewDialog() {
+/**
+ * Review your design (Phase 4 M5) is this same dialog — the same drawing, sides, zoom and product
+ * view — with a review panel beside the preview (below it on phones). `Panel` gets `capture`,
+ * a small PNG of what the preview shows now (null when it can't be drawn), for the approval.
+ */
+export interface ReviewSlot {
+  title: string;
+  closeLabel: string;
+  description: string;
+  Panel: ComponentType<{ capture: () => string | null }>;
+}
+
+export function PreviewDialog({ review }: { review?: ReviewSlot } = {}) {
   const document = useStudio((s) => s.document);
   const { profile, workspace } = useStudioSession();
   const studio = useStudioStoreApi();
@@ -60,7 +73,7 @@ function PreviewDialog() {
       <DialogPrimitive.Content
         ref={contentRef}
         aria-describedby="studio-preview-description"
-        data-testid="studio-preview"
+        data-testid={review ? 'studio-review' : 'studio-preview'}
         data-modal-dialog=""
         onOpenAutoFocus={(event) => {
           event.preventDefault();
@@ -68,7 +81,7 @@ function PreviewDialog() {
         }}
         className="fixed inset-0 z-50 flex flex-col bg-surface-sunken outline-none data-[state=open]:animate-fade-in"
       >
-        <PreviewBody key={attempt} document={document} surface={surface} profile={profile} view={productOnly ? 'product' : view} productOnly={productOnly} onView={setView} onSide={setSideId} onRetry={() => setAttempt((n) => n + 1)} />
+        <PreviewBody key={attempt} document={document} surface={surface} profile={profile} view={productOnly ? 'product' : view} productOnly={productOnly} review={review} onView={setView} onSide={setSideId} onRetry={() => setAttempt((n) => n + 1)} />
       </DialogPrimitive.Content>
     </DialogPrimitive.Portal>
   );
@@ -89,12 +102,14 @@ interface BodyProps {
   view: PreviewMode;
   /** The product is the only view (photo-frame families): no Flat switch. */
   productOnly?: boolean;
+  /** Review your design (Phase 4 M5): the review panel and its texts. */
+  review?: ReviewSlot | undefined;
   onView(view: PreviewMode): void;
   onSide(id: string): void;
   onRetry(): void;
 }
 
-function PreviewBody({ document, surface, profile, view, productOnly = false, onView, onSide, onRetry }: BodyProps) {
+function PreviewBody({ document, surface, profile, view, productOnly = false, review, onView, onSide, onRetry }: BodyProps) {
   const ready = usePreviewReady(document.surfaces);
   // Phones keep the header short: sides and zoom move to the bottom bar (and the view toggle on tablets too).
   const layout = useStudioUi().layout;
@@ -106,6 +121,20 @@ function PreviewBody({ document, surface, profile, view, productOnly = false, on
   const available = fixedSize ?? measured;
   const [zoom, setZoom] = useState<PreviewZoom>({ mode: 'fit' });
   const [failed, setFailed] = useState(false);
+  // The drawn stage (flat or on the product), for the approval's thumbnail.
+  const stageRef = useRef<Konva.Stage | null>(null);
+  const onStage = useCallback((stage: Konva.Stage | null) => {
+    stageRef.current = stage;
+  }, []);
+  const capture = useCallback((): string | null => {
+    const stage = stageRef.current;
+    if (!stage || stage.width() === 0 || stage.height() === 0) return null;
+    try {
+      return stage.toDataURL({ mimeType: 'image/png', pixelRatio: Math.min(1, 360 / Math.max(stage.width(), stage.height())) });
+    } catch {
+      return null; // a photo that can't be read back: approve without a thumbnail
+    }
+  }, []);
 
   /*
    * On the product (Phase 4 M1): offered only when a side has a photo whose rights are cleared, with
@@ -244,7 +273,7 @@ function PreviewBody({ document, surface, profile, view, productOnly = false, on
     <div className="flex min-h-0 flex-1 flex-col">
       <header className="flex shrink-0 items-center gap-2 border-b border-border bg-surface px-3 py-2 md:gap-4 md:px-4">
         <div className="flex min-w-0 flex-1 flex-col leading-tight">
-          <DialogPrimitive.Title className="text-body font-semibold text-fg">Preview</DialogPrimitive.Title>
+          <DialogPrimitive.Title className="text-body font-semibold text-fg">{review ? review.title : 'Preview'}</DialogPrimitive.Title>
           <p className="truncate text-caption text-fg-muted" title={document.name}>
             {document.name}
           </p>
@@ -253,15 +282,18 @@ function PreviewBody({ document, surface, profile, view, productOnly = false, on
         {roomy && toggle}
         {!phone && <ZoomControls percent={percent} limits={limits} fit={zoom.mode === 'fit'} onStep={step} onZoom={zoomTo} />}
         <DialogPrimitive.Close asChild>
-          <IconButton label="Close preview" icon={<X />} size="sm" tooltip={false} className="pointer-coarse:size-11" />
+          <IconButton label={review ? review.closeLabel : 'Close preview'} icon={<X />} size="sm" tooltip={false} className="pointer-coarse:size-11" />
         </DialogPrimitive.Close>
       </header>
       <DialogPrimitive.Description id="studio-preview-description" className="sr-only">
+        {review ? `${review.description} ` : ''}
         {onProduct
           ? `How ${sided ? `the ${surface.label.toLowerCase()} of ` : ''}“${document.name}” will look on the product (${formatSize(size.width, size.height)} print), shown on a product photo; colours and fit are approximate. Guides, bleed and editing controls are hidden. Escape closes the preview.`
           : `How ${sided ? `the ${surface.label.toLowerCase()} of ` : ''}“${document.name}” will look once printed and trimmed (${formatSize(size.width, size.height)}). Guides, bleed and editing controls are hidden. Escape closes the preview.`}
       </DialogPrimitive.Description>
 
+      <div className="flex min-h-0 flex-1 flex-col lg:flex-row">
+      <div className="flex min-h-0 flex-1 flex-col">
       {/* oxlint-disable-next-line jsx-a11y/no-noninteractive-element-interactions -- the artwork region: focusable only while zoomed in, so arrow keys (and drags) move around; every action also has a button */}
       <section
         ref={areaRef}
@@ -289,7 +321,7 @@ function PreviewBody({ document, surface, profile, view, productOnly = false, on
                 <Suspense fallback={null}>
                   <div aria-hidden="true" className={cn('absolute inset-0 transition-opacity', shown ? 'opacity-100' : 'opacity-0')}>
                     {!onProduct ? (
-                      <Canvas surface={surface} width={available.width} height={available.height} viewport={viewport} />
+                      <Canvas surface={surface} width={available.width} height={available.height} viewport={viewport} onStage={onStage} />
                     ) : (
                       photo &&
                       productView &&
@@ -303,6 +335,7 @@ function PreviewBody({ document, surface, profile, view, productOnly = false, on
                           width={available.width}
                           height={available.height}
                           viewport={viewport}
+                          onStage={onStage}
                         />
                       )
                     )}
@@ -343,6 +376,9 @@ function PreviewBody({ document, surface, profile, view, productOnly = false, on
             : `${formatSize(size.width, size.height)}, trimmed · guides and bleed hidden`}
         </p>
       </footer>
+      </div>
+      {review && <review.Panel capture={capture} />}
+      </div>
       <ZoomAnnouncer percent={percent} fit={zoom.mode === 'fit'} />
     </div>
   );

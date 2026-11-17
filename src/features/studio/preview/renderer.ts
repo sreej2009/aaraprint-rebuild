@@ -38,6 +38,7 @@ export interface ProductCanvasProps {
   width: number;
   height: number;
   viewport: Viewport;
+  onStage?: (stage: Konva.Stage | null) => void;
 }
 
 export interface PreviewRenderer {

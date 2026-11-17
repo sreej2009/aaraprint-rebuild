@@ -9,7 +9,7 @@ export function useSaveController(): SaveController | null {
   return useContext(SaveControllerContext);
 }
 
-const IDLE: SaveState = { status: 'idle', lastSavedAt: null, message: null, persisted: false, versions: [], savedFingerprint: null };
+const IDLE: SaveState = { status: 'idle', lastSavedAt: null, message: null, persisted: false, versions: [], savedFingerprint: null, approval: null };
 const placeholder = { getState: () => IDLE, subscribe: () => () => {}, getInitialState: () => IDLE, setState: () => {} } as unknown as SaveController['state'];
 
 export function useSaveState<T>(selector: (state: SaveState) => T): T {

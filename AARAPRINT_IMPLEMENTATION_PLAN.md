@@ -2584,7 +2584,8 @@ Its §19 gives the recommended order. Phases and milestones above are history an
 | M4 Product-first Studio workspace | Done |
 | M4-C Photo-frame Studio workflow (correction) | Done |
 | M4-C2 Photo-frame product rendering (correction) | Done |
-| M5… Review/Approve | Not started (audit §18) |
+| M5 Review, approval and cart handoff | Done |
+| M6… Checkout, accounts (Phase 6) | Not started |
 
 ### M1 — Schema v3 and product family registry
 
@@ -3053,3 +3054,138 @@ Nothing was missing or mis-mapped. The profile for `umbrella-photo-custom` alrea
 - Timing fix found on the way: `studio-flows` I (restore a version, then Ctrl Z) focused the canvas before the closing history dialog handed focus back to the save status, so Ctrl Z sometimes landed there. The test now waits for the dialog to close (10 of 10 when repeated).
 
 **Results:** lint and typecheck clean; 898 unit and component tests passed (79 files); production build passes. Full browser suite: 420 passed, 0 failed, 428 skipped (each for a different device layout, or a spec that sets its own widths). Run separately: `studio.spec`, `entry.spec`, `studio-flows` and `studio-photoframe` 69 passed. Checked by eye in the browser: Custom Photo Umbrellas at 1440, 1280, 820, 390 and 360 px; Black, Navy, Red and Green; text added; reload; Back and reopen.
+
+### M5 — Review, approval and cart handoff
+
+**Scope:** Studio → Review your design → Approve and continue → sign-in/guest handoff → design attached on the product page → Add to cart. Out of scope (later): checkout, payment, order creation, shipping and tax, accounts and sign-in backend, email, 3D, QR, tables, CMYK.
+
+#### What the original did (audit §11–12, spec §2)
+
+- **Next** opened **Review your design**: product preview per side, element counts, low-resolution alert, Download proof, Continue editing, **Approve and continue**.
+- **Guest (live):** the draft stayed in the browser; a session flag was set; the toast "Sign in to save and continue with your design."; then `/login?redirect=…`.
+- **Signed in (source only):** waited for the cloud save, then `/products/{slug}?designId=…&variantId=…`, where the page said "Your design is attached and ready to order." with Edit and **Add to cart**.
+- **Add to cart (source only):** a server action, then a cart drawer ("Added to cart"); the cart cache was in localStorage. Checkout, payment and quantity changes after attaching were not observable.
+
+#### Review (`studio/approval/review-dialog.tsx`)
+
+- **Opening it:** the Studio's **Continue** (Next on phones), previously a "coming soon" placeholder, opens **Review your design**.
+- **It is the Preview dialog** (`PreviewDialog` with a new `review` slot), not a second renderer. It draws the same design document in memory (unsaved changes included) with the same artwork nodes, sides, zoom and product view: flat for cards, the real product photo with the ordered colour's tint for photo-frame products (M4-C2), and no Flat switch where the family has none.
+- **The panel** (beside the preview from 1024 px, under it on narrower screens, actions pinned):
+  - product, options, quantity, unit price, total, print size, item counts per side, SKU;
+  - the approval status (approved / changed since approved);
+  - "Worth checking": the print checks' warnings (low resolution, near the edge), which don't block, as on the original;
+  - what blocks approval;
+  - **Approve and continue** and **Back to design**.
+- **Accessible description:** "Check positioning, spelling and the safe area before continuing."
+- **Leaving:** Back to design, the close button or Escape return to the editor unchanged (no undo step, nothing saved); focus returns to Continue.
+
+#### Approval (`studio/approval/approval.ts`, `persistence/save-controller.ts`, `persistence/records.ts`)
+
+- **Blockers** (`approvalBlockers`):
+  - an empty design;
+  - a missing image or graphic file;
+  - unfinished non-entry product choices;
+  - choices with no variant;
+  - a design that fails validation.
+
+  Entry choices (orientation) don't block: the "Design it" step asks them, the artwork already fixes them, and the original didn't carry them past Approve. The print checks are reused.
+- **`controller.approve({ thumbnail })`:**
+  - saves the design;
+  - keeps the approved content as a version with the new reason **`approved`** (label "Approved"), holding the exact artwork and product choices and a small PNG thumbnail of what Review showed;
+  - records a `DesignApproval { versionId, fingerprint, approvedAt, variantId, sku, quantity }` on the design record.
+
+  It is not an undo step and never a second design. Approving unchanged content again changes nothing.
+- **Approved versions are never pruned**: the cart refers to them. The other versions still keep the newest 20.
+- **Current or stale is derived, never stored:** `approvalStatus()` compares the design's fingerprint (artwork and product configuration) with the approved one.
+  - **Any change makes it `changed`:** a text edit, a colour, the quantity, here or on the product page.
+  - **Undo back to the approved content makes it `approved` again.**
+  - **Approving again records a new approved version.**
+- **The approval is part of the record:** later saves keep it, a restore brings it back (`readApproval` checks a stored one field by field), and **Remove design** detaches it (`clearApproval`), keeping the design and its versions.
+- **Failures:** if the design can't be saved, approval fails with the reason ("Unable to save locally…" / "Save all changes successfully before continuing.", the original's message) and the design stays as it is.
+
+#### Sign-in / guest handoff (`features/account/account.ts`)
+
+There is no auth backend in this project, and the original's signed-in behaviour wasn't observable. Nothing is invented: no account, session, customer id, cloud save, email or attachment API. The product UI asks an **account boundary** (`accountService().session()`):
+- `unavailable`: today's only adapter (`noAccounts`);
+- `guest` with a `signInHref(redirect)`;
+- `signed-in`.
+
+After approving, the review panel shows **Design approved**: "Your design is saved in this browser. Next, it's attached to {product} so you can add it to your cart." With no accounts it adds "Signing in to save designs to an account isn't available yet. It arrives with online checkout. Until then, designs stay in this browser." Then **Continue as guest**: the pending save is flushed, then `/products/{slug}?designId={id}&variantId={variant}`, the original's attached URL. A real adapter later shows **Sign in** (guest) or continues directly (signed in) without changes to this code.
+
+**Deliberate difference:** the original sent a guest to sign in and didn't attach the design until then. With no accounts here, the guest continues and the design stays local.
+
+#### Design attached (`product/attached-design.tsx`, `product/purchase-panel.tsx`, `product-options/session.ts`)
+
+- **Restoring it:** the product page's design session restores exactly the design named by `?designId=`, or the latest one for the product if that design is missing or belongs to another product. The approval comes with its record.
+- **Shown from the record, never the URL:** "Design attached" appears only when this browser's saved design has an approval. `?designId=` alone attaches nothing.
+- **Approved:** "Design attached", the design name, "Your design is attached and ready to order.", the thumbnail from the approved version, options, quantity and price, **Edit design** (`/products/{slug}/design?design={id}`) and **Remove design**. The buy box offers **Add to cart** and **Edit design** in place of Start designing; the sticky phone bar offers Add to cart.
+- **Changed since approved:** "Design changed since you approved it", **Review and approve** (to the Studio), and no Add to cart.
+- **Choices restored as approved:** variant, colour, size, quantity, orientation, Studio-only options and same-design. A stale `?variantId=` never overwrites them (M4-C rule, unchanged).
+
+#### Cart (`features/cart/`, `routes/cart.tsx`)
+
+The project had no cart: `/cart` was a Phase 6 placeholder. M5 adds the minimum the handoff needs, behind a **`CartService`** boundary whose only adapter is this browser's localStorage (`aaraprint-cart`, format 1), like the original's cart cache. A server-backed adapter can replace it later.
+
+- **A line refers to the approved design; it never copies it.** It holds the product, the `variantId` and SKU, the quantity, unit and total price, the approved configuration, and `design { designId, versionId, name, approvedAt, fingerprint }` pointing at the `approved` version.
+- **Line ids aren't random:** the id is `designId:versionId`, so the same approval can't be added twice ("This approved design is already in your cart.").
+- **What can be added:** `cartLineFor` refuses anything that doesn't match the approval (SKU, variant or quantity), and the product page only offers Add to cart while the approval is current. A design changed after approval can't be added until it is approved again; the new approval gives a new line.
+- **After Add to cart:** "Added to cart." with **View cart**. The header shows the cart count.
+- **`/cart`:**
+  - lines with the approved thumbnail, product, "Design ready", design name and approval time, options, SKU, quantity, price, **Edit design**, **Remove**;
+  - a subtotal;
+  - "Online checkout is being rebuilt. Contact us to place this order." (no checkout);
+  - empty state as on the original: "Your cart is empty — Browse our catalog and start designing — everything you add will show up here."
+- **Damaged storage:** lines are checked field by field and dropped if damaged.
+
+#### Edge cases
+
+| Case | Behaviour |
+|---|---|
+| No artwork | The Review blocker says the design is empty; Approve is disabled and described by the blocker. |
+| No variant / unfinished choices | Blocked with the reason. |
+| Missing image or graphic file | Blocked; Print check shows where. |
+| Unsaved changes | Review draws the document in memory; Approve saves it first. |
+| Cancel / close | Nothing lost or saved; no undo step. |
+| Reload during handoff | The approval is already saved: the product page attaches it, and Review reopens as "approved". |
+| Back navigation | No duplicates: one design record, one line per approval. |
+
+#### Responsive and accessibility
+
+- **Widths:** the Review panel sits beside the preview from 1024 px and under it below that (at most 42 % of the height, actions pinned and visible). At 1440, 1280, 820, 390 and 360 px nothing scrolls sideways.
+- **Cart page overflow fix:** the cart's single-column grid now uses `minmax(0, 1fr)`; a long design name had pushed it 42–72 px wider than the screen on phones.
+- **Accessibility:** the dialog is named "Review your design" and has a description. Approve is described by the blockers, the handoff heading takes focus, and Escape closes the dialog with focus returning to Continue. Axe passes on Review, the attached card and the cart.
+
+#### Tests
+
+- `persistence/approval.test.ts` (8): the approved version and approval, idempotent, stale and undo, kept by later saves and restored, re-approve, detach, never pruned, unsavable, damaged approval.
+- `approval/approval.test.ts` (8): blockers (empty, missing file, no variant, orientation not blocking), status, cart line (version reference, id, configuration copy, refuses mismatches), add once.
+- `approval/review-dialog.test.tsx` (6):
+  - summary and blockers;
+  - Back to design changes nothing;
+  - approve → approved version → handoff with the no-accounts note → product URL;
+  - edit after approval → "changed" → re-approve;
+  - unsavable;
+  - phone, and Escape.
+- `product/attached-design.test.tsx` (6):
+  - attached from the record;
+  - never from the URL alone;
+  - `?designId=` plus a stale `?variantId=`;
+  - Add to cart (exact line, no duplicate design or line);
+  - change after approval hides Add to cart, undo restores it;
+  - Remove design.
+- `cart/cart-page.test.tsx` (3): empty state and header count, lines with edit and remove, damaged lines.
+- Updated: `studio-shell.test.tsx` and `e2e/studio.spec.ts` (Continue now opens Review), `e2e/a11y.spec.ts` (`/cart` is the cart).
+- `e2e/studio-approval.spec.ts` (new):
+  - **A/B:** card from the product page → Review (same artwork, axe) → Approve → handoff → attached (IndexedDB approval equals the record, thumbnail, axe) → Add to cart (localStorage line equals the approved version, SKU, quantity and configuration; no second design or line) → cart (axe);
+  - **C:** reload of the product page and the Studio;
+  - **D:** edit after approval → changed, no Add to cart → re-approve → only the new version in the cart;
+  - **E:** 390 and 360 px, the whole flow, actions on screen, no sideways scroll;
+  - **F:** the real Custom Photo Umbrella in Navy: Review on the tinted photo, approved Navy attached and in the cart.
+
+#### Bundle
+
+Gzipped JS on entry against the M4-C2 commit: the product page went from 232.0 KB to **236.0 KB** (+4.0 KB: the attached card, approval status and the cart line), and the Studio route from 306.9 KB to **310.2 KB** (+3.3 KB: Review panel and approval rules). The header carries the small cart store; the cart page and approval thumbnails read storage only when shown.
+
+**Results:** lint and typecheck clean; 929 unit and component tests passed (84 files); production build passes (one earlier build attempt hit a pre-render timeout on `/credits` under load and passed on retry). Full browser suite: 426 passed, 0 failed, 440 skipped (each for a different device layout, or a spec that sets its own widths). Run separately: `studio-approval`, `studio`, `shell` and `a11y` specs, 104 passed. Checked by eye in the browser: a visiting card and the real Custom Photo Umbrella in Navy, through Review, approval, handoff, the attached card, Add to cart and the cart page, and the Review panel at 360 px.
+
+**Not in M5:** checkout, payment, order creation, shipping and GST, accounts and sign-in, cloud save, cart quantity editing, the original's Download proof inside Review (Print check keeps it), and the 2D/3D toggle in Review.

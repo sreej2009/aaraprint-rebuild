@@ -18,7 +18,7 @@ const pages = [
   { name: 'faq', path: '/faq' },
   { name: 'contact', path: '/contact' },
   { name: 'credits', path: '/credits' },
-  { name: 'commerce placeholder', path: '/cart' },
+  { name: 'cart (empty)', path: '/cart' },
   { name: 'not found', path: '/no-such-page' },
   { name: 'studio', path: '/products/business-card-classic/design', ready: 'Classic Visiting Cards design' },
   { name: 'studio (product panel, round card)', path: '/products/business-card-circle/design?tool=product&side=back', ready: 'Circle Visiting Cards design' },

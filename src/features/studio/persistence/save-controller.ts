@@ -4,7 +4,7 @@ import type { DesignDocument } from '../schema/types';
 import { parseDesign, validateDesign } from '../schema/validate';
 import type { StudioStore } from '../store';
 import { designFingerprint, toStoredDocument } from './fingerprint';
-import {
+import { readApproval, type DesignApproval,
   AUTOSAVE_DELAY_MS,
   AUTOSAVE_VERSION_INTERVAL_MS,
   StorageError,
@@ -46,7 +46,11 @@ export interface SaveState {
   versions: VersionSummary[];
   /** Fingerprint of what's saved, to mark the matching version as current. */
   savedFingerprint: string | null;
+  /** The customer's approval of this design (Phase 4 M5), current or not; see `approvalStatus`. */
+  approval: DesignApproval | null;
 }
+
+export type ApproveResult = { ok: true; approval: DesignApproval } | { ok: false; message: string };
 
 export interface SaveController {
   state: StoreApi<SaveState>;
@@ -56,6 +60,14 @@ export interface SaveController {
   saveAnyway(): Promise<void>;
   /** Replace the design with a version (one undo step), keeping a safety copy first. */
   restoreVersion(versionId: string): Promise<boolean>;
+  /**
+   * Approve the design as it is now (Phase 4 M5): save it, keep it as an `approved` version (with
+   * an optional thumbnail) and record the approval on the design. Not an undo step; approving the
+   * same content again changes nothing. The caller checks that the design can be approved.
+   */
+  approve(options?: { thumbnail?: string | null }): Promise<ApproveResult>;
+  /** Detach: forget the approval (the design and its versions stay). */
+  clearApproval(): Promise<boolean>;
   refreshVersions(): Promise<void>;
   /** Pending changes written as soon as possible (leaving the page, closing the Studio). */
   flush(): Promise<void>;
@@ -73,7 +85,7 @@ export interface SaveControllerOptions {
   productSlug: string;
   productId: string;
   /** The record this design was restored from, if any. */
-  record?: Pick<DesignRecord, 'revision' | 'fingerprint' | 'createdAt' | 'updatedAt' | 'currentVersionId'> | null;
+  record?: Pick<DesignRecord, 'revision' | 'fingerprint' | 'createdAt' | 'updatedAt' | 'currentVersionId' | 'approval'> | null;
   /** Sample designs (`?sample=1`) aren't saved until the customer saves one on purpose. */
   sample?: boolean;
   /** An error from opening storage: start in the error state. */
@@ -100,6 +112,7 @@ export function createSaveController(options: SaveControllerOptions): SaveContro
   let createdAt = options.record?.createdAt ?? clock();
   let currentVersionId = options.record?.currentVersionId ?? null;
   let savedFingerprint: string | null = options.record?.fingerprint ?? null;
+  let approval: DesignApproval | null = readApproval(options.record?.approval);
   // The restored design may already differ from what was saved (options changed on the product page).
   const startsSaved = Boolean(options.record) && designFingerprint(studio.getState().document) === savedFingerprint;
   let savedDocument: DesignDocument | null = startsSaved ? studio.getState().document : null;
@@ -116,6 +129,7 @@ export function createSaveController(options: SaveControllerOptions): SaveContro
     persisted: Boolean(options.record),
     versions: [],
     savedFingerprint,
+    approval,
   }));
   const set = (partial: Partial<SaveState>) => {
     if (!disposed) state.setState(partial);
@@ -136,7 +150,7 @@ export function createSaveController(options: SaveControllerOptions): SaveContro
     }
   };
 
-  const addVersion = async (document: DesignDocument, fingerprint: string, reason: VersionReason, meta: DesignDocument['meta']) => {
+  const addVersion = async (document: DesignDocument, fingerprint: string, reason: VersionReason, meta: DesignDocument['meta'], thumbnail: string | null = null) => {
     const version: VersionRecord = {
       versionId: newId('version'),
       designId: document.id,
@@ -145,6 +159,7 @@ export function createSaveController(options: SaveControllerOptions): SaveContro
       schemaVersion: document.schemaVersion,
       fingerprint,
       document: toStoredDocument(document, meta),
+      ...(reason === 'approved' ? { thumbnail } : {}),
     };
     await repository.addVersion(version, versionLimit);
     newestVersion = { fingerprint, at: version.createdAt };
@@ -162,6 +177,9 @@ export function createSaveController(options: SaveControllerOptions): SaveContro
 
   // -------------------------------------------------------------- Writing
 
+  /** Approval work riding on the next write (approve: a new approval; detach: none). */
+  let approvalChange: { kind: 'approve'; thumbnail: string | null } | { kind: 'clear' } | null = null;
+
   const write = async (reason: 'manual' | 'autosave' | 'restored', force = false): Promise<void> => {
     const document = studio.getState().document;
     const fingerprint = designFingerprint(document);
@@ -172,8 +190,13 @@ export function createSaveController(options: SaveControllerOptions): SaveContro
       return;
     }
     const unchanged = fingerprint === savedFingerprint && revision !== null;
-    const keep = versionFor(reason, fingerprint);
-    if (unchanged && !keep && !force) {
+    const change = approvalChange;
+    approvalChange = null;
+    // Approving content that is already approved changes nothing (one approval per content).
+    const approving = change?.kind === 'approve' && approval?.fingerprint !== fingerprint;
+    const clearing = change?.kind === 'clear' && approval !== null;
+    const keep = approving ? 'approved' : versionFor(reason, fingerprint);
+    if (unchanged && !keep && !force && !clearing) {
       savedDocument = document;
       set({ status: 'saved', message: null });
       return;
@@ -183,7 +206,12 @@ export function createSaveController(options: SaveControllerOptions): SaveContro
     const meta = { createdAt: new Date(createdAt).toISOString(), updatedAt: new Date(now).toISOString(), revision: (revision ?? 0) + 1 };
     try {
       let versionId = currentVersionId;
-      if (keep) versionId = (await addVersion(document, fingerprint, keep, meta)).versionId;
+      if (keep) versionId = (await addVersion(document, fingerprint, keep, meta, approving && change.kind === 'approve' ? change.thumbnail : null)).versionId;
+      const nextApproval: DesignApproval | null = approving
+        ? { versionId: versionId!, fingerprint, approvedAt: now, variantId: document.product.variantId, sku: document.product.sku, quantity: document.product.configuration.quantity }
+        : clearing
+          ? null
+          : approval;
       const record: DesignRecord = {
         designId: document.id,
         productSlug,
@@ -197,6 +225,7 @@ export function createSaveController(options: SaveControllerOptions): SaveContro
         fingerprint,
         currentVersionId: versionId,
         document: toStoredDocument(document, meta),
+        ...(nextApproval ? { approval: nextApproval } : {}),
       };
       const result = await repository.saveDesign(record, { expectedRevision: revision, force });
       if (result === 'conflict') {
@@ -206,7 +235,8 @@ export function createSaveController(options: SaveControllerOptions): SaveContro
       revision = record.revision;
       savedDocument = document;
       savedFingerprint = fingerprint;
-      set({ lastSavedAt: now, persisted: true, savedFingerprint: fingerprint, message: null, status: isSaved(studio.getState().document) ? 'saved' : 'dirty' });
+      approval = nextApproval;
+      set({ lastSavedAt: now, persisted: true, savedFingerprint: fingerprint, approval, message: null, status: isSaved(studio.getState().document) ? 'saved' : 'dirty' });
       if (keep) void refreshVersions();
     } catch (error) {
       const storage = error instanceof StorageError ? error : toStorageError(error);
@@ -309,6 +339,23 @@ export function createSaveController(options: SaveControllerOptions): SaveContro
     },
     refreshVersions,
     flush,
+
+    async approve({ thumbnail = null } = {}) {
+      sample = false; // approving a sample makes it a design of its own
+      approvalChange = { kind: 'approve', thumbnail };
+      await run('manual');
+      const fingerprint = designFingerprint(studio.getState().document);
+      const { status, message } = state.getState();
+      if (approval && approval.fingerprint === fingerprint && savedFingerprint === fingerprint) return { ok: true, approval };
+      return { ok: false, message: status === 'error' || status === 'conflict' ? (message ?? UNSAVED_MESSAGE) : 'Save all changes successfully before continuing.' };
+    },
+
+    async clearApproval() {
+      if (!approval) return true;
+      approvalChange = { kind: 'clear' };
+      await run('manual', true);
+      return approval === null;
+    },
 
     async restoreVersion(versionId) {
       let version: VersionRecord | null;

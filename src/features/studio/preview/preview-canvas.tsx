@@ -40,9 +40,14 @@ export function PreviewCanvas({ surface, width, height, viewport, onStage }: Pre
  * artwork nodes and clipped to the trim like the flat preview. The photo is a backdrop only — it
  * is never selectable, exported, saved or part of the design; nothing here listens for input.
  */
-export function ProductPreviewCanvas({ surface, photo, draw, placed, width, height, viewport }: ProductCanvasProps) {
+export function ProductPreviewCanvas({ surface, photo, draw, placed, width, height, viewport, onStage }: ProductCanvasProps) {
+  const stageRef = useRef<Konva.Stage>(null);
+  useEffect(() => {
+    onStage?.(stageRef.current);
+    return () => onStage?.(null);
+  }, [onStage]);
   return (
-    <Stage width={width} height={height} scaleX={viewport.scale} scaleY={viewport.scale} x={viewport.x} y={viewport.y} listening={false} className="studio-preview-stage studio-product-stage">
+    <Stage ref={stageRef} width={width} height={height} scaleX={viewport.scale} scaleY={viewport.scale} x={viewport.x} y={viewport.y} listening={false} className="studio-preview-stage studio-product-stage">
       <Layer name="product-photo" listening={false}>
         <KonvaImage image={photo} {...draw.at} crop={draw.crop ?? undefined} listening={false} perfectDrawEnabled={false} />
       </Layer>

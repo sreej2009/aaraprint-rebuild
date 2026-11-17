@@ -22,7 +22,7 @@ export const AUTOSAVE_VERSION_INTERVAL_MS = 10 * 60 * 1000;
 /** Versions kept per design; the oldest go first. */
 export const VERSION_LIMIT = 20;
 
-export type VersionReason = 'initial' | 'manual' | 'autosave' | 'before-restore' | 'restored';
+export type VersionReason = 'initial' | 'manual' | 'autosave' | 'before-restore' | 'restored' | 'approved';
 
 export const VERSION_LABELS: Record<VersionReason, string> = {
   initial: 'Initial save',
@@ -30,7 +30,38 @@ export const VERSION_LABELS: Record<VersionReason, string> = {
   autosave: 'Autosave',
   'before-restore': 'Before restore',
   restored: 'Restored version',
+  approved: 'Approved',
 };
+
+/**
+ * The customer's approval of a design (Phase 4 M5): "Approve and continue" in Review keeps the
+ * approved content as a version (reason `approved`, never pruned) and records it here, on the
+ * design record. Whether it is still current is derived, never stored: the design's fingerprint
+ * must equal `fingerprint`. Any edit after approving makes it stale; undoing back makes it current.
+ */
+export interface DesignApproval {
+  /** The `approved` version holding exactly what was approved (artwork and product choices). */
+  versionId: string;
+  /** Content fingerprint of the approved design. */
+  fingerprint: string;
+  /** ms since the epoch. */
+  approvedAt: number;
+  /** What is ordered with it, as approved. */
+  variantId: string | null;
+  sku: string | null;
+  quantity: number;
+}
+
+/** A stored approval checked field by field (records are untrusted until read); null when absent or damaged. */
+export function readApproval(value: unknown): DesignApproval | null {
+  if (!value || typeof value !== 'object') return null;
+  const a = value as Record<string, unknown>;
+  const text = (v: unknown) => typeof v === 'string' && v.length > 0 && v.length <= 200;
+  if (!text(a.versionId) || !text(a.fingerprint) || typeof a.approvedAt !== 'number' || !Number.isFinite(a.approvedAt)) return null;
+  if (!(a.variantId === null || text(a.variantId)) || !(a.sku === null || text(a.sku))) return null;
+  if (typeof a.quantity !== 'number' || !Number.isInteger(a.quantity) || a.quantity < 1) return null;
+  return { versionId: a.versionId as string, fingerprint: a.fingerprint as string, approvedAt: a.approvedAt, variantId: a.variantId as string | null, sku: a.sku as string | null, quantity: a.quantity };
+}
 
 export interface DesignRecord {
   designId: string;
@@ -50,6 +81,8 @@ export interface DesignRecord {
   currentVersionId: string | null;
   /** The design document as stored. Unknown until parsed and validated on restore. */
   document: unknown;
+  /** The customer's approval (Phase 4 M5), if any; read it with `readApproval`. */
+  approval?: unknown;
 }
 
 export interface VersionRecord {
@@ -60,6 +93,8 @@ export interface VersionRecord {
   schemaVersion: number;
   fingerprint: string;
   document: unknown;
+  /** A small PNG data URL of the design as approved (`approved` versions only, Phase 4 M5). */
+  thumbnail?: string | null;
 }
 
 /**
@@ -86,12 +121,15 @@ export interface AssetRecord {
 export type AssetSummary = Omit<AssetRecord, 'blob'>;
 
 /** A version without its document, for lists. */
-export type VersionSummary = Omit<VersionRecord, 'document'>;
+export type VersionSummary = Omit<VersionRecord, 'document' | 'thumbnail'>;
 
 export function summarise(version: VersionRecord): VersionSummary {
-  const { document: _document, ...summary } = version;
+  const { document: _document, thumbnail: _thumbnail, ...summary } = version;
   return summary;
 }
+
+/** Approved versions are what the cart refers to: they are never pruned (Phase 4 M5). */
+export const prunable = (version: Pick<VersionRecord, 'reason'>) => version.reason !== 'approved';
 
 /** Storage isn't usable (private mode, disabled, blocked, quota…). The editor carries on in memory. */
 export class StorageError extends Error {

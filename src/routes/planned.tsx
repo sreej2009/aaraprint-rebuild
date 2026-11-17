@@ -19,7 +19,6 @@ interface PlannedPage {
 }
 
 const PAGES: Record<string, PlannedPage> = {
-  cart: { title: 'Your cart', description: 'Items with design previews, free-shipping progress and an order summary.', phase: 6 },
   checkout: { title: 'Checkout', description: 'Contact, delivery address with PIN-code lookup, pay on delivery and review.', phase: 6 },
   'track-order': { title: 'Track your order', description: 'Order status timeline, courier and tracking details.', phase: 6 },
   account: { title: 'Your account', description: 'Orders, saved designs, addresses and settings in one place.', phase: 6 },

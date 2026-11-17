@@ -137,15 +137,15 @@ describe('Studio shell — desktop (≥ 1280 px)', () => {
     expect(within(banner).getByRole('button', { name: /^Zoom .*view options$/ })).toBeInTheDocument();
   });
 
-  it('has history buttons that are disabled with nothing to undo, and inert coming-soon actions', async () => {
+  it('has history buttons that are disabled with nothing to undo; Continue opens Review your design (Phase 4 M5)', async () => {
     const { user } = renderStudio();
     expect(screen.getByRole('button', { name: 'Undo' })).toBeDisabled();
     expect(screen.getByRole('button', { name: 'Redo' })).toBeDisabled();
     const continueButton = screen.getByRole('button', { name: 'Continue' });
-    expect(continueButton).toHaveAttribute('aria-disabled', 'true');
-    expect(continueButton).toHaveAccessibleDescription(/coming soon/);
+    expect(continueButton).toBeEnabled();
     await user.click(continueButton);
-    expect(screen.getByTestId('location')).toHaveTextContent(/design$/);
+    expect(await screen.findByRole('dialog', { name: 'Review your design' })).toBeInTheDocument();
+    expect(screen.getByTestId('location')).toHaveTextContent(/design$/); // nothing navigates until approved
   });
 });
 
